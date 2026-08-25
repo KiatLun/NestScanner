@@ -3,201 +3,225 @@ import json
 from app.llm.client import getLLM
 from app.models.schemas import EvidenceGroup
 
+
 llm = getLLM()
 
 
 def groupModelEvidence(
-    results: list[dict],
+    searchResults: list[dict],
 ) -> list[dict]:
     """
-    Use the LLM to group discovery results that refer
-    to the same ASR model or model family.
+    Group discovery evidence that refers to the same
+    ASR model or model family.
 
-    Separately released derived models should remain
-    separate from their base models.
+    Uses the LLM because cross-source naming can differ
+    significantly across web, Hugging Face, GitHub,
+    and arXiv.
     """
 
-    if not results:
+    if not searchResults:
         return []
 
     response = llm.invoke(f"""
-You are performing entity matching for an ASR technology scanner.
+You are performing cross-source evidence matching for an
+ASR technology scanner.
 
-Below are discovery results collected from multiple sources:
+Discovery evidence:
 
-- general web
-- Hugging Face
-- GitHub
-- arXiv
+{json.dumps(searchResults, indent=2)}
 
-Results:
+Your task is to group evidence that clearly refers to the
+SAME automatic speech recognition model or model family.
 
-{json.dumps(results, indent=2)}
-
-Your job is to group evidence that refers to the SAME
-ASR model or model family.
-
-Examples of evidence that may belong to the same group:
-
-- a Hugging Face model repository
-- an official GitHub repository
-- an arXiv paper
-- an official project page
-- an official announcement
-
-Rules:
-
-1. Only group results when there is reasonable evidence that
-   they refer to the same underlying model or model family.
-
-2. Do NOT group items simply because they come from the
-   same organisation.
-
-3. Do NOT merge distinct model families.
-
-4. Different parameter-size checkpoints of the SAME model
-   family may be grouped.
+Different sources may describe the same model differently.
 
 For example:
 
-- Qwen3-ASR-0.6B
-- Qwen3-ASR-1.7B
+- a Hugging Face repository
+- an official GitHub repository
+- an arXiv paper
+- an official announcement
+- a web article
+
+may all refer to the same underlying model.
+
+Your goal is to connect those pieces of evidence.
+
+========================================================
+GROUPING RULES
+========================================================
+
+1. Only group evidence when it refers to the same
+   underlying model or model family.
+
+2. Being produced by the same organisation is NOT enough.
+
+For example:
+
+Organisation X / Model A
+
+and
+
+Organisation X / Model B
+
+must remain separate.
+
+3. Different parameter-size checkpoints MAY be grouped
+   when they clearly belong to the same model family.
+
+For example:
+
+Qwen3-ASR-0.6B
+
+and
+
+Qwen3-ASR-1.7B
 
 may be grouped as:
 
 Qwen3-ASR
 
-if the supplied evidence indicates that they are variants
-of the same model family.
+4. Do NOT automatically group a fine-tuned model with
+   its base model.
 
-5. A separately named derived model must NOT automatically
-   be grouped with its base model.
+A separately named:
 
-This includes:
+- fine-tuned model
+- adapted model
+- distilled model
+- quantized model
+- converted model
+- language-specific model
+- domain-specific model
+- derivative model
 
-- fine-tuned models
-- adapted models
-- distilled models
-- quantized models
-- converted models
-- domain-specific derivatives
-- language-specific derivatives
+should remain separate when it has its own model identity.
 
 For example:
 
 ASLP-lab/CN-MultiDialect-ASR
 
-with metadata such as:
+must NOT automatically be grouped with:
 
-base_model:Qwen/Qwen3-ASR-1.7B
+Qwen/Qwen3-ASR
 
-or:
+even if its metadata contains:
 
-base_model:finetune:Qwen/Qwen3-ASR-1.7B
-
-is NOT the same model as Qwen3-ASR.
-
-It is a separate released model that happens to use
-Qwen3-ASR as its base model.
-
-6. Treat metadata beginning with:
-
-base_model:
+base_model:Qwen/Qwen3-ASR
 
 or:
 
-base_model:finetune:
+base_model:finetune:Qwen/Qwen3-ASR
 
-as a relationship between models, NOT proof that they
-are the same model.
+Those fields indicate a RELATIONSHIP between models,
+not that they are the same model release.
 
-7. Similarly, a separately named quantized or derived model,
-such as:
+5. A base-model relationship does NOT mean two models
+   belong in the same evidence group.
 
-VibeVoice-ASR-BitNet
+6. If two items have similar names but it is unclear
+   whether they are the same model, keep them separate.
 
-should remain separate from:
+When uncertain, prefer separate groups rather than
+incorrectly merging evidence.
 
-VibeVoice-ASR
+7. Do not create standalone model groups for evidence
+   that is only:
 
-if the evidence indicates that it is a separately released
-derived model rather than merely another parameter-size
-checkpoint of the same release.
+- a leaderboard
+- a tutorial
+- a survey
+- a generic article
+- a software library
+- a general ASR toolkit
+- a benchmark page
 
-8. If uncertain whether two results represent the same model,
-keep them separate.
+unless that evidence clearly supports an identifiable
+ASR model or model family.
 
-It is better to create two groups than to incorrectly merge
-two different model releases.
+8. A research paper may support a model group when the
+   paper clearly introduces or describes that model.
 
-9. Preserve the supplied URLs and evidence exactly.
+9. Preserve the supplied evidence.
 
-10. Do not invent evidence.
+Do not invent URLs, titles, organisations, model names,
+metadata, or descriptions.
 
-11. modelName should be the clearest canonical model or
-model-family name supported by the evidence.
+10. Choose a useful canonical modelName for each group.
 
-12. organisation should be null if it cannot be determined
-from the supplied evidence.
+Prefer the actual model/model-family name rather than
+the title of an article discussing it.
 
-13. Do NOT create standalone model groups for items that
-are clearly only:
+11. organisation should refer to the organisation or
+research group responsible for that model when this can
+be determined from the supplied evidence.
 
-- leaderboards
-- tutorials
-- surveys
-- generic articles
-- software libraries
-- comparison pages
+If it cannot be determined, use null.
 
-These may only be included as supporting evidence for an
-identifiable model if they clearly refer to that model.
-
-14. A paper should only form or support a model group when
-it describes an identifiable ASR model or model family.
+========================================================
+OUTPUT FORMAT
+========================================================
 
 Return ONLY valid JSON.
+
+Use camelCase field names.
 
 Use exactly this structure:
 
 {{
-  "groups": [
-    {{
-      "modelName": "model name",
-      "organisation": "organisation or null",
-      "evidence": [
+    "groups": [
         {{
-          "source": "source",
-          "title": "original title",
-          "url": "original URL",
-          "description": "description or null",
-          "metadata": {{}}
+            "modelName": "model or model family name",
+            "organisation": "organisation or null",
+            "evidence": [
+                {{
+                    "source": "source name",
+                    "title": "original evidence title",
+                    "url": "original URL",
+                    "description": "original description or null",
+                    "metadata": {{}}
+                }}
+            ]
         }}
-      ]
-    }}
-  ]
+    ]
 }}
 
 Do not include markdown.
+
 Do not include code fences.
+
 Do not include explanations outside the JSON.
 """)
 
     rawContent = response.content
 
-    print("\n=== EVIDENCE MATCHING RESPONSE ===")
-    print(rawContent)
+    print(
+        "\n=== RAW EVIDENCE MATCHER RESPONSE ==="
+    )
 
-    data = json.loads(rawContent)
+    print(
+        rawContent
+    )
 
-    groups = []
+    data = json.loads(
+        rawContent
+    )
 
-    for group in data.get(
+    evidenceGroups = []
+
+    for groupData in data.get(
         "groups",
         [],
     ):
-        validated = EvidenceGroup.model_validate(group)
 
-        groups.append(validated.model_dump())
+        validatedGroup = (
+            EvidenceGroup.model_validate(
+                groupData
+            )
+        )
 
-    return groups
+        evidenceGroups.append(
+            validatedGroup.model_dump()
+        )
+
+    return evidenceGroups

@@ -3,10 +3,10 @@ import json
 from datetime import (
     date,
     timedelta,
+    datetime,
 )
 
 from zoneinfo import ZoneInfo
-from datetime import datetime
 
 from app.llm.client import getLLM
 
@@ -51,6 +51,7 @@ from app.helper.evidenceMatcher import (
     groupModelEvidence,
 )
 
+
 llm = getLLM()
 
 
@@ -65,9 +66,14 @@ def getDiscoveryDateWindow() -> tuple[date, date]:
     using Singapore local time.
     """
 
-    currentDate = datetime.now(ZoneInfo("Asia/Singapore")).date()
+    currentDate = datetime.now(
+        ZoneInfo("Asia/Singapore")
+    ).date()
 
-    cutoffDate = currentDate - timedelta(days=30)
+    cutoffDate = (
+        currentDate
+        - timedelta(days=30)
+    )
 
     return cutoffDate, currentDate
 
@@ -113,6 +119,7 @@ Discovery has exactly two responsibilities:
 
 1. Find models or model families released within the
    specified 30-day release window.
+
 2. Ensure that they are actually automatic speech
    recognition models.
 
@@ -187,12 +194,23 @@ Do not include explanations outside the JSON.
 
     rawContent = response.content
 
-    print("\n=== SEARCH COVERAGE DECISION ===")
-    print(rawContent)
+    print(
+        "\n=== SEARCH COVERAGE DECISION ==="
+    )
 
-    data = json.loads(rawContent)
+    print(
+        rawContent
+    )
 
-    return DiscoveryDecision.model_validate(data)
+    data = json.loads(
+        rawContent
+    )
+
+    return (
+        DiscoveryDecision.model_validate(
+            data
+        )
+    )
 
 
 # =====================================================
@@ -210,30 +228,45 @@ def discoveryAgent(
 
     1. Finding models/model families released
        within the past 30 days.
+
     2. Checking that they are actually ASR.
 
     Everything else belongs to Research.
     """
 
-    print("\n" + "=" * 60)
-    print("DISCOVERY AGENT")
-    print("=" * 60)
+    print(
+        "\n"
+        + "=" * 60
+    )
 
-    objective = state["query"]
+    print(
+        "DISCOVERY AGENT"
+    )
 
-    cutoffDate, currentDate = getDiscoveryDateWindow()
+    print(
+        "=" * 60
+    )
 
-    print(f"\nObjective:\n{objective}")
+    objective = (
+        state["query"]
+    )
 
-    print(f"\nStrict release window: " f"{cutoffDate} to {currentDate}")
+    cutoffDate, currentDate = (
+        getDiscoveryDateWindow()
+    )
+
+    print(
+        f"\nObjective:\n{objective}"
+    )
+
+    print(
+        f"\nStrict release window: "
+        f"{cutoffDate} to {currentDate}"
+    )
 
     # =================================================
     # 1. BUILD SOURCE-SPECIFIC SEARCH PLAN
     # =================================================
-
-    # Give the search planner the real date explicitly.
-    # This prevents the LLM from assuming an outdated
-    # current date.
 
     searchObjective = f"""
 {objective}
@@ -249,25 +282,63 @@ Do not treat recent repository updates, model-card edits,
 or articles about older models as new model releases.
 """
 
-    searchPlan = buildDiscoveryQueries(searchObjective)
+    searchPlan = (
+        buildDiscoveryQueries(
+            searchObjective
+        )
+    )
 
-    print("\n=== SEARCH PLAN ===")
+    print(
+        "\n=== SEARCH PLAN ==="
+    )
 
-    print("\nWeb queries:")
-    for query in searchPlan.webQueries:
-        print(f"- {query}")
+    print(
+        "\nWeb queries:"
+    )
 
-    print("\nHugging Face queries:")
-    for query in searchPlan.huggingFaceQueries:
-        print(f"- {query}")
+    for query in (
+        searchPlan.webQueries
+    ):
 
-    print("\nGitHub queries:")
-    for query in searchPlan.githubQueries:
-        print(f"- {query}")
+        print(
+            f"- {query}"
+        )
 
-    print("\narXiv queries:")
-    for query in searchPlan.arxivQueries:
-        print(f"- {query}")
+    print(
+        "\nHugging Face queries:"
+    )
+
+    for query in (
+        searchPlan.huggingFaceQueries
+    ):
+
+        print(
+            f"- {query}"
+        )
+
+    print(
+        "\nGitHub queries:"
+    )
+
+    for query in (
+        searchPlan.githubQueries
+    ):
+
+        print(
+            f"- {query}"
+        )
+
+    print(
+        "\narXiv queries:"
+    )
+
+    for query in (
+        searchPlan.arxivQueries
+    ):
+
+        print(
+            f"- {query}"
+        )
 
     allResults = []
 
@@ -275,127 +346,223 @@ or articles about older models as new model releases.
     # 2. GENERAL WEB SEARCH
     # =================================================
 
-    print("\n=== WEB SEARCH ===")
+    print(
+        "\n=== WEB SEARCH ==="
+    )
 
-    for query in searchPlan.webQueries:
+    for query in (
+        searchPlan.webQueries
+    ):
 
-        print(f"\nSearching web:\n{query}")
+        print(
+            f"\nSearching web:\n{query}"
+        )
 
         try:
+
             results = webSearch(
                 query,
                 maxResults=5,
             )
 
-            print(f"Found {len(results)} " f"web results.")
+            print(
+                f"Found "
+                f"{len(results)} "
+                f"web results."
+            )
 
-            allResults.extend(results)
+            allResults.extend(
+                results
+            )
 
         except Exception as error:
 
-            print(f"Web search failed for:\n" f"{query}")
+            print(
+                f"Web search failed for:\n"
+                f"{query}"
+            )
 
-            print(error)
+            print(
+                error
+            )
 
     # =================================================
     # 3. HUGGING FACE SEARCH
     # =================================================
 
-    print("\n=== HUGGING FACE SEARCH ===")
+    print(
+        "\n=== HUGGING FACE SEARCH ==="
+    )
 
-    for query in searchPlan.huggingFaceQueries:
+    for query in (
+        searchPlan.huggingFaceQueries
+    ):
 
-        print(f"\nSearching Hugging Face:\n" f"{query}")
+        print(
+            "\nSearching Hugging Face:\n"
+            f"{query}"
+        )
 
         try:
-            hfResults = searchHuggingFaceModels(
-                query,
-                limit=20,
+
+            hfResults = (
+                searchHuggingFaceModels(
+                    query,
+                    limit=20,
+                )
             )
 
             print(
-                f"Found {len(hfResults)} " f"Hugging Face results " f"before filtering."
+                f"Found "
+                f"{len(hfResults)} "
+                f"Hugging Face results "
+                f"before filtering."
             )
 
-            hfResults = filterASRModels(hfResults)
+            hfResults = (
+                filterASRModels(
+                    hfResults
+                )
+            )
 
             print(
-                f"Found {len(hfResults)} "
+                f"Found "
+                f"{len(hfResults)} "
                 f"Hugging Face ASR models "
                 f"after filtering."
             )
 
-            allResults.extend(hfResults)
+            allResults.extend(
+                hfResults
+            )
 
         except Exception as error:
 
-            print("Hugging Face search failed.")
+            print(
+                "Hugging Face search failed."
+            )
 
-            print(error)
+            print(
+                error
+            )
 
     # =================================================
     # 4. GITHUB SEARCH
     # =================================================
 
-    print("\n=== GITHUB SEARCH ===")
+    print(
+        "\n=== GITHUB SEARCH ==="
+    )
 
-    for query in searchPlan.githubQueries:
+    for query in (
+        searchPlan.githubQueries
+    ):
 
-        print(f"\nSearching GitHub:\n" f"{query}")
+        print(
+            "\nSearching GitHub:\n"
+            f"{query}"
+        )
 
         try:
-            githubResults = searchGithubRepositories(
-                query,
-                limit=10,
+
+            githubResults = (
+                searchGithubRepositories(
+                    query,
+                    limit=10,
+                )
             )
 
-            print(f"Found {len(githubResults)} " f"GitHub repositories.")
+            print(
+                f"Found "
+                f"{len(githubResults)} "
+                f"GitHub repositories."
+            )
 
-            allResults.extend(githubResults)
+            allResults.extend(
+                githubResults
+            )
 
         except Exception as error:
 
-            print("GitHub search failed.")
+            print(
+                "GitHub search failed."
+            )
 
-            print(error)
+            print(
+                error
+            )
 
     # =================================================
     # 5. ARXIV SEARCH
     # =================================================
 
-    print("\n=== ARXIV SEARCH ===")
+    print(
+        "\n=== ARXIV SEARCH ==="
+    )
 
-    for query in searchPlan.arxivQueries:
+    for query in (
+        searchPlan.arxivQueries
+    ):
 
-        print(f"\nSearching arXiv:\n" f"{query}")
+        print(
+            "\nSearching arXiv:\n"
+            f"{query}"
+        )
 
         try:
-            arxivResults = searchArxivPapers(
-                query,
-                limit=10,
+
+            arxivResults = (
+                searchArxivPapers(
+                    query,
+                    limit=10,
+                )
             )
 
-            print(f"Found {len(arxivResults)} " f"arXiv papers.")
+            print(
+                f"Found "
+                f"{len(arxivResults)} "
+                f"arXiv papers."
+            )
 
-            allResults.extend(arxivResults)
+            allResults.extend(
+                arxivResults
+            )
 
         except Exception as error:
 
-            print("arXiv search failed.")
+            print(
+                "arXiv search failed."
+            )
 
-            print(error)
+            print(
+                error
+            )
 
     # =================================================
     # 6. DEDUPLICATE INITIAL RESULTS
     # =================================================
 
-    rawResultCount = len(allResults)
+    rawResultCount = (
+        len(
+            allResults
+        )
+    )
 
-    allResults = deduplicateResults(allResults)
+    allResults = (
+        deduplicateResults(
+            allResults
+        )
+    )
 
-    print(f"\nRaw discovery results: " f"{rawResultCount}")
+    print(
+        f"\nRaw discovery results: "
+        f"{rawResultCount}"
+    )
 
-    print(f"Unique discovery results: " f"{len(allResults)}")
+    print(
+        f"Unique discovery results: "
+        f"{len(allResults)}"
+    )
 
     # =================================================
     # 7. ADAPTIVE COVERAGE LOOP
@@ -403,30 +570,32 @@ or articles about older models as new model releases.
 
     maxExtraSearches = 3
 
-    for searchRound in range(maxExtraSearches):
+    for searchRound in range(
+        maxExtraSearches
+    ):
 
-        print(f"\n=== COVERAGE CHECK " f"{searchRound + 1} ===")
-
-        decision = evaluateSearchResults(
-            objective,
-            allResults,
-            cutoffDate,
-            currentDate,
+        print(
+            f"\n=== COVERAGE CHECK "
+            f"{searchRound + 1} ==="
         )
 
-        # ---------------------------------------------
-        # Enough evidence
-        # ---------------------------------------------
+        decision = (
+            evaluateSearchResults(
+                objective,
+                allResults,
+                cutoffDate,
+                currentDate,
+            )
+        )
 
         if decision.enoughInformation:
 
-            print("\nDiscovery has enough " "information.")
+            print(
+                "\nDiscovery has enough "
+                "information."
+            )
 
             break
-
-        # ---------------------------------------------
-        # No additional query
-        # ---------------------------------------------
 
         if not decision.nextQuery:
 
@@ -438,52 +607,90 @@ or articles about older models as new model releases.
 
             break
 
-        # ---------------------------------------------
-        # Additional targeted search
-        # ---------------------------------------------
+        nextQuery = (
+            decision.nextQuery
+        )
 
-        nextQuery = decision.nextQuery
+        print(
+            "\nAdditional search requested:"
+        )
 
-        print("\nAdditional search requested:")
-
-        print(nextQuery)
+        print(
+            nextQuery
+        )
 
         try:
+
             newResults = webSearch(
                 nextQuery,
                 maxResults=5,
             )
 
-            print(f"Found {len(newResults)} " f"additional results.")
+            print(
+                f"Found "
+                f"{len(newResults)} "
+                f"additional results."
+            )
 
-            allResults.extend(newResults)
+            allResults.extend(
+                newResults
+            )
 
-            allResults = deduplicateResults(allResults)
+            allResults = (
+                deduplicateResults(
+                    allResults
+                )
+            )
 
-            print(f"Total unique discovery " f"results: {len(allResults)}")
+            print(
+                f"Total unique discovery "
+                f"results: "
+                f"{len(allResults)}"
+            )
 
         except Exception as error:
 
-            print("Additional web search failed.")
+            print(
+                "Additional web search failed."
+            )
 
-            print(error)
+            print(
+                error
+            )
 
     # =================================================
     # 8. CROSS-SOURCE EVIDENCE MATCHING
     # =================================================
 
-    print("\n=== CROSS-SOURCE " "EVIDENCE MATCHING ===")
+    print(
+        "\n=== CROSS-SOURCE "
+        "EVIDENCE MATCHING ==="
+    )
 
     try:
-        evidenceGroups = groupModelEvidence(allResults)
 
-        print(f"Created {len(evidenceGroups)} " f"evidence groups.")
+        evidenceGroups = (
+            groupModelEvidence(
+                allResults
+            )
+        )
+
+        print(
+            f"Created "
+            f"{len(evidenceGroups)} "
+            f"evidence groups."
+        )
 
     except Exception as error:
 
-        print("Cross-source evidence " "matching failed.")
+        print(
+            "Cross-source evidence "
+            "matching failed."
+        )
 
-        print(error)
+        print(
+            error
+        )
 
         evidenceGroups = []
 
@@ -491,27 +698,53 @@ or articles about older models as new model releases.
     # 9. STRICT RECENCY FILTER
     # =================================================
 
-    print("\n=== RECENCY CHECK ===")
+    print(
+        "\n=== RECENCY CHECK ==="
+    )
 
     recentEvidenceGroups = []
 
     for group in evidenceGroups:
 
-        releaseDate = getModelReleaseDate(group)
-
-        isRecent = checkRecency(
-            releaseDate,
-            days=30,
+        releaseDate = (
+            getModelReleaseDate(
+                group
+            )
         )
 
-        modelName = group.get("modelName")
+        isRecent = (
+            checkRecency(
+                releaseDate,
+                days=30,
+            )
+        )
 
-        print(f"{modelName}: " f"{'PASS' if isRecent else 'FAIL'}")
+        modelName = (
+            group.get(
+                "modelName"
+            )
+        )
 
-        if isRecent:
-            recentEvidenceGroups.append(group)
+        print(
+            f"{modelName}: "
+            f"releaseDate={releaseDate}, "
+            f"{'PASS' if isRecent else 'FAIL'}"
+        )
 
-    evidenceGroups = recentEvidenceGroups
+        if not isRecent:
+            continue
+
+        group[
+            "releaseDate"
+        ] = releaseDate
+
+        recentEvidenceGroups.append(
+            group
+        )
+
+    evidenceGroups = (
+        recentEvidenceGroups
+    )
 
     print(
         f"\nEvidence groups within "
@@ -523,7 +756,9 @@ or articles about older models as new model releases.
     # 10. FINAL CANDIDATE SELECTION
     # =================================================
 
-    print("\n=== CANDIDATE SELECTION ===")
+    print(
+        "\n=== CANDIDATE SELECTION ==="
+    )
 
     response = llm.invoke(f"""
 You are the Discovery Agent for an ASR technology scanner.
@@ -559,7 +794,9 @@ Select up to 5 candidates.
 A valid candidate MUST:
 
 1. Be an automatic speech recognition model or model family.
+
 2. Be an actual model/model-family release rather than:
+
    - general articles
    - tutorials
    - surveys
@@ -567,7 +804,9 @@ A valid candidate MUST:
    - toolkits
    - leaderboards
    - unrelated speech systems
+
 3. Be identifiable from the supplied evidence.
+
 4. Not return the same model multiple times.
 
 Important evidence-grouping rule:
@@ -659,15 +898,15 @@ Return ONLY valid JSON.
 Use exactly this structure:
 
 {{
-  "candidates": [
-    {{
-      "name": "model name",
-      "organisation": "organisation or null",
-      "sourceUrl": "primary URL or null",
-      "reason": "short discovery reason",
-      "candidate_type": "model"
-    }}
-  ]
+    "candidates": [
+        {{
+            "name": "model name",
+            "organisation": "organisation or null",
+            "sourceUrl": "primary URL or null",
+            "reason": "short discovery reason",
+            "candidate_type": "model"
+        }}
+    ]
 }}
 
 Do not include markdown.
@@ -679,29 +918,51 @@ Do not include explanations outside the JSON.
     # 11. PARSE LLM OUTPUT
     # =================================================
 
-    rawContent = response.content
+    rawContent = (
+        response.content
+    )
 
-    print("\n=== RAW DISCOVERY RESPONSE ===")
+    print(
+        "\n=== RAW DISCOVERY RESPONSE ==="
+    )
 
-    print(rawContent)
+    print(
+        rawContent
+    )
 
-    data = json.loads(rawContent)
+    data = json.loads(
+        rawContent
+    )
 
     # =================================================
     # 12. VALIDATE USING PYDANTIC
     # =================================================
 
-    validated = CandidateList.model_validate(data)
+    validated = (
+        CandidateList.model_validate(
+            data
+        )
+    )
 
-    candidates = [candidate.model_dump() for candidate in validated.candidates]
+    candidates = [
+        candidate.model_dump()
+        for candidate in validated.candidates
+    ]
 
-    print(f"\nValidated candidates: " f"{len(candidates)}")
+    print(
+        f"\nValidated candidates: "
+        f"{len(candidates)}"
+    )
 
     # =================================================
     # 13. TEMPORARILY CHOOSE FIRST CANDIDATE
     # =================================================
 
-    currentModel = candidates[0] if candidates else {}
+    currentModel = (
+        candidates[0]
+        if candidates
+        else {}
+    )
 
     # =================================================
     # 14. RETURN LANGGRAPH STATE UPDATE
