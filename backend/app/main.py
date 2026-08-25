@@ -24,7 +24,7 @@ def root():
 
 @app.get("/api/test-llm")
 def test_llm():
-    response = ask_llm("Return the current date in YYYY-MM-DD format. and return \"LLM Connection Successful\" if the LLM is working properly.")
+    response = ask_llm("return \"LLM Connection Successful\" if the LLM is working properly.")
 
     return {
         "response": response
