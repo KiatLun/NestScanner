@@ -1,24 +1,13 @@
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
+from llm.client import getLLM
 
-load_dotenv()
 
-print("Base URL:", os.getenv("OPENAI_BASE_URL"))
-print("Model:", os.getenv("OPENAI_MODEL"))
-print("API key loaded:", bool(os.getenv("OPENAI_API_KEY")))
+def main():
+    llm = getLLM()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_BASE_URL"),
-)
+    response = llm.invoke("Reply with exactly: connection successful")
 
-response = client.chat.completions.create(
-    model=os.getenv("OPENAI_MODEL"),
-    messages=[
-        {"role": "user", "content": "how to make a cup of tea?"},
-    ],
-)
+    print(response.content)
 
-print("\nResponse:")
-print(response.choices[0].message.content)
+
+if __name__ == "__main__":
+    main()
