@@ -42,6 +42,7 @@ def researchAgent(
     recencyResult = checkRecency(
         candidate,
         discoveryEvidence,
+        60
     )
 
     if not recencyResult.get(

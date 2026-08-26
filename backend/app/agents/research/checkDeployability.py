@@ -1,18 +1,9 @@
 import json
 
 from app.llm.client import getLLM
-
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
-)
-
-from app.tools.huggingFace import (
-    searchHuggingFaceModels,
-)
-
-from app.tools.github import (
-    searchGithubRepositories,
 )
 
 
@@ -22,57 +13,66 @@ llm = getLLM()
 def checkDeployability(
     candidate: dict,
     discoveryEvidence: list[dict],
+    maxSearches: int = 3,
 ) -> dict:
     """
-    Gather deployability-related evidence and determine
-    whether the model can be run locally.
+    Determine whether a model can be deployed locally.
 
-    Local deployability requires BOTH:
-
-    1. Public/downloadable model weights.
-    2. A documented/public local inference path.
-
-    Returns:
-    {
-        "isLocallyDeployable": bool,
-        "evidence": list[dict]
-    }
+    Local deployability requires:
+    1. Public/downloadable weights.
+    2. A usable local inference path.
     """
-
-    modelName = candidate.get(
-        "name",
-        "",
-    )
-
-    organisation = candidate.get(
-        "organisation",
-        "",
-    )
 
     evidence = list(
         discoveryEvidence
     )
 
-    # =================================================
-    # 1. GATHER DEPLOYABILITY EVIDENCE
-    # =================================================
+    searchCount = 0
 
-    queries = [
-        f'"{modelName}" model weights',
-        f'"{modelName}" local inference',
-        f'"{modelName}" download model',
-        f'"{modelName}" from_pretrained',
-    ]
+    while True:
 
-    if organisation:
-        queries.append(
-            f'"{organisation}" "{modelName}" local inference'
+        decision = evaluateDeployability(
+            candidate,
+            evidence,
         )
 
-    for query in queries:
+        if decision.get(
+            "enoughInformation",
+            False,
+        ):
+            return {
+                "isLocallyDeployable": decision.get(
+                    "isLocallyDeployable",
+                    False,
+                ),
+                "evidence": evidence,
+            }
+
+        if searchCount >= maxSearches:
+            return {
+                "isLocallyDeployable": False,
+                "evidence": evidence,
+            }
+
+        nextQuery = decision.get(
+            "nextQuery"
+        )
+
+        if not nextQuery:
+            return {
+                "isLocallyDeployable": False,
+                "evidence": evidence,
+            }
+
+        print(
+            f"\nDeployability search "
+            f"{searchCount + 1}: "
+            f"{nextQuery}"
+        )
+
         try:
             results = webSearch(
-                query,
+                nextQuery,
                 maxResults=5,
             )
 
@@ -80,55 +80,31 @@ def checkDeployability(
                 results
             )
 
+            evidence = deduplicateResults(
+                evidence
+            )
+
         except Exception as error:
             print(
-                f"Deployability web search failed: "
-                f"{query}"
+                f"Deployability search failed: "
+                f"{nextQuery}"
             )
 
             print(error)
 
-    try:
-        hfResults = searchHuggingFaceModels(
-            modelName,
-            limit=10,
-        )
+        searchCount += 1
 
-        evidence.extend(
-            hfResults
-        )
 
-    except Exception as error:
-        print(
-            "Deployability Hugging Face search failed."
-        )
+def evaluateDeployability(
+    candidate: dict,
+    evidence: list[dict],
+) -> dict:
+    """
+    Decide whether current evidence is enough to establish
+    local deployability.
 
-        print(error)
-
-    try:
-        githubResults = searchGithubRepositories(
-            modelName,
-            limit=5,
-        )
-
-        evidence.extend(
-            githubResults
-        )
-
-    except Exception as error:
-        print(
-            "Deployability GitHub search failed."
-        )
-
-        print(error)
-
-    evidence = deduplicateResults(
-        evidence
-    )
-
-    # =================================================
-    # 2. CHECK LOCAL DEPLOYABILITY
-    # =================================================
+    If not, generate one targeted search query.
+    """
 
     response = llm.invoke(f"""
 You are checking whether an automatic speech recognition
@@ -145,58 +121,81 @@ Evidence:
 A model is locally deployable ONLY if BOTH conditions
 are supported:
 
-1. Public/downloadable model weights are available.
+1. Public/downloadable model weights exist.
 
-2. The model can be run locally using publicly available
-   code, libraries, frameworks, or documented inference
-   instructions.
+2. There is a usable local inference path.
 
-Evidence that may support local deployment includes:
+Examples of valid local inference evidence:
 
-- downloadable Hugging Face checkpoints
+- Hugging Face checkpoints
 - from_pretrained(...)
-- Transformers inference
-- PyTorch inference
-- ONNX inference
+- Transformers
+- PyTorch
+- ONNX
 - inference scripts
 - official GitHub inference code
 - documented local execution instructions
 
-The following are NOT enough by themselves:
+The following are NOT sufficient by themselves:
 
-- an API exists
-- a research paper exists
-- a GitHub repository exists
-- source code exists but model weights do not
-- weights exist but there is no usable local inference path
+- API access
+- research paper
+- GitHub repository without weights
+- weights without inference instructions
 
-Use only supplied evidence.
 
-Return ONLY valid JSON:
+IF ENOUGH INFORMATION EXISTS
+
+Return:
 
 {{
-    "isLocallyDeployable": true
+    "enoughInformation": true,
+    "isLocallyDeployable": true,
+    "nextQuery": null
 }}
 
+or:
+
+{{
+    "enoughInformation": true,
+    "isLocallyDeployable": false,
+    "nextQuery": null
+}}
+
+
+IF MORE INFORMATION IS NEEDED
+
+Generate ONE highly targeted query that would best
+resolve the missing information.
+
+Examples:
+
+"Qwen3-ASR Hugging Face weights inference"
+
+"Cohere Transcribe local inference"
+
+"GPT-Transcribe downloadable weights"
+
+Return:
+
+{{
+    "enoughInformation": false,
+    "isLocallyDeployable": false,
+    "nextQuery": "targeted query"
+}}
+
+Return ONLY valid JSON.
 Do not include markdown.
-Do not include code fences.
-Do not include explanations outside the JSON.
 """)
 
     try:
-        result = json.loads(
+        return json.loads(
             response.content
         )
 
     except json.JSONDecodeError:
-        result = {
-            "isLocallyDeployable": False
+        return {
+            "enoughInformation": False,
+            "isLocallyDeployable": False,
+            "nextQuery": None,
         }
-
-    return {
-        "isLocallyDeployable": result.get(
-            "isLocallyDeployable",
-            False,
-        ),
-        "evidence": evidence,
-    }
