@@ -1,17 +1,11 @@
+import type { HuggingFaceModel } from "../types/model";
+
 const API_BASE_URL = "http://localhost:8000";
 
 export interface LLMResponse {
   response: string;
 }
 
-export interface HuggingFaceModel {
-  id: string;
-  author: string | null;
-  downloads: number | null;
-  likes: number | null;
-  pipeline_tag: string | null;
-  last_modified: string | null;
-}
 
 export interface HuggingFaceModelResponse {
   models: HuggingFaceModel[];
