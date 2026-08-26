@@ -1,0 +1,71 @@
+{
+  "candidates": [
+    {
+      "candidate": {
+        "name": "Qwen3-ASR",
+        "organisation": "Alibaba",
+        "sourceUrl": "https://github.com/QwenLM/Qwen3-ASR",
+        "reason": "Open-source series of ASR models for multilingual speech recognition with language detection and timestamp prediction",
+        "candidateType": "model_family"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "Gladia - Best open-source speech-to-text models in 2026",
+          "url": "https://www.gladia.io/blog/best-open-source-speech-to-text-models",
+          "description": "Released in January 2026 by Alibaba's Qwen team, Qwen3-ASR supports multilingual speech recognition...",
+          "metadata": {
+            "s": "open source automatic speech recognition model release 2026"
+          }
+        },
+        {
+          "source": "web",
+          "title": "GitHub - QwenLM/Qwen3-ASR: Qwen3-ASR is an open-source series ...",
+          "url": "https://github.com/QwenLM/Qwen3-ASR",
+          "description": "Qwen3-ASR is an open-source series of ASR models developed by the Qwen team at Alibaba Cloud...",
+          "metadata": {
+            "s": "ASR model launch open source 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "Cohere Transcribe",
+        "organisation": "Cohere",
+        "sourceUrl": "https://cohere.com/blog/transcribe",
+        "reason": "Open source automatic speech recognition model for transcription and speech analysis",
+        "candidateType": "model"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "Cohere launches an open source voice model specifically for transcription | TechCrunch",
+          "url": "https://techcrunch.com/2026/03/26/cohere-launches-an-open-source-voice-model-specifically-for-transcription/",
+          "description": "Cohere launched its first voice model, Transcribe, an open source automatic speech recognition model...",
+          "metadata": {
+            "s": "open source automatic speech recognition model release 2026"
+          }
+        },
+        {
+          "source": "web",
+          "title": "Introducing Cohere-transcribe: state-of-the-art speech recognition",
+          "url": "https://huggingface.co/blog/CohereLabs/cohere-transcribe-03-2026-release",
+          "description": "Today we are releasing cohere-transcribe-03-2026, a 2B-parameter speech recognition model...",
+          "metadata": {
+            "s": "open source automatic speech recognition model release 2026"
+          }
+        },
+        {
+          "source": "web",
+          "title": "Cohere Transcribe: Open-Source Speech Recognition",
+          "url": "https://cohere.com/blog/transcribe",
+          "description": "Cohere is announcing Transcribe, a state-of-the-art automatic speech recognition model...",
+          "metadata": {
+            "s": "ASR model launch open source 2026"
+          }
+        }
+      ]
+    }
+  ]
+}

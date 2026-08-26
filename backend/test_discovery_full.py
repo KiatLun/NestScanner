@@ -24,14 +24,6 @@ def main():
         )
     )
 
-    print("\nCurrent model:")
-    print(
-        json.dumps(
-            result.get("currentModel", {}),
-            indent=2,
-        )
-    )
-
 
 if __name__ == "__main__":
     main()
