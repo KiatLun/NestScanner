@@ -1,0 +1,876 @@
+Pasted code.py
+Python
+can you fix so all becomes camelcase, dont include this checklocal deployability thing first
+
+
+
+
+Pasted code(1).py
+Python
+ok going back to my discovery, is it currently checking all criterions now
+
+
+Pasted code(2).py
+Python
+this is my code now, actually what is the evidence groups, etc
+
+
+Pasted code(3).py
+Python
+ok this is good, for my discovery now, is it getting too much information or is it ok?
+
+
+Pasted code(4).py
+Python
+what about now
+
+
+Pasted text.txt
+Document
+ok before we move on, i have some issues with my discovery agent
+
+
+Pasted code(5).py
+Python
+is there a way to make cross source evidence faster
+
+
+Pasted text(1).txt
+Document
+can you give me sample outputs from this discovery agent now
+
+
+Pasted text(2).txt
+Document
+
+Yes. For now, hard-coding the queries is better for debugging because you can separate search quality problems from LLM planner variability.
+
+Use this simpler searchPlanner.py:
+
+from pydantic import BaseModel, Field
+
+
+class DiscoverySearchPlan(BaseModel):
+    webQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    huggingFaceQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    githubQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    arxivQueries: list[str] = Field(
+        default_factory=list
+    )
+
+
+def buildDiscoveryQueries(
+    objective: str,
+) -> DiscoverySearchPlan:
+    """
+    Return deterministic source-specific queries
+    for ASR model discovery.
+
+    `objective` is currently unused but kept so the
+    interface remains compatible with the agent.
+    """
+
+    return DiscoverySearchPlan(
+        webQueries=[
+            "new automatic speech recognition model 2026",
+            "new ASR model release 2026",
+            "open source ASR model 2026",
+            "new speech-to-text model 2026",
+            "new transcription model announcement 2026",
+            "multilingual ASR model release 2026",
+            "streaming ASR model release 2026",
+            "new open source speech recognition model 2026",
+        ],
+        huggingFaceQueries=[
+            "ASR",
+            "automatic speech recognition",
+            "speech recognition",
+            "speech-to-text",
+            "transcription",
+            "multilingual ASR",
+            "streaming ASR",
+            "pretrained ASR",
+        ],
+        githubQueries=[
+            "ASR model",
+            "automatic speech recognition model",
+            "speech recognition model",
+            "speech-to-text model",
+            "transcription model",
+            "multilingual ASR model",
+            "streaming ASR model",
+            "ASR pretrained",
+        ],
+        arxivQueries=[
+            "automatic speech recognition",
+            "end-to-end speech recognition",
+            "multilingual speech recognition",
+            "streaming automatic speech recognition",
+            "speech recognition model",
+            "speech-to-text model",
+            "ASR foundation model",
+            "large speech recognition model",
+        ],
+    )
+
+This keeps your existing interface:
+
+searchPlan = buildDiscoveryQueries(
+    objective
+)
+
+but removes the LLM completely.
+
+For now, I would keep objective in the function even though it is unused. That way, when you later want to reintroduce dynamic planning, you do not need to change the rest of Discovery.
+
+One caution: because GitHub and arXiv have been giving you rate-limit issues, 8 queries each may still be too aggressive. If that happens, reduce those two to around 4–5 while keeping Web/Hugging Face at 8.
+
+actually can keep the original llm version, but may turn it off and use hardcoded for now
+
+Yes. Keep both versions and add a switch so you can toggle between deterministic hardcoded queries and LLM-generated queries.
+
+import json
+
+from pydantic import BaseModel, Field
+
+from app.llm.client import getLLM
+
+
+llm = getLLM()
+
+USE_LLM_PLANNER = False
+
+
+class DiscoverySearchPlan(BaseModel):
+    webQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    huggingFaceQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    githubQueries: list[str] = Field(
+        default_factory=list
+    )
+
+    arxivQueries: list[str] = Field(
+        default_factory=list
+    )
+
+
+def buildDiscoveryQueries(
+    objective: str,
+) -> DiscoverySearchPlan:
+    """
+    Build source-specific search queries for Discovery.
+
+    Set USE_LLM_PLANNER = False for deterministic
+    hardcoded queries.
+
+    Set USE_LLM_PLANNER = True to use the LLM planner.
+    """
+
+    if not USE_LLM_PLANNER:
+        return buildHardcodedQueries()
+
+    return buildLLMQueries(
+        objective
+    )
+
+
+def buildHardcodedQueries() -> DiscoverySearchPlan:
+    """
+    Deterministic ASR discovery queries.
+    """
+
+    return DiscoverySearchPlan(
+        webQueries=[
+            "new automatic speech recognition model 2026",
+            "new ASR model release 2026",
+            "open source ASR model 2026",
+            "new speech-to-text model 2026",
+            "new transcription model announcement 2026",
+            "multilingual ASR model release 2026",
+            "streaming ASR model release 2026",
+            "new open source speech recognition model 2026",
+        ],
+        huggingFaceQueries=[
+            "ASR",
+            "automatic speech recognition",
+            "speech recognition",
+            "speech-to-text",
+            "transcription",
+            "multilingual ASR",
+            "streaming ASR",
+            "pretrained ASR",
+        ],
+        githubQueries=[
+            "ASR model",
+            "automatic speech recognition model",
+            "speech recognition model",
+            "speech-to-text model",
+            "transcription model",
+            "multilingual ASR model",
+            "streaming ASR model",
+            "ASR pretrained",
+        ],
+        arxivQueries=[
+            "automatic speech recognition",
+            "end-to-end speech recognition",
+            "multilingual speech recognition",
+            "streaming automatic speech recognition",
+            "speech recognition model",
+            "speech-to-text model",
+            "ASR foundation model",
+            "large speech recognition model",
+        ],
+    )
+
+
+def buildLLMQueries(
+    objective: str,
+) -> DiscoverySearchPlan:
+    """
+    Use the LLM to dynamically generate source-specific
+    ASR discovery queries.
+    """
+
+    response = llm.invoke(f"""
+You are the search planner for an automatic speech
+recognition technology discovery agent.
+
+Objective:
+
+{objective}
+
+Your goal is to discover identifiable ASR models or
+model families from recent sources.
+
+Discovery is only responsible for scouting candidate
+models.
+
+Discovery does NOT verify:
+
+- exact release date
+- whether the model is truly recent
+- license
+- local deployability
+- hardware requirements
+- architecture
+- parameter count
+- WER
+- fine-tuning support
+
+Those responsibilities belong to the Research Agent.
+
+
+GENERAL STRATEGY
+
+Generate diverse source-specific search queries.
+
+Focus on:
+
+- automatic speech recognition
+- ASR
+- speech recognition
+- speech-to-text
+- transcription
+- multilingual ASR
+- streaming ASR
+- real-time transcription
+- open-source ASR
+- pretrained ASR
+- foundation speech models
+- end-to-end ASR
+- large speech recognition models
+- model releases
+- model repositories
+
+
+WEB SEARCH
+
+Use natural-language queries likely to surface:
+
+- official announcements
+- release posts
+- research project pages
+- model repositories
+- technology news
+- recent ASR model roundups
+
+Generate approximately 5 to 8 queries.
+
+
+HUGGING FACE SEARCH
+
+Use short keyword-oriented queries.
+
+Prefer approximately 1 to 4 words.
+
+Good styles:
+
+"ASR"
+"speech recognition"
+"automatic speech recognition"
+"speech-to-text"
+"transcription"
+"multilingual ASR"
+"streaming ASR"
+"pretrained ASR"
+
+Avoid long natural-language queries.
+
+Generate approximately 5 to 8 queries.
+
+
+GITHUB SEARCH
+
+Use repository-style search terms.
+
+Good styles:
+
+"ASR model"
+"automatic speech recognition model"
+"speech recognition model"
+"speech-to-text model"
+"transcription model"
+"multilingual ASR model"
+"streaming ASR model"
+"ASR pretrained"
+
+Avoid conversational sentences.
+
+Generate approximately 5 to 8 queries.
+
+
+ARXIV SEARCH
+
+Use academic ASR terminology.
+
+Good styles:
+
+"automatic speech recognition"
+"end-to-end speech recognition"
+"multilingual speech recognition"
+"streaming automatic speech recognition"
+"speech recognition model"
+"speech-to-text model"
+"ASR foundation model"
+"large speech recognition model"
+
+Generate approximately 5 to 8 queries.
+
+
+QUERY DIVERSITY
+
+Do not generate many near-duplicate queries.
+
+Optimize each query for its specific source.
+
+Do not use specific model names unless the objective
+already mentions them.
+
+
+Return ONLY valid JSON:
+
+{{
+    "webQueries": [
+        "query"
+    ],
+    "huggingFaceQueries": [
+        "query"
+    ],
+    "githubQueries": [
+        "query"
+    ],
+    "arxivQueries": [
+        "query"
+    ]
+}}
+
+Do not include markdown.
+Do not include code fences.
+Do not include explanations outside the JSON.
+""")
+
+    data = json.loads(
+        response.content
+    )
+
+    return DiscoverySearchPlan.model_validate(
+        data
+    )
+
+Then you only change:
+
+USE_LLM_PLANNER = False
+
+to:
+
+USE_LLM_PLANNER = True
+
+when you want dynamic planning again.
+
+For your current testing phase, False is preferable because the exact same queries run every time.
+
+Pasted text(3).txt
+Document
+this is my new output from discovery, put it properly in sampleoutput.txt
+
+
+Created the corrected file with the exact structure Research expects:
+
+{
+  "candidates": [
+    ...
+  ]
+}
+
+It contains all 8 Discovery candidates from your new output.
+
+Download sampleOutput.txt 
+
+sampleOutput.txt
+Document
+
+sampleOutput.txt
+{
+  "candidates": [
+    {
+      "candidate": {
+        "name": "Qwen3-ASR",
+        "organisation": "Qwen",
+        "sourceUrl": "https://github.com/QwenLM/Qwen3-ASR",
+        "reason": "Open-source ASR series from Qwen team at Alibaba Cloud with multilingual speech/music/song recognition, language detection and timestamp prediction.",
+        "candidateType": "model_family"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "GitHub - QwenLM/Qwen3-ASR: Qwen3-ASR is an open-source series of ASR ...",
+          "url": "https://github.com/QwenLM/Qwen3-ASR",
+          "description": "Qwen3-ASR is an open-source series of ASR models developed by the Qwen team at Alibaba Cloud, supporting stable multilingual speech/music/song recognition, language detection and timestamp prediction. - QwenLM/Qwen3-ASR",
+          "metadata": {
+            "s": "new ASR model release 2026"
+          }
+        },
+        {
+          "source": "huggingface",
+          "title": "Qwen/Qwen3-ASR-1.7B",
+          "url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
+          "description": null,
+          "metadata": {
+            "organisation": "Qwen",
+            "pipelineTag": "automatic-speech-recognition",
+            "downloads": 4559058,
+            "likes": 1039,
+            "createdAt": "2026-01-28T03:22:40+00:00",
+            "lastModified": "2026-01-30T03:00:12+00:00",
+            "tags": [
+              "safetensors",
+              "qwen3_asr",
+              "automatic-speech-recognition",
+              "arxiv:2601.21337",
+              "license:apache-2.0",
+              "eval-results",
+              "deploy:sagemaker",
+              "deploy:azure",
+              "region:us"
+            ]
+          }
+        },
+        {
+          "source": "huggingface",
+          "title": "Qwen/Qwen3-ASR-0.6B",
+          "url": "https://huggingface.co/Qwen/Qwen3-ASR-0.6B",
+          "description": null,
+          "metadata": {
+            "organisation": "Qwen",
+            "pipelineTag": "automatic-speech-recognition",
+            "downloads": 3403357,
+            "likes": 339,
+            "createdAt": "2026-01-28T03:15:39+00:00",
+            "lastModified": "2026-01-30T03:00:21+00:00",
+            "tags": [
+              "safetensors",
+              "qwen3_asr",
+              "automatic-speech-recognition",
+              "arxiv:2601.21337",
+              "license:apache-2.0",
+              "eval-results",
+              "deploy:azure",
+              "region:us"
+            ]
+          }
+        },
+        {
+          "source": "web",
+          "title": "Qwen3-ASR-1.7B: Revolutionary Multilingual Speech Recognition Model (2026 Complete Guide)",
+          "url": "https://qwen-image-2512.com/blog/qwen3-asr-1.7b-complete-guide-en",
+          "description": "January 30, 2026 - Master Qwen3-ASR-1.7B's architecture, performance benchmarks, and real-world applications. Qwen3-ASR-1.7B is the latest automatic speech recognition (ASR) model released by Alibaba Cloud's Qwen team on January 29, 2026.",
+          "metadata": {
+            "s": "multilingual ASR model release 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "Mega-ASR",
+        "organisation": null,
+        "sourceUrl": "https://github.com/xzf-thu/Mega-ASR",
+        "reason": "Foundation ASR project with released inference/training codebase and model weights in May 2026.",
+        "candidateType": "model"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "GitHub - xzf-thu/Mega-ASR: First foundation ASR built for the real ...",
+          "url": "https://github.com/xzf-thu/Mega-ASR",
+          "description": "May 20, 2026: 🔥 We release Voices-in-the-Wild-2M. May 20, 2026: 🔥 We release the Mega-ASR Inference and Training Codebase. May 19, 2026: 🔥 Mega-ASR model weights are now available on Hugging Face. May 19, 2026: 🔥 We release the Mega-ASR Technical Report.",
+          "metadata": {
+            "s": "new ASR model release 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "Nemotron-3.5-asr-streaming",
+        "organisation": "nvidia",
+        "sourceUrl": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+        "reason": "NVIDIA Nemotron Speech ASR announced at CES 2026 for sub-100ms latency speech recognition, with streaming ASR model on Hugging Face.",
+        "candidateType": "model_family"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "NVIDIA Unveils Nemotron Open-Source Models at CES 2026",
+          "url": "https://adtools.org/buyers-guide/ai-news-nvidia-nemotron-ai-model-release",
+          "description": "NVIDIA Unveils Nemotron Open-Source Models at CES 2026 Updated: August 23, 2026 At CES 2026, NVIDIA launched the Nemotron family of open-source AI models, including Nemotron Speech ASR for sub-100ms latency speech recognition and tools for agentic AI, biomedical imaging via Clara, autonomous vehicles with Alpamayo, and robotics through Isaac GR00T.",
+          "metadata": {
+            "s": "new ASR model release 2026"
+          }
+        },
+        {
+          "source": "huggingface",
+          "title": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+          "description": null,
+          "metadata": {
+            "organisation": "nvidia",
+            "pipelineTag": "automatic-speech-recognition",
+            "downloads": 986967,
+            "likes": 1062,
+            "createdAt": "2026-05-15T21:52:25+00:00",
+            "lastModified": "2026-08-05T18:52:16+00:00",
+            "tags": [
+              "nemo",
+              "safetensors",
+              "gguf",
+              "nemotron3_5_asr",
+              "feature-extraction",
+              "transformers",
+              "speech-recognition",
+              "cache-aware ASR",
+              "automatic-speech-recognition",
+              "streaming-asr",
+              "multilingual",
+              "speech",
+              "audio",
+              "FastConformer",
+              "RNNT",
+              "Parakeet",
+              "ASR",
+              "pytorch",
+              "NeMo",
+              "en",
+              "es",
+              "de",
+              "fr",
+              "it",
+              "ar",
+              "ja",
+              "ko",
+              "pt",
+              "ru",
+              "hi",
+              "zh",
+              "vi",
+              "he",
+              "nl",
+              "cs",
+              "da",
+              "pl",
+              "no",
+              "sv",
+              "th",
+              "tr",
+              "bg",
+              "el",
+              "et",
+              "fi",
+              "hr",
+              "hu",
+              "lt",
+              "lv",
+              "ro",
+              "sk",
+              "uk",
+              "mt",
+              "sl",
+              "dataset:nvidia/Granary",
+              "dataset:multilingual_librispeech",
+              "dataset:fleurs",
+              "dataset:mozilla-foundation/common_voice_8_0",
+              "dataset:voxpopuli",
+              "dataset:europarl",
+              "arxiv:2312.17279",
+              "arxiv:2305.05084",
+              "license:other",
+              "model-index",
+              "eval-results",
+              "region:us"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "GPT-Transcribe",
+        "organisation": "OpenAI",
+        "sourceUrl": "https://spokenly.app/blog/gpt-transcribe",
+        "reason": "OpenAI speech-to-text model released July 28 2026, recommended for transcription ahead of Whisper and GPT-4o variants.",
+        "candidateType": "model"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "GPT-Transcribe: OpenAI's New Speech-to-Text Model",
+          "url": "https://spokenly.app/blog/gpt-transcribe",
+          "description": "1 month ago - GPT-Transcribe is OpenAI's speech-to-text model released on July 28, 2026. It converts audio files and streamed audio into text and is now the model OpenAI recommends for transcription, ahead of whisper-1, gpt-4o-transcribe, and gpt-4o-mini...",
+          "metadata": {
+            "s": "new transcription model announcement 2026"
+          }
+        },
+        {
+          "source": "web",
+          "title": "New GPT Transcription Models Launched | StartupHub.ai",
+          "url": "https://www.startuphub.ai/ai-news/artificial-intelligence/2026/new-gpt-transcription-models-launched",
+          "description": "New GPT Models: gpt-transcribe and gpt-live-transcribe launched for enhanced audio-to-text conversion • Enhanced Accuracy: improved performance for accents, multilingual speech, and custom vocabularies • gpt-transcribe: processes completed ... Published: 1 month ago",
+          "metadata": {
+            "s": "new transcription model announcement 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "cohere-transcribe-03-2026",
+        "organisation": "Cohere",
+        "sourceUrl": "https://techcrunch.com/2026/03/26/cohere-launches-an-open-source-voice-model-specifically-for-transcription/",
+        "reason": "Cohere open-source voice model for transcription released March 2026, 2B parameters, 14 languages, reported as top on Open ASR leaderboard.",
+        "candidateType": "model"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "Cohere launches an open source voice model specifically for transcription | TechCrunch",
+          "url": "https://techcrunch.com/2026/03/26/cohere-launches-an-open-source-voice-model-specifically-for-transcription/",
+          "description": "March 26, 2026 - Relatively light at just 2 billion parameters, the model is meant for use with consumer-grade GPUs for those who want to self-host it. It currently supports 14 languages.",
+          "metadata": {
+            "s": "new transcription model announcement 2026"
+          }
+        },
+        {
+          "source": "web",
+          "title": "The New King of Open Source ASR: Real-Time, SOTA, and Unmatched Accuracy | by Bytefer | Medium",
+          "url": "https://medium.com/@bytefer/the-new-king-of-open-source-asr-real-time-sota-and-unmatched-accuracy-d56e3bf953f0",
+          "description": "March 30, 2026 - I recently introduced IBM’s open-source Granite-4.0-1b-speech model, which ranked 3rd on the Open ASR Leaderboard. Now, CohereLabs has released the cohere-transcribe-03-2026 ASR model, which has taken the number 1 spot on the Open ASR ...",
+          "metadata": {
+            "s": "open source ASR model 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "Omnilingual ASR",
+        "organisation": "Meta",
+        "sourceUrl": "https://ai.meta.com/research/publications/omnilingual-asr-open-source-multilingual-speech-recognition-for-1600-languages/",
+        "reason": "Open-source multilingual speech recognition family for 1600+ languages released by Meta AI.",
+        "candidateType": "model_family"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "Omnilingual ASR: Open-Source Multilingual Speech Recognition for 1600+ Languages | Research - AI at Meta",
+          "url": "https://ai.meta.com/research/publications/omnilingual-asr-open-source-multilingual-speech-recognition-for-1600-languages/",
+          "description": "Automatic evaluations show substantial gains over prior systems, especially in extreme low-resource conditions, and strong generalization to languages never encountered during training. Crucially, Omnilingual ASR is released as a family of models ranging from compact 300M variants for low-power ...",
+          "metadata": {
+            "s": "multilingual ASR model release 2026"
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "VibeVoice-ASR",
+        "organisation": "microsoft",
+        "sourceUrl": "https://huggingface.co/microsoft/VibeVoice-ASR",
+        "reason": "Microsoft automatic speech recognition model with diarization and multilingual support.",
+        "candidateType": "model_family"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "huggingface",
+          "title": "microsoft/VibeVoice-ASR",
+          "url": "https://huggingface.co/microsoft/VibeVoice-ASR",
+          "description": null,
+          "metadata": {
+            "organisation": "microsoft",
+            "pipelineTag": "automatic-speech-recognition",
+            "downloads": 696696,
+            "likes": 1276,
+            "createdAt": "2026-01-21T15:04:18+00:00",
+            "lastModified": "2026-01-27T13:12:22+00:00",
+            "tags": [
+              "transformers",
+              "safetensors",
+              "vibevoice",
+              "ASR",
+              "Transcriptoin",
+              "Diarization",
+              "Speech-to-Text",
+              "automatic-speech-recognition",
+              "en",
+              "zh",
+              "es",
+              "pt",
+              "de",
+              "ja",
+              "ko",
+              "fr",
+              "ru",
+              "id",
+              "sv",
+              "it",
+              "he",
+              "nl",
+              "pl",
+              "no",
+              "tr",
+              "th",
+              "ar",
+              "hu",
+              "ca",
+              "cs",
+              "da",
+              "fa",
+              "af",
+              "hi",
+              "fi",
+              "et",
+              "aa",
+              "el",
+              "ro",
+              "vi",
+              "bg",
+              "is",
+              "sl",
+              "sk",
+              "lt",
+              "sw",
+              "uk",
+              "kl",
+              "lv",
+              "hr",
+              "ne",
+              "sr",
+              "tl",
+              "yi",
+              "ms",
+              "ur",
+              "mn",
+              "hy",
+              "jv",
+              "arxiv:2601.18184",
+              "license:mit",
+              "endpoints_compatible",
+              "region:us"
+            ]
+          }
+        },
+        {
+          "source": "huggingface",
+          "title": "microsoft/VibeVoice-ASR-BitNet",
+          "url": "https://huggingface.co/microsoft/VibeVoice-ASR-BitNet",
+          "description": null,
+          "metadata": {
+            "organisation": "microsoft",
+            "pipelineTag": "automatic-speech-recognition",
+            "downloads": 19036,
+            "likes": 185,
+            "createdAt": "2026-07-24T06:03:05+00:00",
+            "lastModified": "2026-07-24T06:03:32+00:00",
+            "tags": [
+              "ggml",
+              "safetensors",
+              "gguf",
+              "vibevoice",
+              "ASR",
+              "quantization",
+              "cpu-inference",
+              "bitnet",
+              "multilingual",
+              "automatic-speech-recognition",
+              "en",
+              "zh",
+              "fr",
+              "it",
+              "ko",
+              "pt",
+              "vi",
+              "arxiv:2607.21075",
+              "license:mit",
+              "endpoints_compatible",
+              "region:us",
+              "conversational"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "candidate": {
+        "name": "diffusion-gemma-asr-small",
+        "organisation": null,
+        "sourceUrl": "https://www.nextpulse.site/2026/07/revolutionizing-multilingual-asr.html",
+        "reason": "Open-source diffusion ASR model released July 2026 for six-language transcription with parallel denoising decoder.",
+        "candidateType": "model"
+      },
+      "discoveryEvidence": [
+        {
+          "source": "web",
+          "title": "Revolutionizing Multilingual ASR: Discover the First Open-Source Diffusion ASR Model | Tech & AI Insight",
+          "url": "https://www.nextpulse.site/2026/07/revolutionizing-multilingual-asr.html",
+          "description": "July 5, 2026 - Interfaze has released diffusion-gemma-asr-small, an open-source diffusion ASR model that can transcribe six languages with one small adapter on top of DiffusionGemma’s parallel denoising decoder. Instead of writing text one token at a time like many older speech systems, it cleans up a whole text canvas in parallel, which makes this model especially interesting for multilingual speech-to-text work.",
+          "metadata": {
+            "s": "multilingual ASR model release 2026"
+          }
+        }
+      ]
+    }
+  ]
+}
