@@ -2,8 +2,9 @@ import { useState } from "react";
 import { 
   testLLM,
   getASRModels,
-  type HuggingFaceModel,
 } from "./services/api";
+
+import type { HuggingFaceModel } from "./types/model";
 
 function App() {
   const [response, setResponse] = useState<string>("");
@@ -31,7 +32,7 @@ function App() {
       setModelsLoading(true);
 
       const data = await getASRModels();
-
+      console.log("Fetched ASR models:", data.models);
       setModels(data.models);
     } catch (error) {
       console.error(error);
@@ -57,9 +58,8 @@ function App() {
       
       <ul>
         {models.map((model) => (
-          <li key={model.id}>
-            <strong>{model.id}</strong> - 
-            Downloads: {model.downloads || 0}, Likes: {model.likes || 0}
+          <li key={model.url}>
+            {model.title}
           </li>
         ))}
       </ul>
