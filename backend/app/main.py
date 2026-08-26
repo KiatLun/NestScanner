@@ -30,13 +30,6 @@ app.add_middleware(
 def root():
     return {"message": "Backend is running"}
 
-@app.get("/api/test-llm")
-def test_llm():
-    response = ask_llm("return \"LLM Connection Successful\" if the LLM is working properly.")
-
-    return {
-        "message": "Backend is running"
-    }
 
 
 # =====================================================

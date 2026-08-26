@@ -1,4 +1,4 @@
-from llm.client import getLLM
+from app.llm.client import getLLM
 
 
 def main():
