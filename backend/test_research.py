@@ -1,25 +1,38 @@
 import json
 
-from agents.research import research_agent
+from app.agents.research.agent import researchAgent
 
 
 def main():
-    state = {
-        "currentModel": {
-            "name": "Whisper",
-            "organisation": "OpenAI",
-            "sourceUrl": "https://github.com/openai/whisper",
-            "reason": "Open-source ASR model",
-        },
-        "missing_fields": [],
-    }
+    with open(
+        "app/agents/discovery/sampleOutput.txt",
+        "r",
+        encoding="utf-8",
+    ) as file:
+        discoveryOutput = json.load(file)
 
-    result = research_agent(state)
+    candidates = discoveryOutput[
+        "candidates"
+    ]
 
-    print("\n=== MODEL PROFILE ===")
+    print(
+        f"\nFound {len(candidates)} "
+        "Discovery candidates."
+    )
+
+    researchInput = candidates[0]
+
+    result = researchAgent(
+        researchInput
+    )
+
+    print(
+        "\n=== RESEARCH RESULT ==="
+    )
+
     print(
         json.dumps(
-            result["profile"],
+            result,
             indent=2,
         )
     )

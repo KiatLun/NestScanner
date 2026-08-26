@@ -1,20 +1,12 @@
-from app.agents.research.releaseDate import (
-    determineReleaseDate,
-)
-
 from app.agents.research.checkRecency import (
     checkRecency,
-)
-
-from app.agents.research.gatherEvidence import (
-    gatherResearchEvidence,
 )
 
 from app.agents.research.checkDeployability import (
     checkDeployability,
 )
 
-from app.agents.research.technicalProfile import (
+from app.agents.research.buildTechnicalProfile import (
     buildTechnicalProfile,
 )
 
@@ -25,12 +17,13 @@ def researchAgent(
     """
     Research one candidate produced by Discovery.
 
-    Research checks:
-    1. Recency
-    2. Local deployability
+    Research performs:
+    1. Recency check
+    2. Local deployability check
+    3. Technical profiling
 
-    Only candidates that pass both checks proceed
-    to technical profiling.
+    Technical profiling only happens when both
+    checks pass.
     """
 
     candidate = researchInput[
@@ -43,76 +36,113 @@ def researchAgent(
     )
 
     # =================================================
-    # 1. GATHER RESEARCH EVIDENCE
+    # 1. RECENCY
     # =================================================
 
-    researchEvidence = gatherResearchEvidence(
+    recencyResult = checkRecency(
         candidate,
         discoveryEvidence,
     )
 
-    # =================================================
-    # 2. DETERMINE RELEASE DATE
-    # =================================================
-
-    releaseDate = determineReleaseDate(
-        candidate,
-        researchEvidence,
-    )
-
-    # =================================================
-    # 3. CHECK RECENCY
-    # =================================================
-
-    isRecent = checkRecency(
-        releaseDate,
-        days=30,
-    )
-
-    if not isRecent:
+    if not recencyResult.get(
+        "isRecent",
+        False,
+    ):
         return {
             "candidate": candidate,
-            "releaseDate": releaseDate,
+            "releaseDate": recencyResult.get(
+                "releaseDate"
+            ),
             "isRecent": False,
             "isLocallyDeployable": None,
             "profile": None,
-            "researchEvidence": researchEvidence,
+            "researchEvidence": {
+                "recencyEvidence": recencyResult.get(
+                    "evidence",
+                    [],
+                ),
+            },
         }
 
     # =================================================
-    # 4. CHECK LOCAL DEPLOYABILITY
+    # 2. LOCAL DEPLOYABILITY
     # =================================================
 
-    isLocallyDeployable = checkDeployability(
+    deployabilityResult = checkDeployability(
         candidate,
-        researchEvidence,
+        discoveryEvidence,
     )
 
-    if not isLocallyDeployable:
+    if not deployabilityResult.get(
+        "isLocallyDeployable",
+        False,
+    ):
         return {
             "candidate": candidate,
-            "releaseDate": releaseDate,
+            "releaseDate": recencyResult.get(
+                "releaseDate"
+            ),
             "isRecent": True,
             "isLocallyDeployable": False,
             "profile": None,
-            "researchEvidence": researchEvidence,
+            "researchEvidence": {
+                "recencyEvidence": recencyResult.get(
+                    "evidence",
+                    [],
+                ),
+                "deployabilityEvidence": (
+                    deployabilityResult.get(
+                        "evidence",
+                        [],
+                    )
+                ),
+            },
         }
 
     # =================================================
-    # 5. BUILD TECHNICAL PROFILE
+    # 3. TECHNICAL PROFILE
     # =================================================
 
-    profile = buildTechnicalProfile(
+    profileResult = buildTechnicalProfile(
         candidate,
-        researchEvidence,
-        releaseDate,
+        discoveryEvidence,
+        recencyResult.get(
+            "evidence",
+            [],
+        ),
+        deployabilityResult.get(
+            "evidence",
+            [],
+        ),
+        recencyResult.get(
+            "releaseDate"
+        ),
     )
 
     return {
         "candidate": candidate,
-        "releaseDate": releaseDate,
+        "releaseDate": recencyResult.get(
+            "releaseDate"
+        ),
         "isRecent": True,
         "isLocallyDeployable": True,
-        "profile": profile,
-        "researchEvidence": researchEvidence,
+        "profile": profileResult.get(
+            "profile"
+        ),
+        "researchEvidence": {
+            "recencyEvidence": recencyResult.get(
+                "evidence",
+                [],
+            ),
+            "deployabilityEvidence": (
+                deployabilityResult.get(
+                    "evidence",
+                    [],
+                )
+            ),
+            "technicalEvidence": profileResult.get(
+                "evidence",
+                [],
+            ),
+        },
     }
