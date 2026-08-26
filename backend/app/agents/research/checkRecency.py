@@ -1,14 +1,13 @@
 import json
 
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
 from app.llm.client import getLLM
 
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
-)
-
-from app.tools.huggingFace import (
-    searchHuggingFaceModels,
 )
 
 
@@ -18,11 +17,21 @@ llm = getLLM()
 def checkRecency(
     candidate: dict,
     discoveryEvidence: list[dict],
-    days: int = 30,
+    days: int = 60,
+    maxSearches: int = 3,
 ) -> dict:
     """
-    Gather release-related evidence and determine whether
-    the model was released within the past `days` days.
+    Determine whether an ASR candidate was released
+    within the required recency window.
+
+    Start with Discovery evidence.
+
+    If the release date cannot be determined, generate
+    one targeted web search at a time.
+
+    Stop when:
+    - a release date is found, or
+    - maxSearches is reached.
 
     Returns:
     {
@@ -32,39 +41,87 @@ def checkRecency(
     }
     """
 
-    modelName = candidate.get(
-        "name",
-        "",
-    )
-
-    organisation = candidate.get(
-        "organisation",
-        "",
-    )
+    currentDate = datetime.now(
+        ZoneInfo("Asia/Singapore")
+    ).date()
 
     evidence = list(
         discoveryEvidence
     )
 
-    # =================================================
-    # 1. GATHER RELEASE EVIDENCE
-    # =================================================
+    searchCount = 0
 
-    queries = [
-        f'"{modelName}" release',
-        f'"{modelName}" released',
-        f'"{modelName}" announcement',
-    ]
+    while True:
 
-    if organisation:
-        queries.append(
-            f'"{organisation}" "{modelName}" release'
+        # =================================================
+        # 1. EVALUATE CURRENT EVIDENCE
+        # =================================================
+
+        decision = evaluateRecency(
+            candidate,
+            evidence,
         )
 
-    for query in queries:
+        releaseDate = decision.get(
+            "releaseDate"
+        )
+
+        # =================================================
+        # 2. RELEASE DATE FOUND
+        # =================================================
+
+        if releaseDate:
+            isRecent = calculateRecency(
+                releaseDate,
+                currentDate,
+                days,
+            )
+
+            return {
+                "releaseDate": releaseDate,
+                "isRecent": isRecent,
+                "evidence": evidence,
+            }
+
+        # =================================================
+        # 3. STOP IF SEARCH LIMIT REACHED
+        # =================================================
+
+        if searchCount >= maxSearches:
+            return {
+                "releaseDate": None,
+                "isRecent": False,
+                "evidence": evidence,
+            }
+
+        # =================================================
+        # 4. GET NEXT TARGETED QUERY
+        # =================================================
+
+        nextQuery = decision.get(
+            "nextQuery"
+        )
+
+        if not nextQuery:
+            return {
+                "releaseDate": None,
+                "isRecent": False,
+                "evidence": evidence,
+            }
+
+        print(
+            f"\nRecency search "
+            f"{searchCount + 1}: "
+            f"{nextQuery}"
+        )
+
+        # =================================================
+        # 5. SEARCH
+        # =================================================
+
         try:
             results = webSearch(
-                query,
+                nextQuery,
                 maxResults=5,
             )
 
@@ -72,126 +129,252 @@ def checkRecency(
                 results
             )
 
+            evidence = deduplicateResults(
+                evidence
+            )
+
         except Exception as error:
             print(
-                f"Recency web search failed: "
-                f"{query}"
+                f"Recency search failed: "
+                f"{nextQuery}"
             )
 
             print(error)
 
-    try:
-        hfResults = searchHuggingFaceModels(
-            modelName,
-            limit=10,
-        )
+        searchCount += 1
 
-        evidence.extend(
-            hfResults
-        )
 
-    except Exception as error:
-        print(
-            "Recency Hugging Face search failed."
-        )
+def evaluateRecency(
+    candidate: dict,
+    evidence: list[dict],
+) -> dict:
+    """
+    Determine whether the current evidence establishes
+    the candidate's actual release date.
 
-        print(error)
-
-    evidence = deduplicateResults(
-        evidence
-    )
-
-    # =================================================
-    # 2. CHECK RECENCY USING LLM
-    # =================================================
+    If not, generate one targeted search query.
+    """
 
     response = llm.invoke(f"""
-You are checking whether an automatic speech recognition
-model was actually released within the past {days} days.
+You are researching the release date of an automatic
+speech recognition model.
 
 Candidate:
 
 {json.dumps(candidate, indent=2)}
 
-Evidence:
+Evidence currently available:
 
 {json.dumps(evidence, indent=2)}
 
-Your tasks:
 
-1. Determine the actual release date of THIS model or
-   model family.
+YOUR TASK
 
-2. Decide whether that release date falls within the
-   past {days} days.
+Determine whether the current evidence establishes the
+actual release date of THIS candidate.
 
-Important rules:
+The candidate may be:
 
-1. Use only supplied evidence.
+- an individual model
+- a specific model variant
+- a model family
 
-2. Prefer explicit release statements such as:
 
-   - "released on ..."
-   - "we release ..."
-   - "launched on ..."
-   - "announced on ..."
-   - "available today ..."
+==================================================
+ACCEPT A RELEASE DATE WHEN
+==================================================
 
-3. Prefer authoritative sources such as:
+Accept a date when a supplied source explicitly states
+that THIS exact candidate:
 
-   - official organisation announcements
-   - official project pages
-   - official Hugging Face repositories
-   - official GitHub repositories
-   - official research/project pages
+- "was released on ..."
+- "released on ..."
+- "we release ..."
+- "launched on ..."
+- "introduced on ..."
+- "became available on ..."
+- "model weights were released on ..."
+- "is released on ..."
 
-4. Do NOT treat these as release dates unless explicitly
-   tied to the model's release:
+The release wording must clearly refer to the model or
+model family itself.
 
-   - article publication date
-   - repository update date
-   - model-card modification date
-   - page retrieval date
-   - benchmark date
+If the wording clearly refers to THIS exact candidate,
+you MAY accept the date even if the source is
+third-party.
 
-5. Do not use dates belonging to another model.
+Official sources are preferred, but they are NOT
+required when an existing source clearly and
+unambiguously states the release date.
 
-6. A recent article discussing an older model does NOT
-   make the model recent.
+Do NOT continue searching merely because the source
+is not official.
 
-7. If the actual release date cannot be established,
-   return releaseDate=null and isRecent=false.
 
-Return ONLY valid JSON:
+==================================================
+SOURCE PREFERENCE
+==================================================
+
+When multiple sources exist, prefer:
+
+1. official organisation announcement
+2. official model or project page
+3. official GitHub repository
+4. official Hugging Face repository
+5. research paper or project page
+6. reputable third-party reporting
+
+However, a clear third-party statement such as:
+
+"MODEL was released on July 28, 2026"
+
+is sufficient unless there is contradictory evidence.
+
+
+==================================================
+DO NOT ACCEPT
+==================================================
+
+Do NOT treat these as the model release date:
+
+- article publication date by itself
+- webpage update date
+- GitHub last update date
+- Hugging Face lastModified
+- search result retrieval date
+- benchmark date
+- dates referring to another model
+- dates referring to another organisation
+- dates referring to a different model variant
+
+For example:
+
+If the candidate is:
+
+Qwen3-ASR
+
+and the evidence only states:
+
+Qwen3-ASR-1.7B was released on January 29, 2026
+
+do NOT automatically assume that January 29 is the
+release date of the entire Qwen3-ASR family unless the
+evidence indicates the family was released together.
+
+
+==================================================
+MODEL IDENTITY
+==================================================
+
+Make sure the release date belongs to THIS candidate.
+
+Use:
+
+- candidate name
+- organisation
+- model family
+- variant name
+- surrounding ASR context
+
+Do not accept a date just because another model has a
+similar name.
+
+
+==================================================
+IF RELEASE DATE IS FOUND
+==================================================
+
+Return:
 
 {{
-    "releaseDate": "YYYY-MM-DD or null",
-    "isRecent": true
+    "releaseDate": "YYYY-MM-DD",
+    "nextQuery": null
 }}
 
+
+==================================================
+IF RELEASE DATE IS NOT FOUND
+==================================================
+
+Generate ONE targeted web search query that is most
+likely to find the release date.
+
+The query should use:
+
+- the exact candidate name
+- organisation when available
+- "release"
+- "launch"
+- "announcement"
+- ASR or speech recognition when useful
+
+Prefer a specific query rather than a broad one.
+
+Good examples:
+
+"Useful Sensors Moonshine ASR release date"
+
+"Cohere cohere-transcribe-03-2026 release"
+
+"Qwen Qwen3-ASR official release announcement"
+
+"NVIDIA Nemotron 3.5 ASR streaming release"
+
+
+Return:
+
+{{
+    "releaseDate": null,
+    "nextQuery": "targeted query"
+}}
+
+
+Return ONLY valid JSON.
 Do not include markdown.
 Do not include code fences.
 Do not include explanations outside the JSON.
 """)
 
     try:
-        result = json.loads(
+        return json.loads(
             response.content
         )
 
     except json.JSONDecodeError:
-        result = {
+        return {
             "releaseDate": None,
-            "isRecent": False,
+            "nextQuery": None,
         }
 
-    return {
-        "releaseDate": result.get(
-            "releaseDate"
-        ),
-        "isRecent": result.get(
-            "isRecent",
-            False,
-        ),
-        "evidence": evidence,
-    }
+
+def calculateRecency(
+    releaseDate: str,
+    currentDate,
+    days: int,
+) -> bool:
+    """
+    Deterministically determine whether releaseDate
+    is within the configured recency window.
+    """
+
+    try:
+        parsedDate = datetime.strptime(
+            releaseDate,
+            "%Y-%m-%d",
+        ).date()
+
+    except ValueError:
+        return False
+
+    cutoffDate = (
+        currentDate
+        - timedelta(
+            days=days
+        )
+    )
+
+    return (
+        cutoffDate
+        <= parsedDate
+        <= currentDate
+    )
