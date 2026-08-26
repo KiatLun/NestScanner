@@ -1,0 +1,144 @@
+{
+    "groups": [
+        {
+            "modelName": "Whisper",
+            "organisation": "OpenAI",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "OpenAI Whisper Review (2026): Open-Source ASR, Models & Limits",
+                    "url": "https://www.toolworthy.ai/tool/openai-whisper",
+                    "description": "OpenAI Whisper is an open-source speech recognition model for transcription, language identification, and speech translation. See model sizes, hardware needs, strengths, and tradeoffs.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "Whisper AI – The Open-Source Speech Recognition Model Of 2026",
+                    "url": "https://www.quantumrun.com/consulting/whisper-ai/",
+                    "description": "Apr 10, 2026 • Whisper AI is an automatic speech recognition (ASR) system developed by Alec Radford and colleagues at OpenAI. The system converts spoken audio into written text and can identify the language being spoken without prior configuration.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "Whisper by OpenAI — Free Open-Source Speech to Text | FreeAPIHub",
+                    "url": "https://freeapihub.com/ai-tools/openai-whisper",
+                    "description": "Jul 31, 2026 • Run open-source speech recognition locally for free, in nearly 99 languages. What is Whisper? Whisper is an open-source automatic speech recognition (ASR) model released by OpenAI under the permissive MIT licence.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "OpenAI Whisper Review 2026: Free Open-Source Speech Recognition",
+                    "url": "https://www.buildfastwithai.com/ai-tools/whisper-openai",
+                    "description": "What is Whisper (OpenAI)? Whisper is one of OpenAI's most impactful open-source releases — a speech recognition model trained on 680,000 hours of diverse multilingual audio that achieves near-human transcription accuracy across 100 languages and dialects.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "Whisper (speech recognition system) - Wikipedia",
+                    "url": "https://en.wikipedia.org/wiki/Whisper_(speech_recognition_system)",
+                    "description": "2 weeks ago - Archived from the original on 2026-04-15. Retrieved 2026-03-09. ↑ Wiggers, Kyle (2023-03-01). \"OpenAI debuts Whisper API for speech-to-text transcription and translation\". TechCrunch. Archived from the original on 2023-07-18. Retrieved 2023-08-21. 1 2 Burke, Garance; Schellmann, Hilke (2024-10-26...",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "SraVaani",
+            "organisation": "Indian Institute of Science",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "IISc Releases SraVaani Voice AI Model - GKToday",
+                    "url": "https://www.gktoday.in/iisc-releases-sravaani-voice-ai-model/",
+                    "description": "Aug 13, 2026 • The Indian Institute of Science (IISc) in Bengaluru released SraVaani on 13 August 2026 as an open-source multilingual speech-recognition model. The model was developed by the SPIRE Lab in collaboration with ARTPARK and with support from Google.",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "Cohere Transcribe",
+            "organisation": "Cohere",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "Cohere launches an open source voice model specifically for transcription | TechCrunch",
+                    "url": "https://techcrunch.com/2026/03/26/cohere-launches-an-open-source-voice-model-specifically-for-transcription/",
+                    "description": "March 26, 2026 - Enterprise AI company Cohere on Thursday launched its first voice model: Transcribe is an open source automatic speech recognition model that can be used for tasks like note-taking and speech analysis.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "Introducing Cohere-transcribe: state-of-the-art speech ...",
+                    "url": "https://huggingface.co/blog/CohereLabs/cohere-transcribe-03-2026-release",
+                    "description": "Mar 26, 2026 • Today we are releasing cohere-transcribe-03-2026, a 2B-parameter speech recognition model open-sourced on huggingface under an Apache 2.0 licence.",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "The New King of Open Source ASR: Real-Time, SOTA, and Unmatched Accuracy | by Bytefer | Medium",
+                    "url": "https://medium.com/@bytefer/the-new-king-of-open-source-asr-real-time-sota-and-unmatched-accuracy-d56e3bf953f0",
+                    "description": "March 30, 2026 - I recently introduced IBM’s open-source Granite-4.0-1b-speech model, which ranked 3rd on the Open ASR Leaderboard. Now, CohereLabs has released the cohere-transcribe-03-2026 ASR model, which has taken the number 1 spot on the Open ASR ...",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "Omnilingual ASR",
+            "organisation": "Meta",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "Omnilingual ASR: Open-Source Multilingual Speech Recognition for 1600+ Languages | Research - AI at Meta",
+                    "url": "https://ai.meta.com/research/publications/omnilingual-asr-open-source-multilingual-speech-recognition-for-1600-languages/",
+                    "description": "Automatic evaluations show substantial gains over prior systems, especially in extreme low-resource conditions, and strong generalization to languages never encountered during training. Crucially, Omnilingual ASR is released as a family of models ranging from compact 300M variants for low-power ...",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "OLMoASR",
+            "organisation": "Allen Institute for AI",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "OLMoASR: A series of open speech recognition models",
+                    "url": "https://allenai.org/blog/olmoasr",
+                    "description": "Aug 28, 2025 • We release OLMoASR, a family of open automatic speech recognition (ASR) models trained from scratch on a curated, large-scale dataset.",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "Parakeet TDT",
+            "organisation": "NVIDIA",
+            "evidence": [
+                {
+                    "source": "web",
+                    "title": "Best open source speech-to-text (STT) model in 2026 (with benchmarks) | Blog — Northflank",
+                    "url": "https://northflank.com/blog/best-open-source-speech-to-text-stt-model-in-2026-benchmarks",
+                    "description": "NVIDIA's Parakeet TDT models prioritize inference speed for real-time applications. The 1.1B parameter variant achieves RTFx near >2,000 (among the fastest models on Open ASR), as reported on the Hugging Face Open ASR leaderboard as of late ...",
+                    "metadata": {}
+                },
+                {
+                    "source": "web",
+                    "title": "The Best ASR Models in 2026: Open-Source and Commercial Compared | SpeechData.ai",
+                    "url": "https://www.speechdata.ai/blog/best-asr-models-2026",
+                    "description": "July 9, 2026 - Parakeet-TDT-0.6B-v3 (CC-BY-4.0) covers 25 European languages with automatic language detection and posts the highest throughput among multilingual models on the leaderboard (thousands of times faster than real time on a datacenter GPU), making it the go-to for bulk transcription. Limits: language coverage is Europe-centric, and the LLM-decoder Canary models are markedly slower than TDT/CTC decoders. Mistral Voxtral. Mistral's Apache-2.0 speech models (released 2025, with a streaming-capable Voxtral Transcribe generation in early 2026) post Whisper-beating multilingual WER, but across a much narrower set of languages (around a dozen majors).",
+                    "metadata": {}
+                }
+            ]
+        },
+        {
+            "modelName": "GLM-ASR",
+            "organisation": null,
+            "evidence": [
+                {
+                    "source": "github",
+                    "title": "timmylucy/GLM-ASR",
+                    "url": "https://github.com/timmylucy/GLM-ASR",
+                    "description": "🔍 Enhance speech recognition with GLM-ASR-Nano-2512, a high-performance model excelling in dialect support and low-volume audio accuracy.",
+                    "metadata": {}
+                }
+            ]
+        }
+    ]
+}

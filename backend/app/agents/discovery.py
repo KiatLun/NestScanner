@@ -21,14 +21,6 @@ from app.helper.searchPlanner import (
     buildDiscoveryQueries,
 )
 
-from app.helper.getModelReleaseData import (
-    getModelReleaseDate,
-)
-
-from app.helper.checkRecency import (
-    checkRecency,
-)
-
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
@@ -62,8 +54,14 @@ llm = getLLM()
 
 def getDiscoveryDateWindow() -> tuple[date, date]:
     """
-    Return the strict 30-day discovery window
+    Return the recent-source discovery window
     using Singapore local time.
+
+    Discovery uses this only to guide searches toward
+    recent evidence.
+
+    Actual model release-date verification belongs
+    to the Research Agent.
     """
 
     currentDate = datetime.now(
@@ -90,10 +88,10 @@ def evaluateSearchResults(
     currentDate: date,
 ) -> DiscoveryDecision:
     """
-    Check whether the current search results contain
-    enough recent ASR candidates.
+    Check whether current search results contain enough
+    likely recent ASR candidates.
 
-    If not, request one additional targeted web search.
+    Discovery does not verify the actual model release date.
     """
 
     response = llm.invoke(f"""
@@ -107,7 +105,7 @@ Current date:
 
 {currentDate}
 
-Strict model release window:
+Recent discovery window:
 
 {cutoffDate} to {currentDate}
 
@@ -115,51 +113,67 @@ Current discovery evidence:
 
 {json.dumps(searchResults, indent=2)}
 
-Discovery has exactly two responsibilities:
+The Discovery Agent has two responsibilities:
 
-1. Find models or model families released within the
-   specified 30-day release window.
+1. Find likely ASR model or model-family candidates from
+   recent sources.
 
-2. Ensure that they are actually automatic speech
-   recognition models.
+2. Ensure that the candidates appear to actually be
+   automatic speech recognition models.
 
-Your job here is ONLY to determine whether the current
-search results provide enough coverage to identify several
-such candidates.
+IMPORTANT:
+
+Discovery does NOT need to establish the true model
+release date.
+
+Release-date verification belongs to the Research Agent.
+
+Your job here is ONLY to decide whether the current
+search results provide enough coverage to identify
+several likely ASR candidates worth researching.
 
 Check:
 
-1. Are several actual ASR models or model families represented?
-2. Are model releases from {cutoffDate} to {currentDate}
+1. Are several identifiable ASR models or model families
    represented?
-3. Are there multiple distinct candidate models?
-4. Are the results mostly relevant to automatic speech recognition?
+
+2. Are there multiple distinct candidate models?
+
+3. Are recent sources from approximately
+   {cutoffDate} to {currentDate} represented?
+
+4. Are the results mostly relevant to automatic speech
+   recognition?
+
 5. Are the results dominated by irrelevant items such as:
+
    - tutorials
    - surveys
    - software libraries
    - generic articles
    - unrelated speech systems
-6. Is there enough evidence to identify recent ASR candidates
-   confidently and pass them to the Research Agent?
+
+6. Is there enough evidence to pass likely candidates
+   to the Research Agent?
 
 Important:
 
-- Use the exact release window above.
-- Do NOT invent a different current date.
-- Do NOT search for releases outside the specified date range.
-- A recently updated old model does NOT count as a recent release.
-- A recent article mentioning an old model does NOT make the
-  model recent.
+- Use the current date supplied above.
+- Do NOT assume that a recent article means the model
+  itself was recently released.
+- Do NOT attempt to verify the true model release date.
+- Do NOT investigate technical details.
 
 Do NOT investigate:
 
+- actual release date
 - public model weights
 - source-code availability
 - local deployability
 - licensing
 - architecture
 - benchmarks
+- parameter counts
 - fine-tuning
 - hardware requirements
 
@@ -168,22 +182,22 @@ Those belong to the Research Agent.
 If the results are sufficient, return:
 
 {{
-  "enoughInformation": true,
-  "nextQuery": null
+    "enoughInformation": true,
+    "nextQuery": null
 }}
 
 If additional discovery is required, return:
 
 {{
-  "enoughInformation": false,
-  "nextQuery": "one additional useful web search query"
+    "enoughInformation": false,
+    "nextQuery": "one additional useful web search query"
 }}
 
 If proposing another search query:
 
-- explicitly target ASR model releases between
-  {cutoffDate} and {currentDate}
-- do not use dates outside this range
+- target recent ASR model announcements, repositories,
+  papers, or releases
+- focus approximately on {cutoffDate} to {currentDate}
 
 Return ONLY valid JSON.
 
@@ -198,9 +212,7 @@ Do not include explanations outside the JSON.
         "\n=== SEARCH COVERAGE DECISION ==="
     )
 
-    print(
-        rawContent
-    )
+    print(rawContent)
 
     data = json.loads(
         rawContent
@@ -222,16 +234,17 @@ def discoveryAgent(
     state: ScanState,
 ) -> dict:
     """
-    Discover recent ASR model candidates.
+    Discover likely recent ASR model candidates.
 
     Discovery is responsible only for:
 
-    1. Finding models/model families released
-       within the past 30 days.
+    1. Finding likely ASR models/model families from
+       recent sources.
 
     2. Checking that they are actually ASR.
 
-    Everything else belongs to Research.
+    Actual release-date verification and deeper technical
+    investigation belong to Research.
     """
 
     print(
@@ -260,7 +273,7 @@ def discoveryAgent(
     )
 
     print(
-        f"\nStrict release window: "
+        f"\nRecent discovery window: "
         f"{cutoffDate} to {currentDate}"
     )
 
@@ -273,13 +286,19 @@ def discoveryAgent(
 
 Current date: {currentDate}
 
-Only discover ASR models or model families released
+Find likely automatic speech recognition models or
+model families appearing in recent sources approximately
 between {cutoffDate} and {currentDate}.
 
-This is a strict 30-day model-release window.
+The purpose of this stage is candidate discovery.
 
-Do not treat recent repository updates, model-card edits,
-or articles about older models as new model releases.
+Do NOT attempt to prove that the model itself was
+released during this period.
+
+A recent repository update, model-card edit, article,
+paper, or announcement may be useful discovery evidence,
+but the actual model release date will be verified later
+by the Research Agent.
 """
 
     searchPlan = (
@@ -382,9 +401,7 @@ or articles about older models as new model releases.
                 f"{query}"
             )
 
-            print(
-                error
-            )
+            print(error)
 
     # =================================================
     # 3. HUGGING FACE SEARCH
@@ -442,9 +459,7 @@ or articles about older models as new model releases.
                 "Hugging Face search failed."
             )
 
-            print(
-                error
-            )
+            print(error)
 
     # =================================================
     # 4. GITHUB SEARCH
@@ -488,9 +503,7 @@ or articles about older models as new model releases.
                 "GitHub search failed."
             )
 
-            print(
-                error
-            )
+            print(error)
 
     # =================================================
     # 5. ARXIV SEARCH
@@ -534,9 +547,7 @@ or articles about older models as new model releases.
                 "arXiv search failed."
             )
 
-            print(
-                error
-            )
+            print(error)
 
     # =================================================
     # 6. DEDUPLICATE INITIAL RESULTS
@@ -654,9 +665,7 @@ or articles about older models as new model releases.
                 "Additional web search failed."
             )
 
-            print(
-                error
-            )
+            print(error)
 
     # =================================================
     # 8. CROSS-SOURCE EVIDENCE MATCHING
@@ -688,72 +697,12 @@ or articles about older models as new model releases.
             "matching failed."
         )
 
-        print(
-            error
-        )
+        print(error)
 
         evidenceGroups = []
 
     # =================================================
-    # 9. STRICT RECENCY FILTER
-    # =================================================
-
-    print(
-        "\n=== RECENCY CHECK ==="
-    )
-
-    recentEvidenceGroups = []
-
-    for group in evidenceGroups:
-
-        releaseDate = (
-            getModelReleaseDate(
-                group
-            )
-        )
-
-        isRecent = (
-            checkRecency(
-                releaseDate,
-                days=30,
-            )
-        )
-
-        modelName = (
-            group.get(
-                "modelName"
-            )
-        )
-
-        print(
-            f"{modelName}: "
-            f"releaseDate={releaseDate}, "
-            f"{'PASS' if isRecent else 'FAIL'}"
-        )
-
-        if not isRecent:
-            continue
-
-        group[
-            "releaseDate"
-        ] = releaseDate
-
-        recentEvidenceGroups.append(
-            group
-        )
-
-    evidenceGroups = (
-        recentEvidenceGroups
-    )
-
-    print(
-        f"\nEvidence groups within "
-        f"{cutoffDate} to {currentDate}: "
-        f"{len(evidenceGroups)}"
-    )
-
-    # =================================================
-    # 10. FINAL CANDIDATE SELECTION
+    # 9. FINAL ASR CANDIDATE SELECTION
     # =================================================
 
     print(
@@ -767,35 +716,36 @@ Current date:
 
 {currentDate}
 
-Strict release window:
+Recent discovery window:
 
 {cutoffDate} to {currentDate}
 
-Recent cross-source evidence groups:
+Cross-source evidence groups:
 
 {json.dumps(evidenceGroups, indent=2)}
 
-The supplied evidence groups have already passed the
-strict programmatic recency filter.
+Your job is ONLY to identify which groups represent
+actual automatic speech recognition models or model
+families that are worth passing to the Research Agent.
 
-Your remaining job is ONLY to identify which groups
-represent actual automatic speech recognition models
-or model families.
+Discovery does NOT verify the actual model release date.
 
-Discovery has exactly two responsibilities:
+The Research Agent will later determine:
 
-1. Recency.
-2. Actually ASR.
-
-Recency has already been checked before this step.
+- the true model release date
+- whether the model satisfies the required recency window
+- legitimacy
+- local deployability
+- technical details
 
 Select up to 5 candidates.
 
 A valid candidate MUST:
 
-1. Be an automatic speech recognition model or model family.
+1. Be an automatic speech recognition model or
+   model family.
 
-2. Be an actual model/model-family release rather than:
+2. Be an actual model/model-family identity rather than:
 
    - general articles
    - tutorials
@@ -807,9 +757,11 @@ A valid candidate MUST:
 
 3. Be identifiable from the supplied evidence.
 
-4. Not return the same model multiple times.
+4. Have enough evidence to justify deeper investigation.
 
-Important evidence-grouping rule:
+5. Not return the same model multiple times.
+
+Important:
 
 A fine-tuned, adapted, distilled, quantized, converted,
 or otherwise derived model is NOT automatically the same
@@ -817,19 +769,23 @@ model as its base model.
 
 For example:
 
-A model with metadata such as:
-
 base_model:SomeOrg/BaseModel
 
 or:
 
 base_model:finetune:SomeOrg/BaseModel
 
-should be treated as a separately released model if it
-has its own model identity.
+indicates a relationship.
 
-Do not collapse such a model into its base model merely
-because they are related.
+It does NOT mean both are the same model release.
+
+A separately named derived model should remain a
+separate candidate when it has its own model identity.
+
+Do NOT reject a model merely because its actual release
+date is not yet known.
+
+Release-date verification belongs to Research.
 
 Avoid returning:
 
@@ -856,11 +812,14 @@ Prefer:
 - "model"
 - "model_family"
 
-The reason field should ONLY explain why this is
-an actual ASR model or model family.
+The reason field should ONLY explain why this appears
+to be an actual ASR model or model family worth
+investigating.
 
-Do NOT investigate or make claims about:
+Do NOT make claims about:
 
+- actual model release date
+- whether it passes the 30-day requirement
 - public model weights
 - source-code availability
 - local deployability
@@ -879,9 +838,6 @@ Those belong to the Research Agent.
 
 Do not fabricate models.
 
-Do not return a candidate unless there is supporting
-evidence in the supplied discovery data.
-
 For sourceUrl, choose the most useful source for
 identifying the model.
 
@@ -892,6 +848,7 @@ Prefer:
 3. official GitHub repository
 4. official research page
 5. arXiv paper
+6. credible announcement/article
 
 Return ONLY valid JSON.
 
@@ -915,7 +872,7 @@ Do not include explanations outside the JSON.
 """)
 
     # =================================================
-    # 11. PARSE LLM OUTPUT
+    # 10. PARSE LLM OUTPUT
     # =================================================
 
     rawContent = (
@@ -926,16 +883,14 @@ Do not include explanations outside the JSON.
         "\n=== RAW DISCOVERY RESPONSE ==="
     )
 
-    print(
-        rawContent
-    )
+    print(rawContent)
 
     data = json.loads(
         rawContent
     )
 
     # =================================================
-    # 12. VALIDATE USING PYDANTIC
+    # 11. VALIDATE USING PYDANTIC
     # =================================================
 
     validated = (
@@ -946,7 +901,8 @@ Do not include explanations outside the JSON.
 
     candidates = [
         candidate.model_dump()
-        for candidate in validated.candidates
+        for candidate
+        in validated.candidates
     ]
 
     print(
@@ -955,7 +911,7 @@ Do not include explanations outside the JSON.
     )
 
     # =================================================
-    # 13. TEMPORARILY CHOOSE FIRST CANDIDATE
+    # 12. TEMPORARILY CHOOSE FIRST CANDIDATE
     # =================================================
 
     currentModel = (
@@ -965,7 +921,7 @@ Do not include explanations outside the JSON.
     )
 
     # =================================================
-    # 14. RETURN LANGGRAPH STATE UPDATE
+    # 13. RETURN LANGGRAPH STATE UPDATE
     # =================================================
 
     return {
