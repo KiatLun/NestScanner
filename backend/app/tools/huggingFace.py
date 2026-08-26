@@ -17,7 +17,6 @@ def searchHuggingFaceModels(
     results = []
 
     for model in models:
-
         modelId = model.id
 
         results.append(
@@ -61,6 +60,11 @@ def filterASRModels(
     return [
         model
         for model in models
-        if model.get("metadata", {}).get("pipeline_tag")
+        if model.get(
+            "metadata",
+            {},
+        ).get(
+            "pipelineTag"
+        )
         == "automatic-speech-recognition"
     ]

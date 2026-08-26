@@ -1,6 +1,6 @@
 import json
 
-from tools.huggingFace import (
+from app.tools.huggingFace import (
     searchHuggingFaceModels,
     filterASRModels,
 )
@@ -13,7 +13,6 @@ def main():
     )
 
     asr_results = filterASRModels(results)
-
     print(
         json.dumps(
             asr_results,
