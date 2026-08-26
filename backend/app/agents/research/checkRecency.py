@@ -1,4 +1,5 @@
 import json
+import re
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -26,8 +27,11 @@ def checkRecency(
 
     Start with Discovery evidence.
 
-    If the release date cannot be determined, generate
-    one targeted web search at a time.
+    If an explicit release date is directly stated,
+    extract it deterministically.
+
+    Otherwise, use the existing LLM + targeted search
+    process.
 
     Stop when:
     - a release date is found, or
@@ -54,7 +58,27 @@ def checkRecency(
     while True:
 
         # =================================================
-        # 1. EVALUATE CURRENT EVIDENCE
+        # 1. TRY EXPLICIT RELEASE DATE EXTRACTION
+        # =================================================
+
+        releaseDate = extractExplicitReleaseDate(
+            candidate,
+            evidence,
+        )
+
+        if releaseDate:
+            return {
+                "releaseDate": releaseDate,
+                "isRecent": calculateRecency(
+                    releaseDate,
+                    currentDate,
+                    days,
+                ),
+                "evidence": evidence,
+            }
+
+        # =================================================
+        # 2. EVALUATE CURRENT EVIDENCE USING LLM
         # =================================================
 
         decision = evaluateRecency(
@@ -67,7 +91,7 @@ def checkRecency(
         )
 
         # =================================================
-        # 2. RELEASE DATE FOUND
+        # 3. RELEASE DATE FOUND BY LLM
         # =================================================
 
         if releaseDate:
@@ -84,7 +108,7 @@ def checkRecency(
             }
 
         # =================================================
-        # 3. STOP IF SEARCH LIMIT REACHED
+        # 4. STOP IF SEARCH LIMIT REACHED
         # =================================================
 
         if searchCount >= maxSearches:
@@ -95,7 +119,7 @@ def checkRecency(
             }
 
         # =================================================
-        # 4. GET NEXT TARGETED QUERY
+        # 5. GET NEXT TARGETED QUERY
         # =================================================
 
         nextQuery = decision.get(
@@ -116,7 +140,7 @@ def checkRecency(
         )
 
         # =================================================
-        # 5. SEARCH
+        # 6. SEARCH
         # =================================================
 
         try:
@@ -142,6 +166,96 @@ def checkRecency(
             print(error)
 
         searchCount += 1
+
+
+def extractExplicitReleaseDate(
+    candidate: dict,
+    evidence: list[dict],
+) -> str | None:
+    """
+    Extract an explicit release date only when the
+    evidence clearly mentions the candidate and directly
+    ties a date to release wording.
+
+    This is intentionally conservative so it does not
+    interfere with cases already handled well by the LLM.
+    """
+
+    modelName = (
+        candidate.get(
+            "name",
+            "",
+        )
+        or ""
+    ).lower()
+
+    if not modelName:
+        return None
+
+    releasePatterns = [
+        r"released on ([A-Za-z]+ \d{1,2}, \d{4})",
+        r"was released on ([A-Za-z]+ \d{1,2}, \d{4})",
+        r"launched on ([A-Za-z]+ \d{1,2}, \d{4})",
+        r"introduced on ([A-Za-z]+ \d{1,2}, \d{4})",
+        r"became available on ([A-Za-z]+ \d{1,2}, \d{4})",
+    ]
+
+    for item in evidence:
+        title = (
+            item.get(
+                "title",
+                "",
+            )
+            or ""
+        )
+
+        description = (
+            item.get(
+                "description",
+                "",
+            )
+            or ""
+        )
+
+        text = (
+            f"{title} {description}"
+        )
+
+        lowerText = text.lower()
+
+        # Only use this deterministic shortcut if
+        # the exact candidate name appears in the evidence.
+        if modelName not in lowerText:
+            continue
+
+        for pattern in releasePatterns:
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            rawDate = match.group(1)
+
+            for dateFormat in [
+                "%B %d, %Y",
+                "%b %d, %Y",
+            ]:
+                try:
+                    parsedDate = datetime.strptime(
+                        rawDate,
+                        dateFormat,
+                    ).date()
+
+                    return parsedDate.isoformat()
+
+                except ValueError:
+                    continue
+
+    return None
 
 
 def evaluateRecency(
