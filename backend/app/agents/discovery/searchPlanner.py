@@ -4,48 +4,37 @@ from pydantic import BaseModel, Field
 
 from app.llm.client import getLLM
 
+from app.agents.discovery.config import (
+    DiscoveryConfig,
+)
 
 llm = getLLM()
 
-USE_LLM_PLANNER = False
-
 
 class DiscoverySearchPlan(BaseModel):
-    webQueries: list[str] = Field(
-        default_factory=list
-    )
+    webQueries: list[str] = Field(default_factory=list)
 
-    huggingFaceQueries: list[str] = Field(
-        default_factory=list
-    )
+    huggingFaceQueries: list[str] = Field(default_factory=list)
 
-    githubQueries: list[str] = Field(
-        default_factory=list
-    )
+    githubQueries: list[str] = Field(default_factory=list)
 
-    arxivQueries: list[str] = Field(
-        default_factory=list
-    )
+    arxivQueries: list[str] = Field(default_factory=list)
 
 
 def buildDiscoveryQueries(
     objective: str,
+    config: DiscoveryConfig,
 ) -> DiscoverySearchPlan:
     """
     Build source-specific search queries for Discovery.
 
-    Set USE_LLM_PLANNER = False for deterministic
-    hardcoded queries.
-
-    Set USE_LLM_PLANNER = True to use the LLM planner.
+    Planner mode is controlled through DiscoveryConfig.
     """
 
-    if not USE_LLM_PLANNER:
+    if not config.useLlmPlanner:
         return buildHardcodedQueries()
 
-    return buildLLMQueries(
-        objective
-    )
+    return buildLLMQueries(objective)
 
 
 def buildHardcodedQueries() -> DiscoverySearchPlan:
@@ -259,10 +248,6 @@ Do not include code fences.
 Do not include explanations outside the JSON.
 """)
 
-    data = json.loads(
-        response.content
-    )
+    data = json.loads(response.content)
 
-    return DiscoverySearchPlan.model_validate(
-        data
-    )
+    return DiscoverySearchPlan.model_validate(data)
