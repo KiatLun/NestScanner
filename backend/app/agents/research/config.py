@@ -8,7 +8,7 @@ class ResearchConfig:
     # RECENCY
     # =================================================
 
-    recencyWindowDays: int = 60
+    recencyWindowDays: int = 180
     maxRecencySearches: int = 3
     recencyResultsPerSearch: int = 5
 

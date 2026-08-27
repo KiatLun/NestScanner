@@ -40,26 +40,15 @@ def researchAgent(
 
     releaseDate = recencyResult.get("releaseDate")
 
+    isRecent = recencyResult.get(
+        "isRecent",
+        False,
+    )
+
     recencyEvidence = recencyResult.get(
         "evidence",
         [],
     )
-
-    if not recencyResult.get(
-        "isRecent",
-        False,
-    ):
-        return {
-            "releaseDate": releaseDate,
-            "isRecent": False,
-            "isLocallyDeployable": None,
-            "technicalProfile": None,
-            "researchEvidence": {
-                "recencyEvidence": (recencyEvidence),
-                "deployabilityEvidence": [],
-                "technicalEvidence": [],
-            },
-        }
 
     # =================================================
     # 2. DEPLOYABILITY
@@ -71,53 +60,53 @@ def researchAgent(
         researchConfig,
     )
 
+    isLocallyDeployable = deployabilityResult.get(
+        "isLocallyDeployable",
+        False,
+    )
+
     deployabilityEvidence = deployabilityResult.get(
         "evidence",
         [],
     )
 
-    if not deployabilityResult.get(
-        "isLocallyDeployable",
-        False,
-    ):
-        return {
-            "releaseDate": releaseDate,
-            "isRecent": True,
-            "isLocallyDeployable": False,
-            "technicalProfile": None,
-            "researchEvidence": {
-                "recencyEvidence": (recencyEvidence),
-                "deployabilityEvidence": (deployabilityEvidence),
-                "technicalEvidence": [],
-            },
-        }
-
     # =================================================
     # 3. TECHNICAL PROFILE
     # =================================================
 
-    profileResult = buildTechnicalProfile(
-        candidate,
-        discoveryEvidence,
-        recencyEvidence,
-        deployabilityEvidence,
-        releaseDate,
-        researchConfig,
-    )
+    technicalProfile = None
+    technicalEvidence = []
+
+    if isRecent and isLocallyDeployable:
+
+        profileResult = buildTechnicalProfile(
+            candidate,
+            discoveryEvidence,
+            recencyEvidence,
+            deployabilityEvidence,
+            releaseDate,
+            researchConfig,
+        )
+
+        technicalProfile = profileResult.get("technicalProfile")
+
+        technicalEvidence = profileResult.get(
+            "evidence",
+            [],
+        )
+
+    # =================================================
+    # 4. RETURN RESULT
+    # =================================================
 
     return {
         "releaseDate": releaseDate,
-        "isRecent": True,
-        "isLocallyDeployable": True,
-        "technicalProfile": (profileResult.get("technicalProfile")),
+        "isRecent": isRecent,
+        "isLocallyDeployable": (isLocallyDeployable),
+        "technicalProfile": (technicalProfile),
         "researchEvidence": {
             "recencyEvidence": (recencyEvidence),
             "deployabilityEvidence": (deployabilityEvidence),
-            "technicalEvidence": (
-                profileResult.get(
-                    "evidence",
-                    [],
-                )
-            ),
+            "technicalEvidence": (technicalEvidence),
         },
     }
