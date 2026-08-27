@@ -4,7 +4,7 @@ from typing import TypedDict
 class ScanState(TypedDict, total=False):
     query: str
 
-    runId: int
+    scanId: int
 
     candidates: list[dict]
     researchResults: list[dict]

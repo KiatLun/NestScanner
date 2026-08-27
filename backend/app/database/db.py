@@ -38,11 +38,11 @@ def initializeDatabase():
     cursor = connection.cursor()
 
     # =================================================
-    # SCAN RUNS
+    # SCANS
     # =================================================
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS scan_runs (
+        CREATE TABLE IF NOT EXISTS scans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             query TEXT NOT NULL,
             started_at TEXT NOT NULL,
@@ -67,7 +67,7 @@ def initializeDatabase():
             discovery_evidence TEXT,
 
             FOREIGN KEY (run_id)
-                REFERENCES scan_runs(id)
+                REFERENCES scans(id)
                 ON DELETE CASCADE
         )
         """)
@@ -90,7 +90,7 @@ def initializeDatabase():
             research_evidence TEXT,
 
             FOREIGN KEY (run_id)
-                REFERENCES scan_runs(id)
+                REFERENCES scans(id)
                 ON DELETE CASCADE,
 
             FOREIGN KEY (candidate_id)
@@ -104,7 +104,7 @@ def initializeDatabase():
     connection.close()
 
 
-def createScanRun(
+def createScan(
     query: str,
 ) -> int:
     """
@@ -119,7 +119,7 @@ def createScanRun(
 
     cursor.execute(
         """
-        INSERT INTO scan_runs (
+        INSERT INTO scans (
             query,
             started_at
         )
@@ -131,20 +131,20 @@ def createScanRun(
         ),
     )
 
-    runId = cursor.lastrowid
+    scanId = cursor.lastrowid
 
     connection.commit()
 
     connection.close()
 
-    return runId
+    return scanId
 
 
-def completeScanRun(
-    runId: int,
+def completeScan(
+    scanId: int,
 ):
     """
-    Mark a scan run as completed.
+    Mark a scan as completed.
     """
 
     currentTime = datetime.now(ZoneInfo("Asia/Singapore")).isoformat()
@@ -155,13 +155,13 @@ def completeScanRun(
 
     cursor.execute(
         """
-        UPDATE scan_runs
+        UPDATE scans
         SET completed_at = ?
         WHERE id = ?
         """,
         (
             currentTime,
-            runId,
+            scanId,
         ),
     )
 
@@ -171,7 +171,7 @@ def completeScanRun(
 
 
 def saveDiscoveryCandidate(
-    runId: int,
+    scanId: int,
     discoveryCandidate: dict,
 ) -> int:
     """
@@ -201,10 +201,10 @@ def saveDiscoveryCandidate(
             candidate_type,
             discovery_evidence
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
-            runId,
+            scanId,
             candidate.get("name"),
             candidate.get("organisation"),
             candidate.get("sourceUrl"),
@@ -226,7 +226,7 @@ def saveDiscoveryCandidate(
 
 
 def saveResearchResult(
-    runId: int,
+    scanId: int,
     candidateId: int,
     result: dict,
 ) -> int:
@@ -254,7 +254,7 @@ def saveResearchResult(
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            runId,
+            scanId,
             candidateId,
             result.get("releaseDate"),
             result.get("isRecent"),
@@ -280,3 +280,146 @@ def saveResearchResult(
     connection.close()
 
     return researchResultId
+
+
+def getAllScans() -> list[dict]:
+    """
+    Return all scans, newest first.
+    """
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            query,
+            started_at,
+            completed_at
+        FROM scans
+        ORDER BY id DESC
+        """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [dict(row) for row in rows]
+
+
+def getScan(
+    scanId: int,
+) -> dict | None:
+    """
+    Return one scan and its Discovery candidates.
+    """
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    # =================================================
+    # GET RUN
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            query,
+            started_at,
+            completed_at
+        FROM scans
+        WHERE id = ?
+        """,
+        (scanId,),
+    )
+
+    scanRow = cursor.fetchone()
+
+    if scanRow is None:
+        connection.close()
+        return None
+
+    # =================================================
+    # GET DISCOVERY CANDIDATES
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            name,
+            organisation,
+            source_url,
+            candidate_type,
+            discovery_evidence
+        FROM discovery_candidates
+        WHERE run_id = ?
+        ORDER BY id ASC
+        """,
+        (scanId,),
+    )
+
+    candidateRows = cursor.fetchall()
+
+    connection.close()
+
+    candidates = []
+
+    for row in candidateRows:
+
+        discoveryEvidence = []
+
+        if row["discovery_evidence"]:
+            try:
+                discoveryEvidence = json.loads(row["discovery_evidence"])
+            except json.JSONDecodeError:
+                discoveryEvidence = []
+
+        candidates.append(
+            {
+                "candidateId": row["id"],
+                "candidate": {
+                    "name": row["name"],
+                    "organisation": (row["organisation"]),
+                    "sourceUrl": (row["source_url"]),
+                    "candidateType": (row["candidate_type"]),
+                },
+                "discoveryEvidence": (discoveryEvidence),
+            }
+        )
+
+    return {
+        "scan": dict(scanRow),
+        "discovery": {
+            "candidates": candidates,
+        },
+    }
+
+
+def getLatestScan() -> dict | None:
+    """
+    Return the latest scan and its Discovery output.
+    """
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM scans
+        ORDER BY id DESC
+        LIMIT 1
+        """)
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+
+    return getScan(row["id"])

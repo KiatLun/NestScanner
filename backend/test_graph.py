@@ -6,8 +6,8 @@ from app.graph.workflow import (
 
 from app.database.db import (
     initializeDatabase,
-    createScanRun,
-    completeScanRun,
+    createScan,
+    completeScan,
 )
 
 
@@ -20,14 +20,14 @@ def main():
     initializeDatabase()
 
     # =================================================
-    # 2. CREATE SCAN RUN
+    # 2. CREATE SCAN
     # =================================================
 
     query = "Find automatic speech recognition " "models from recent sources."
 
-    runId = createScanRun(query)
+    scanId = createScan(query)
 
-    print(f"\nCreated scan run: " f"{runId}")
+    print(f"\nCreated scan: " f"{scanId}")
 
     # =================================================
     # 3. BUILD GRAPH
@@ -37,7 +37,7 @@ def main():
 
     initialState = {
         "query": query,
-        "runId": runId,
+        "scanId": scanId,
     }
 
     # =================================================
@@ -50,7 +50,7 @@ def main():
     # 5. COMPLETE RUN
     # =================================================
 
-    completeScanRun(runId)
+    completeScan(scanId)
 
     print("\n=== FINAL GRAPH RESULT ===")
 

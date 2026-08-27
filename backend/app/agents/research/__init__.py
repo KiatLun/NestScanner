@@ -19,7 +19,7 @@ def research_agent(
 
     researchConfig = defaultResearchConfig
 
-    runId = state.get("runId")
+    scanId = state.get("scanId")
 
     candidates = state.get(
         "candidates",
@@ -61,10 +61,10 @@ def research_agent(
         # SAVE RESEARCH RESULT
         # =================================================
 
-        if runId is not None and candidateId is not None:
+        if scanId is not None and candidateId is not None:
 
             researchResultId = saveResearchResult(
-                runId,
+                scanId,
                 candidateId,
                 result,
             )

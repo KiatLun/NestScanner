@@ -29,7 +29,7 @@ def discoveryAgent(
 
     objective = state["query"]
 
-    runId = state.get("runId")
+    scanId = state.get("scanId")
 
     discoveryEvidence = gatherDiscoveryEvidence(
         objective,
@@ -54,12 +54,12 @@ def discoveryAgent(
     # SAVE DISCOVERY CANDIDATES
     # =================================================
 
-    if runId is not None:
+    if scanId is not None:
 
         for candidatePackage in candidates:
 
             candidateId = saveDiscoveryCandidate(
-                runId,
+                scanId,
                 candidatePackage,
             )
 
