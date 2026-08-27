@@ -75,14 +75,10 @@ def buildHardcodedQueries() -> DiscoverySearchPlan:
             "pretrained ASR",
         ],
         githubQueries=[
-            "ASR model",
-            "automatic speech recognition model",
-            "speech recognition model",
-            "speech-to-text model",
-            "transcription model",
-            "multilingual ASR model",
-            "streaming ASR model",
-            "ASR pretrained",
+            "ASR",
+            "automatic speech recognition",
+            "speech-to-text",
+            "stt",
         ],
         arxivQueries=[
             "automatic speech recognition",

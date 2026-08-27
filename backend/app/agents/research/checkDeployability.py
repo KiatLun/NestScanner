@@ -6,7 +6,6 @@ from app.tools.webSearch import (
     deduplicateResults,
 )
 
-
 llm = getLLM()
 
 
@@ -23,9 +22,7 @@ def checkDeployability(
     2. A usable local inference path.
     """
 
-    evidence = list(
-        discoveryEvidence
-    )
+    evidence = list(discoveryEvidence)
 
     searchCount = 0
 
@@ -54,9 +51,7 @@ def checkDeployability(
                 "evidence": evidence,
             }
 
-        nextQuery = decision.get(
-            "nextQuery"
-        )
+        nextQuery = decision.get("nextQuery")
 
         if not nextQuery:
             return {
@@ -64,11 +59,7 @@ def checkDeployability(
                 "evidence": evidence,
             }
 
-        print(
-            f"\nDeployability search "
-            f"{searchCount + 1}: "
-            f"{nextQuery}"
-        )
+        print(f"\nDeployability search " f"{searchCount + 1}: " f"{nextQuery}")
 
         try:
             results = webSearch(
@@ -76,19 +67,12 @@ def checkDeployability(
                 maxResults=5,
             )
 
-            evidence.extend(
-                results
-            )
+            evidence.extend(results)
 
-            evidence = deduplicateResults(
-                evidence
-            )
+            evidence = deduplicateResults(evidence)
 
         except Exception as error:
-            print(
-                f"Deployability search failed: "
-                f"{nextQuery}"
-            )
+            print(f"Deployability search failed: " f"{nextQuery}")
 
             print(error)
 
@@ -189,9 +173,7 @@ Do not include markdown.
 """)
 
     try:
-        return json.loads(
-            response.content
-        )
+        return json.loads(response.content)
 
     except json.JSONDecodeError:
         return {
