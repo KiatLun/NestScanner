@@ -2,8 +2,22 @@ import json
 
 from app.agents.research.agent import researchAgent
 
+from app.agents.research.config import (
+    ResearchConfig,
+)
+
 
 def main():
+
+    config = ResearchConfig(
+        recencyWindowDays=180,
+        maxRecencySearches=2,
+        recencyResultsPerSearch=3,
+        maxDeployabilitySearches=2,
+        deployabilityResultsPerSearch=3,
+        verbose=True,
+    )
+
     with open(
         "app/agents/discovery/sampleOutput.txt",
         "r",
@@ -11,24 +25,18 @@ def main():
     ) as file:
         discoveryOutput = json.load(file)
 
-    candidates = discoveryOutput[
-        "candidates"
-    ]
+    candidates = discoveryOutput["candidates"]
 
-    print(
-        f"\nFound {len(candidates)} "
-        "Discovery candidates."
-    )
+    print(f"\nFound {len(candidates)} " "Discovery candidates.")
 
     researchInput = candidates[1]
 
     result = researchAgent(
-        researchInput
+        researchInput,
+        config,
     )
 
-    print(
-        "\n=== RESEARCH RESULT ==="
-    )
+    print("\n=== RESEARCH RESULT ===")
 
     print(
         json.dumps(

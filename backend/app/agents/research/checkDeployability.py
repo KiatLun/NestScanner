@@ -1,6 +1,11 @@
 import json
 
 from app.llm.client import getLLM
+
+from app.agents.research.config import (
+    ResearchConfig,
+)
+
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
@@ -12,7 +17,7 @@ llm = getLLM()
 def checkDeployability(
     candidate: dict,
     discoveryEvidence: list[dict],
-    maxSearches: int = 3,
+    config: ResearchConfig,
 ) -> dict:
     """
     Determine whether a model can be deployed locally.
@@ -45,7 +50,7 @@ def checkDeployability(
                 "evidence": evidence,
             }
 
-        if searchCount >= maxSearches:
+        if searchCount >= config.maxDeployabilitySearches:
             return {
                 "isLocallyDeployable": False,
                 "evidence": evidence,
@@ -59,12 +64,13 @@ def checkDeployability(
                 "evidence": evidence,
             }
 
-        print(f"\nDeployability search " f"{searchCount + 1}: " f"{nextQuery}")
+        if config.verbose:
+            print(f"\nDeployability search " f"{searchCount + 1}: " f"{nextQuery}")
 
         try:
             results = webSearch(
                 nextQuery,
-                maxResults=5,
+                maxResults=(config.deployabilityResultsPerSearch),
             )
 
             evidence.extend(results)
@@ -72,9 +78,11 @@ def checkDeployability(
             evidence = deduplicateResults(evidence)
 
         except Exception as error:
-            print(f"Deployability search failed: " f"{nextQuery}")
 
-            print(error)
+            if config.verbose:
+                print(f"Deployability search failed: " f"{nextQuery}")
+
+                print(error)
 
         searchCount += 1
 

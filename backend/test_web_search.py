@@ -1,12 +1,12 @@
 import json
 
-from tools.webSearch import webSearch
+from app.tools.webSearch import webSearch
 
 
 def main():
     results = webSearch(
         "open source ASR speech recognition model 2026",
-        max_results=5,
+        maxResults=5,
     )
 
     print(

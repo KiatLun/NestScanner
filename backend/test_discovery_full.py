@@ -9,7 +9,6 @@ def main():
             "Find recently released open-source " "automatic speech recognition models."
         )
     }
-
     result = discoveryAgent(state)
 
     print("\n" + "=" * 60)

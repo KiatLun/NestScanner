@@ -6,11 +6,14 @@ from zoneinfo import ZoneInfo
 
 from app.llm.client import getLLM
 
+from app.agents.research.config import (
+    ResearchConfig,
+)
+
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
 )
-
 
 llm = getLLM()
 
@@ -18,8 +21,7 @@ llm = getLLM()
 def checkRecency(
     candidate: dict,
     discoveryEvidence: list[dict],
-    days: int = 60,
-    maxSearches: int = 3,
+    config: ResearchConfig,
 ) -> dict:
     """
     Determine whether an ASR candidate was released
@@ -35,7 +37,7 @@ def checkRecency(
 
     Stop when:
     - a release date is found, or
-    - maxSearches is reached.
+    - maxRecencySearches is reached.
 
     Returns:
     {
@@ -45,13 +47,9 @@ def checkRecency(
     }
     """
 
-    currentDate = datetime.now(
-        ZoneInfo("Asia/Singapore")
-    ).date()
+    currentDate = datetime.now(ZoneInfo("Asia/Singapore")).date()
 
-    evidence = list(
-        discoveryEvidence
-    )
+    evidence = list(discoveryEvidence)
 
     searchCount = 0
 
@@ -72,7 +70,7 @@ def checkRecency(
                 "isRecent": calculateRecency(
                     releaseDate,
                     currentDate,
-                    days,
+                    config.recencyWindowDays,
                 ),
                 "evidence": evidence,
             }
@@ -86,9 +84,7 @@ def checkRecency(
             evidence,
         )
 
-        releaseDate = decision.get(
-            "releaseDate"
-        )
+        releaseDate = decision.get("releaseDate")
 
         # =================================================
         # 3. RELEASE DATE FOUND BY LLM
@@ -98,7 +94,7 @@ def checkRecency(
             isRecent = calculateRecency(
                 releaseDate,
                 currentDate,
-                days,
+                config.recencyWindowDays,
             )
 
             return {
@@ -111,7 +107,7 @@ def checkRecency(
         # 4. STOP IF SEARCH LIMIT REACHED
         # =================================================
 
-        if searchCount >= maxSearches:
+        if searchCount >= config.maxRecencySearches:
             return {
                 "releaseDate": None,
                 "isRecent": False,
@@ -122,9 +118,7 @@ def checkRecency(
         # 5. GET NEXT TARGETED QUERY
         # =================================================
 
-        nextQuery = decision.get(
-            "nextQuery"
-        )
+        nextQuery = decision.get("nextQuery")
 
         if not nextQuery:
             return {
@@ -133,11 +127,8 @@ def checkRecency(
                 "evidence": evidence,
             }
 
-        print(
-            f"\nRecency search "
-            f"{searchCount + 1}: "
-            f"{nextQuery}"
-        )
+        if config.verbose:
+            print(f"\nRecency search " f"{searchCount + 1}: " f"{nextQuery}")
 
         # =================================================
         # 6. SEARCH
@@ -146,24 +137,19 @@ def checkRecency(
         try:
             results = webSearch(
                 nextQuery,
-                maxResults=5,
+                maxResults=(config.recencyResultsPerSearch),
             )
 
-            evidence.extend(
-                results
-            )
+            evidence.extend(results)
 
-            evidence = deduplicateResults(
-                evidence
-            )
+            evidence = deduplicateResults(evidence)
 
         except Exception as error:
-            print(
-                f"Recency search failed: "
-                f"{nextQuery}"
-            )
 
-            print(error)
+            if config.verbose:
+                print(f"Recency search failed: " f"{nextQuery}")
+
+                print(error)
 
         searchCount += 1
 
@@ -177,8 +163,13 @@ def extractExplicitReleaseDate(
     evidence clearly mentions the candidate and directly
     ties a date to release wording.
 
-    This is intentionally conservative so it does not
-    interfere with cases already handled well by the LLM.
+    Handles both:
+
+    "MODEL was released on July 5, 2026"
+
+    and:
+
+    "July 5, 2026 - Organisation released MODEL"
     """
 
     modelName = (
@@ -192,7 +183,7 @@ def extractExplicitReleaseDate(
     if not modelName:
         return None
 
-    releasePatterns = [
+    releaseDateAfterPatterns = [
         r"released on ([A-Za-z]+ \d{1,2}, \d{4})",
         r"was released on ([A-Za-z]+ \d{1,2}, \d{4})",
         r"launched on ([A-Za-z]+ \d{1,2}, \d{4})",
@@ -200,7 +191,16 @@ def extractExplicitReleaseDate(
         r"became available on ([A-Za-z]+ \d{1,2}, \d{4})",
     ]
 
+    releaseDateBeforePatterns = [
+        (r"([A-Za-z]+ \d{1,2}, \d{4})" r".{0,100}?\b(?:has\s+)?released\b"),
+        (r"([A-Za-z]+ \d{1,2}, \d{4})" r".{0,100}?\blaunched\b"),
+        (r"([A-Za-z]+ \d{1,2}, \d{4})" r".{0,100}?\bintroduced\b"),
+    ]
+
+    releasePatterns = releaseDateAfterPatterns + releaseDateBeforePatterns
+
     for item in evidence:
+
         title = (
             item.get(
                 "title",
@@ -217,18 +217,17 @@ def extractExplicitReleaseDate(
             or ""
         )
 
-        text = (
-            f"{title} {description}"
-        )
+        text = f"{title} {description}"
 
         lowerText = text.lower()
 
-        # Only use this deterministic shortcut if
-        # the exact candidate name appears in the evidence.
+        # Only use deterministic extraction when the
+        # exact candidate name is present in the evidence.
         if modelName not in lowerText:
             continue
 
         for pattern in releasePatterns:
+
             match = re.search(
                 pattern,
                 text,
@@ -244,6 +243,7 @@ def extractExplicitReleaseDate(
                 "%B %d, %Y",
                 "%b %d, %Y",
             ]:
+
                 try:
                     parsedDate = datetime.strptime(
                         rawDate,
@@ -450,9 +450,7 @@ Do not include explanations outside the JSON.
 """)
 
     try:
-        return json.loads(
-            response.content
-        )
+        return json.loads(response.content)
 
     except json.JSONDecodeError:
         return {
@@ -480,15 +478,6 @@ def calculateRecency(
     except ValueError:
         return False
 
-    cutoffDate = (
-        currentDate
-        - timedelta(
-            days=days
-        )
-    )
+    cutoffDate = currentDate - timedelta(days=days)
 
-    return (
-        cutoffDate
-        <= parsedDate
-        <= currentDate
-    )
+    return cutoffDate <= parsedDate <= currentDate
