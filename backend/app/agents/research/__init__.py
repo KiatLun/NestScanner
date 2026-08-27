@@ -1,8 +1,3 @@
-import json
-import re
-
-from pathlib import Path
-
 from app.models.state import ScanState
 
 from app.agents.research.agent import (
@@ -13,18 +8,9 @@ from app.agents.research.config import (
     defaultResearchConfig,
 )
 
-
-def makeSafeFilename(
-    name: str,
-) -> str:
-
-    safeName = re.sub(
-        r'[<>:"/\\|?*]',
-        "_",
-        name,
-    )
-
-    return safeName.strip() or "unknown_model"
+from app.database.db import (
+    saveResearchResult,
+)
 
 
 def research_agent(
@@ -33,64 +19,68 @@ def research_agent(
 
     researchConfig = defaultResearchConfig
 
+    runId = state.get("runId")
+
     candidates = state.get(
         "candidates",
         [],
     )
 
-    runOutputPath = state.get("runOutputPath")
-
     researchResults = []
-
-    researchFolder = None
-
-    if runOutputPath:
-
-        researchFolder = Path(runOutputPath) / "research"
-
-        researchFolder.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
 
     for index, researchInput in enumerate(
         candidates,
         start=1,
     ):
 
+        candidate = researchInput.get(
+            "candidate",
+            {},
+        )
+
+        modelName = candidate.get(
+            "name",
+            "Unknown",
+        )
+
+        candidateId = researchInput.get("candidateId")
+
+        if researchConfig.verbose:
+            print(f"\nResearching " f"{index}/{len(candidates)}: " f"{modelName}")
+
+        # =================================================
+        # RUN RESEARCH
+        # =================================================
+
         result = researchAgent(
             researchInput,
             researchConfig,
         )
 
-        researchResults.append(result)
+        # =================================================
+        # SAVE RESEARCH RESULT
+        # =================================================
 
-        if researchFolder:
+        if runId is not None and candidateId is not None:
 
-            candidate = researchInput.get(
-                "candidate",
-                {},
+            researchResultId = saveResearchResult(
+                runId,
+                candidateId,
+                result,
             )
 
-            modelName = candidate.get(
-                "name",
-                f"candidate_{index}",
-            )
+            result["researchResultId"] = researchResultId
 
-            safeName = makeSafeFilename(modelName)
-
-            outputPath = researchFolder / f"{index:02d}_{safeName}.json"
-
-            with open(
-                outputPath,
-                "w",
-                encoding="utf-8",
-            ) as file:
-                json.dump(
-                    result,
-                    file,
-                    indent=2,
-                    ensure_ascii=False,
+            if researchConfig.verbose:
+                print(
+                    f"Saved Research result "
+                    f"{researchResultId} "
+                    f"for candidate "
+                    f"{candidateId}"
                 )
 
-    return {"researchResults": researchResults}
+        researchResults.append(result)
+
+    return {
+        "researchResults": researchResults,
+    }

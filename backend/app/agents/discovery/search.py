@@ -59,7 +59,6 @@ def searchWeb(
     """
     Search the general web.
     """
-
     results = []
 
     for query in queries:
@@ -233,7 +232,6 @@ release date and recency.
         searchObjective,
         config,
     )
-
     if config.verbose:
 
         print("\n=== SEARCH PLAN ===")

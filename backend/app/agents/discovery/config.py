@@ -30,7 +30,7 @@ class DiscoveryConfig:
     maxCandidates: int = 10
 
     # Logging
-    verbose: bool = False
+    verbose: bool = True
 
 
 defaultDiscoveryConfig = DiscoveryConfig()

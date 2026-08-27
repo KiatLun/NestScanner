@@ -17,31 +17,65 @@ from app.agents.discovery.evidenceMatcher import (
     groupModelEvidence,
 )
 
+from app.database.db import (
+    saveDiscoveryCandidate,
+)
+
 
 def discoveryAgent(
     state: ScanState,
-    config: DiscoveryConfig = defaultDiscoveryConfig,
+    discoveryConfig: DiscoveryConfig = defaultDiscoveryConfig,
 ) -> dict:
 
     objective = state["query"]
 
+    runId = state.get("runId")
+
     discoveryEvidence = gatherDiscoveryEvidence(
         objective,
-        config,
+        discoveryConfig,
     )
 
-    if config.enableCoverageImprovement:
+    if discoveryConfig.enableCoverageImprovement:
         discoveryEvidence = improveDiscoveryCoverage(
             objective,
             discoveryEvidence,
-            config,
+            discoveryConfig,
         )
 
     candidates = groupModelEvidence(
         discoveryEvidence,
-        config,
+        discoveryConfig,
     )
 
+    candidates = candidates[: discoveryConfig.maxCandidates]
+
+    # =================================================
+    # SAVE DISCOVERY CANDIDATES
+    # =================================================
+
+    if runId is not None:
+
+        for candidatePackage in candidates:
+
+            candidateId = saveDiscoveryCandidate(
+                runId,
+                candidatePackage,
+            )
+
+            candidatePackage["candidateId"] = candidateId
+
+            if discoveryConfig.verbose:
+                modelName = candidatePackage.get(
+                    "candidate",
+                    {},
+                ).get(
+                    "name",
+                    "Unknown",
+                )
+
+                print(f"Saved Discovery candidate " f"{candidateId}: " f"{modelName}")
+
     return {
-        "candidates": candidates[: config.maxCandidates],
+        "candidates": candidates,
     }

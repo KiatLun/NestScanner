@@ -6,8 +6,13 @@ from langgraph.graph import (
 
 from app.models.state import ScanState
 
-from app.agents.discovery import discoveryAgent
-from app.agents.research import researchAgent
+from app.agents.discovery import (
+    discoveryAgent,
+)
+
+from app.agents.research import (
+    research_agent,
+)
 
 
 def build_graph():
@@ -21,7 +26,7 @@ def build_graph():
 
     workflow.add_node(
         "research",
-        researchAgent,
+        research_agent,
     )
 
     workflow.add_edge(

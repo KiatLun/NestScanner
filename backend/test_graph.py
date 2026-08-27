@@ -1,26 +1,58 @@
 import json
 
-from app.graph.workflow import build_graph
+from app.graph.workflow import (
+    build_graph,
+)
+
+from app.database.db import (
+    initializeDatabase,
+    createScanRun,
+    completeScanRun,
+)
 
 
 def main():
 
+    # =================================================
+    # 1. INITIALIZE DATABASE
+    # =================================================
+
+    initializeDatabase()
+
+    # =================================================
+    # 2. CREATE SCAN RUN
+    # =================================================
+
+    query = "Find automatic speech recognition " "models from recent sources."
+
+    runId = createScanRun(query)
+
+    print(f"\nCreated scan run: " f"{runId}")
+
+    # =================================================
+    # 3. BUILD GRAPH
+    # =================================================
+
     graph = build_graph()
 
     initialState = {
-        "query": (
-            "Find automatic speech recognition "
-            "models from recent sources."
-        )
+        "query": query,
+        "runId": runId,
     }
 
-    result = graph.invoke(
-        initialState
-    )
+    # =================================================
+    # 4. RUN GRAPH
+    # =================================================
 
-    print(
-        "\n=== FINAL GRAPH RESULT ==="
-    )
+    result = graph.invoke(initialState)
+
+    # =================================================
+    # 5. COMPLETE RUN
+    # =================================================
+
+    completeScanRun(runId)
+
+    print("\n=== FINAL GRAPH RESULT ===")
 
     print(
         json.dumps(
