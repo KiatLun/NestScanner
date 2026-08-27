@@ -1,13 +1,18 @@
 import json
 
-from tools.github import searchGithubRepositories
+from app.tools.github import searchGitHubRepositories
 
 
 def main():
-    results = searchGithubRepositories(
+
+    print("\n=== TEST GITHUB SEARCH ===")
+
+    results = searchGitHubRepositories(
         "automatic speech recognition ASR",
-        limit=5,
+        limit=30,
     )
+
+    print(f"\nFound {len(results)} repositories.\n")
 
     print(
         json.dumps(
