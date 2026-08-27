@@ -57,7 +57,7 @@ def initializeDatabase():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS discovery_candidates (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
+            scan_id INTEGER NOT NULL,
 
             name TEXT NOT NULL,
             organisation TEXT,
@@ -66,7 +66,7 @@ def initializeDatabase():
 
             discovery_evidence TEXT,
 
-            FOREIGN KEY (run_id)
+            FOREIGN KEY (scan_id)
                 REFERENCES scans(id)
                 ON DELETE CASCADE
         )
@@ -79,7 +79,7 @@ def initializeDatabase():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS research_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
+            scan_id INTEGER NOT NULL,
             candidate_id INTEGER NOT NULL,
 
             release_date TEXT,
@@ -89,7 +89,7 @@ def initializeDatabase():
             technical_profile TEXT,
             research_evidence TEXT,
 
-            FOREIGN KEY (run_id)
+            FOREIGN KEY (scan_id)
                 REFERENCES scans(id)
                 ON DELETE CASCADE,
 
@@ -194,7 +194,7 @@ def saveDiscoveryCandidate(
     cursor.execute(
         """
         INSERT INTO discovery_candidates (
-            run_id,
+            scan_id,
             name,
             organisation,
             source_url,
@@ -243,7 +243,7 @@ def saveResearchResult(
     cursor.execute(
         """
         INSERT INTO research_results (
-            run_id,
+            scan_id,
             candidate_id,
             release_date,
             is_recent,
@@ -356,7 +356,7 @@ def getScan(
             candidate_type,
             discovery_evidence
         FROM discovery_candidates
-        WHERE run_id = ?
+        WHERE scan_id = ?
         ORDER BY id ASC
         """,
         (scanId,),
@@ -423,3 +423,122 @@ def getLatestScan() -> dict | None:
         return None
 
     return getScan(row["id"])
+
+
+def getResearchByScan(
+    scanId: int,
+) -> dict | None:
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    # =================================================
+    # CHECK SCAN EXISTS
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            query,
+            started_at,
+            completed_at
+        FROM scans
+        WHERE id = ?
+        """,
+        (scanId,),
+    )
+
+    scanRow = cursor.fetchone()
+
+    if scanRow is None:
+        connection.close()
+        return None
+
+    # =================================================
+    # GET RESEARCH RESULTS
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            rr.id AS research_result_id,
+            rr.candidate_id,
+            rr.release_date,
+            rr.is_recent,
+            rr.is_locally_deployable,
+            rr.technical_profile,
+            rr.research_evidence,
+
+            dc.name,
+            dc.organisation,
+            dc.source_url,
+            dc.candidate_type
+
+        FROM research_results rr
+
+        JOIN discovery_candidates dc
+            ON rr.candidate_id = dc.id
+
+        WHERE rr.scan_id = ?
+
+        ORDER BY rr.id ASC
+        """,
+        (scanId,),
+    )
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    researchResults = []
+
+    for row in rows:
+
+        technicalProfile = None
+
+        if row["technical_profile"]:
+            try:
+                technicalProfile = json.loads(row["technical_profile"])
+            except json.JSONDecodeError:
+                technicalProfile = None
+
+        researchEvidence = {}
+
+        if row["research_evidence"]:
+            try:
+                researchEvidence = json.loads(row["research_evidence"])
+            except json.JSONDecodeError:
+                researchEvidence = {}
+
+        researchResults.append(
+            {
+                "researchResultId": (row["research_result_id"]),
+                "candidateId": (row["candidate_id"]),
+                "candidate": {
+                    "name": row["name"],
+                    "organisation": (row["organisation"]),
+                    "sourceUrl": (row["source_url"]),
+                    "candidateType": (row["candidate_type"]),
+                },
+                "releaseDate": (row["release_date"]),
+                "isRecent": (
+                    None if row["is_recent"] is None else bool(row["is_recent"])
+                ),
+                "isLocallyDeployable": (
+                    None
+                    if row["is_locally_deployable"] is None
+                    else bool(row["is_locally_deployable"])
+                ),
+                "technicalProfile": (technicalProfile),
+                "researchEvidence": (researchEvidence),
+            }
+        )
+
+    return {
+        "scan": dict(scanRow),
+        "research": {
+            "results": researchResults,
+        },
+    }

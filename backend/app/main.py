@@ -15,6 +15,10 @@ from app.agents.research.agent import researchAgent
 from app.llm.client import getLLM
 from app.tools.huggingFace import searchHuggingFaceModels
 
+from app.database.db import (
+    getResearchByScan,
+)
+
 app = FastAPI()
 
 
@@ -166,3 +170,19 @@ def getLatestScanEndpoint():
         )
 
     return scan
+
+
+@app.get("/api/getResearchByScan/{scanId}")
+def getResearchEndpoint(
+    scanId: int,
+):
+
+    research = getResearchByScan(scanId)
+
+    if research is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(f"Scan {scanId} " "not found"),
+        )
+
+    return research
