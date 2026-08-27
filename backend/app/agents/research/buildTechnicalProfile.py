@@ -3,7 +3,7 @@ import json
 from app.llm.client import getLLM
 
 from app.models.schemas import (
-    ModelProfile,
+    TechnicalProfile,
 )
 
 from app.agents.research.config import (
@@ -39,15 +39,15 @@ def buildTechnicalProfile(
     config: ResearchConfig,
 ) -> dict:
     """
-    Gather deeper technical evidence and build the final
-    model profile.
+    Gather deeper technical evidence and build the
+    technical profile.
 
     This function should only be called after the model
     passes recency and local deployability checks.
 
     Returns:
     {
-        "profile": dict,
+        "technicalProfile": dict,
         "evidence": list[dict]
     }
     """
@@ -86,6 +86,10 @@ def buildTechnicalProfile(
     if organisation:
         queries.append(f'"{organisation}" ' f'"{modelName}" technical details')
 
+    # =================================================
+    # WEB SEARCH
+    # =================================================
+
     for query in queries:
 
         if config.verbose:
@@ -102,7 +106,7 @@ def buildTechnicalProfile(
         except Exception as error:
 
             if config.verbose:
-                print(f"Technical web search failed: " f"{query}")
+                print("Technical web search " f"failed: {query}")
 
                 print(error)
 
@@ -140,7 +144,7 @@ def buildTechnicalProfile(
     except Exception as error:
 
         if config.verbose:
-            print("Technical GitHub search failed.")
+            print("Technical GitHub search " "failed.")
 
             print(error)
 
@@ -159,21 +163,28 @@ def buildTechnicalProfile(
     except Exception as error:
 
         if config.verbose:
-            print("Technical arXiv search failed.")
+            print("Technical arXiv search " "failed.")
 
             print(error)
+
+    # =================================================
+    # DEDUPLICATE EVIDENCE
+    # =================================================
 
     evidence = deduplicateResults(evidence)
 
     # =================================================
-    # 2. BUILD PROFILE
+    # 2. BUILD TECHNICAL PROFILE
     # =================================================
 
     response = llm.invoke(f"""
 You are building a technical profile for an automatic
 speech recognition model.
 
-Candidate:
+The candidate identity has already been established
+during Discovery.
+
+Candidate context:
 
 {json.dumps(candidate, indent=2)}
 
@@ -185,64 +196,94 @@ Research evidence:
 
 {json.dumps(evidence, indent=2)}
 
-Extract:
+Extract ONLY the following technical information:
 
-- name
-- organisation
-- releaseDate
 - license
 - architecture
 - parameterCount
 - languages
 - reportedWer
 - fineTuningSupport
+
+Do NOT return:
+
+- name
+- organisation
+- sourceUrl
+- candidateType
+- releaseDate
 - sourceUrls
 
 Rules:
 
-1. Use only supplied evidence.
+1. Use only the supplied evidence.
 
-2. Do not fabricate missing information.
+2. Do not fabricate or guess missing information.
 
 3. If a scalar field cannot be established, use null.
 
 4. If languages cannot be established, use [].
 
-5. releaseDate MUST use the supplied release date:
+5. For architecture:
 
-{releaseDate}
+   - describe the model architecture only when clearly
+     supported by the evidence
+   - use null if the architecture cannot be established
 
-6. For reportedWer:
+6. For parameterCount:
+
+   - use the parameter count for the exact candidate
+     when possible
+   - do not use the parameter count of another model
+     variant unless the candidate represents the entire
+     model family and the distinction is clearly stated
+   - use null if it cannot be established
+
+7. For languages:
+
+   - include only languages or language coverage clearly
+     supported by the evidence
+   - do not infer language support
+
+8. For reportedWer:
 
    - include benchmark or dataset context when available
    - do not confuse CER with WER
    - do not convert CER into WER
+   - do not compare unrelated model variants
    - if only CER is reported, use null
+   - use null if reliable WER cannot be established
 
-7. For fineTuningSupport:
+9. For fineTuningSupport:
 
    - state whether fine-tuning is supported
-   - include relevant method/instructions when supported
+   - include relevant method or instructions when
+     supported
    - use null if it cannot be established
 
-8. Prefer official sources when evidence conflicts.
+10. For license:
 
-9. sourceUrls should contain the most useful sources
-   supporting the technical profile.
+    - use the license associated with the actual model
+      weights or repository when possible
+    - do not infer a license from unrelated repositories
+    - use null if it cannot be established
+
+11. Prefer official sources when evidence conflicts.
+
+12. Be strict about model identity. Do not mix technical
+    details from different model variants unless the
+    candidate represents a model family and the evidence
+    clearly applies to the family.
 
 Return ONLY valid JSON:
 
 {{
-    "name": "model name",
-    "organisation": "organisation or null",
-    "releaseDate": "{releaseDate}",
     "license": "license or null",
     "architecture": "architecture or null",
     "parameterCount": "parameter count or null",
     "languages": [],
-    "reportedWer": "WER with context or null",
-    "fineTuningSupport": "description or null",
-    "sourceUrls": []
+    "reportedWer": "WER with benchmark context or null",
+    "fineTuningSupport": "description or null"
 }}
 
 Do not include markdown.
@@ -250,11 +291,15 @@ Do not include code fences.
 Do not include explanations outside the JSON.
 """)
 
+    # =================================================
+    # 3. VALIDATE PROFILE
+    # =================================================
+
     data = json.loads(response.content)
 
-    validated = ModelProfile.model_validate(data)
+    validated = TechnicalProfile.model_validate(data)
 
     return {
-        "profile": validated.model_dump(),
+        "technicalProfile": (validated.model_dump()),
         "evidence": evidence,
     }

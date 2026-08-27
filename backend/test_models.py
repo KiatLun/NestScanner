@@ -1,13 +1,12 @@
-from models.schemas import Candidate, ModelProfile
+from models.schemas import Candidate, TechnicalProfile
 from models.state import ScanState
-
 
 candidate = Candidate(
     name="Example ASR",
     organisation="Example Lab",
 )
 
-profile = ModelProfile(
+profile = TechnicalProfile(
     name="Example ASR",
     architecture="CTC",
 )

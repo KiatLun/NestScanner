@@ -34,20 +34,13 @@ class DiscoveryDecision(BaseModel):
     nextQuery: str | None = None
 
 
-class ModelProfile(BaseModel):
-    name: str
-    organisation: str | None = None
-    releaseDate: str | None = None
-    license: str | None = None
+class TechnicalProfile(BaseModel):
     architecture: str | None = None
     parameterCount: str | None = None
-
     languages: list[str] = Field(default_factory=list)
-
     reportedWer: str | None = None
     fineTuningSupport: str | None = None
-
-    sourceUrls: list[str] = Field(default_factory=list)
+    license: str | None = None
 
 
 class VerificationResult(BaseModel):

@@ -86,7 +86,7 @@ def initializeDatabase():
             is_recent INTEGER,
             is_locally_deployable INTEGER,
 
-            profile TEXT,
+            technical_profile TEXT,
             research_evidence TEXT,
 
             FOREIGN KEY (run_id)
@@ -248,7 +248,7 @@ def saveResearchResult(
             release_date,
             is_recent,
             is_locally_deployable,
-            profile,
+            technical_profile,
             research_evidence
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -260,7 +260,7 @@ def saveResearchResult(
             result.get("isRecent"),
             result.get("isLocallyDeployable"),
             json.dumps(
-                result.get("profile"),
+                result.get("technicalProfile"),
                 ensure_ascii=False,
             ),
             json.dumps(

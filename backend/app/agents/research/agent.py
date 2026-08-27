@@ -38,23 +38,26 @@ def researchAgent(
         researchConfig,
     )
 
+    releaseDate = recencyResult.get("releaseDate")
+
+    recencyEvidence = recencyResult.get(
+        "evidence",
+        [],
+    )
+
     if not recencyResult.get(
         "isRecent",
         False,
     ):
         return {
-            "candidate": candidate,
-            "releaseDate": recencyResult.get("releaseDate"),
+            "releaseDate": releaseDate,
             "isRecent": False,
             "isLocallyDeployable": None,
-            "profile": None,
+            "technicalProfile": None,
             "researchEvidence": {
-                "recencyEvidence": (
-                    recencyResult.get(
-                        "evidence",
-                        [],
-                    )
-                ),
+                "recencyEvidence": (recencyEvidence),
+                "deployabilityEvidence": [],
+                "technicalEvidence": [],
             },
         }
 
@@ -68,29 +71,24 @@ def researchAgent(
         researchConfig,
     )
 
+    deployabilityEvidence = deployabilityResult.get(
+        "evidence",
+        [],
+    )
+
     if not deployabilityResult.get(
         "isLocallyDeployable",
         False,
     ):
         return {
-            "candidate": candidate,
-            "releaseDate": recencyResult.get("releaseDate"),
+            "releaseDate": releaseDate,
             "isRecent": True,
             "isLocallyDeployable": False,
-            "profile": None,
+            "technicalProfile": None,
             "researchEvidence": {
-                "recencyEvidence": (
-                    recencyResult.get(
-                        "evidence",
-                        [],
-                    )
-                ),
-                "deployabilityEvidence": (
-                    deployabilityResult.get(
-                        "evidence",
-                        [],
-                    )
-                ),
+                "recencyEvidence": (recencyEvidence),
+                "deployabilityEvidence": (deployabilityEvidence),
+                "technicalEvidence": [],
             },
         }
 
@@ -101,37 +99,20 @@ def researchAgent(
     profileResult = buildTechnicalProfile(
         candidate,
         discoveryEvidence,
-        recencyResult.get(
-            "evidence",
-            [],
-        ),
-        deployabilityResult.get(
-            "evidence",
-            [],
-        ),
-        recencyResult.get("releaseDate"),
+        recencyEvidence,
+        deployabilityEvidence,
+        releaseDate,
         researchConfig,
     )
 
     return {
-        "candidate": candidate,
-        "releaseDate": recencyResult.get("releaseDate"),
+        "releaseDate": releaseDate,
         "isRecent": True,
         "isLocallyDeployable": True,
-        "profile": profileResult.get("profile"),
+        "technicalProfile": (profileResult.get("technicalProfile")),
         "researchEvidence": {
-            "recencyEvidence": (
-                recencyResult.get(
-                    "evidence",
-                    [],
-                )
-            ),
-            "deployabilityEvidence": (
-                deployabilityResult.get(
-                    "evidence",
-                    [],
-                )
-            ),
+            "recencyEvidence": (recencyEvidence),
+            "deployabilityEvidence": (deployabilityEvidence),
             "technicalEvidence": (
                 profileResult.get(
                     "evidence",
