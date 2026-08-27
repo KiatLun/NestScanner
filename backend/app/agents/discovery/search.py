@@ -6,6 +6,10 @@ from datetime import (
 
 from zoneinfo import ZoneInfo
 
+from app.agents.discovery.config import (
+    DiscoveryConfig,
+)
+
 from app.agents.discovery.searchPlanner import (
     buildDiscoveryQueries,
 )
@@ -21,7 +25,7 @@ from app.tools.huggingFace import (
 )
 
 from app.tools.github import (
-    searchGithubRepositories,
+    searchGitHubRepositories,
 )
 
 from app.tools.arvixSearch import (
@@ -29,7 +33,9 @@ from app.tools.arvixSearch import (
 )
 
 
-def getDiscoveryDateWindow() -> tuple[date, date]:
+def getDiscoveryDateWindow(
+    config: DiscoveryConfig,
+) -> tuple[date, date]:
     """
     Return a recent-source search window.
 
@@ -39,52 +45,40 @@ def getDiscoveryDateWindow() -> tuple[date, date]:
     information.
     """
 
-    currentDate = datetime.now(
-        ZoneInfo("Asia/Singapore")
-    ).date()
+    currentDate = datetime.now(ZoneInfo("Asia/Singapore")).date()
 
-    cutoffDate = (
-        currentDate
-        - timedelta(days=30)
-    )
+    cutoffDate = currentDate - timedelta(days=config.discoveryWindowDays)
 
     return cutoffDate, currentDate
 
 
 def searchWeb(
     queries: list[str],
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Search the general web.
     """
-
     results = []
 
     for query in queries:
 
-        print(
-            f"\nSearching web: {query}"
-        )
+        if config.verbose:
+            print(f"\nSearching web: {query}")
 
         try:
             queryResults = webSearch(
                 query,
-                maxResults=5,
+                maxResults=config.webResultsPerQuery,
             )
 
-            print(
-                f"Found {len(queryResults)} "
-                "web results."
-            )
+            if config.verbose:
+                print(f"Found {len(queryResults)} " "web results.")
 
-            results.extend(
-                queryResults
-            )
+            results.extend(queryResults)
 
         except Exception as error:
-            print(
-                f"Web search failed: {query}"
-            )
+            print(f"Web search failed: {query}")
 
             print(error)
 
@@ -93,6 +87,7 @@ def searchWeb(
 
 def searchHuggingFace(
     queries: list[str],
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Search Hugging Face and retain ASR models.
@@ -102,39 +97,31 @@ def searchHuggingFace(
 
     for query in queries:
 
-        print(
-            f"\nSearching Hugging Face: {query}"
-        )
+        if config.verbose:
+            print(f"\nSearching Hugging Face: " f"{query}")
 
         try:
             queryResults = searchHuggingFaceModels(
                 query,
-                limit=20,
+                limit=(config.huggingFaceResultsPerQuery),
             )
 
-            print(
-                f"Found {len(queryResults)} "
-                "Hugging Face results "
-                "before filtering."
-            )
+            if config.verbose:
+                print(
+                    f"Found {len(queryResults)} "
+                    "Hugging Face results "
+                    "before filtering."
+                )
 
-            queryResults = filterASRModels(
-                queryResults
-            )
+            queryResults = filterASRModels(queryResults)
 
-            print(
-                f"Found {len(queryResults)} "
-                "ASR models after filtering."
-            )
+            if config.verbose:
+                print(f"Found {len(queryResults)} " "ASR models after filtering.")
 
-            results.extend(
-                queryResults
-            )
+            results.extend(queryResults)
 
         except Exception as error:
-            print(
-                f"Hugging Face search failed: {query}"
-            )
+            print(f"Hugging Face search failed: " f"{query}")
 
             print(error)
 
@@ -143,6 +130,7 @@ def searchHuggingFace(
 
 def searchGithub(
     queries: list[str],
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Search GitHub repositories.
@@ -152,31 +140,22 @@ def searchGithub(
 
     for query in queries:
 
-        print(
-            f"\nSearching GitHub: {query}"
-        )
+        if config.verbose:
+            print(f"\nSearching GitHub: {query}")
 
         try:
-            queryResults = (
-                searchGithubRepositories(
-                    query,
-                    limit=10,
-                )
+            queryResults = searchGitHubRepositories(
+                query,
+                limit=config.githubResultsPerQuery,
             )
 
-            print(
-                f"Found {len(queryResults)} "
-                "GitHub repositories."
-            )
+            if config.verbose:
+                print(f"Found {len(queryResults)} " "GitHub repositories.")
 
-            results.extend(
-                queryResults
-            )
+            results.extend(queryResults)
 
         except Exception as error:
-            print(
-                f"GitHub search failed: {query}"
-            )
+            print(f"GitHub search failed: {query}")
 
             print(error)
 
@@ -185,6 +164,7 @@ def searchGithub(
 
 def searchArxiv(
     queries: list[str],
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Search arXiv papers.
@@ -194,29 +174,22 @@ def searchArxiv(
 
     for query in queries:
 
-        print(
-            f"\nSearching arXiv: {query}"
-        )
+        if config.verbose:
+            print(f"\nSearching arXiv: {query}")
 
         try:
             queryResults = searchArxivPapers(
                 query,
-                limit=10,
+                limit=config.arxivResultsPerQuery,
             )
 
-            print(
-                f"Found {len(queryResults)} "
-                "arXiv papers."
-            )
+            if config.verbose:
+                print(f"Found {len(queryResults)} " "arXiv papers.")
 
-            results.extend(
-                queryResults
-            )
+            results.extend(queryResults)
 
         except Exception as error:
-            print(
-                f"arXiv search failed: {query}"
-            )
+            print(f"arXiv search failed: {query}")
 
             print(error)
 
@@ -225,15 +198,14 @@ def searchArxiv(
 
 def gatherDiscoveryEvidence(
     objective: str,
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Build a search plan and gather evidence from
     web, Hugging Face, GitHub, and arXiv.
     """
 
-    cutoffDate, currentDate = (
-        getDiscoveryDateWindow()
-    )
+    cutoffDate, currentDate = getDiscoveryDateWindow(config)
 
     searchObjective = f"""
 {objective}
@@ -257,99 +229,90 @@ release date and recency.
 """
 
     searchPlan = buildDiscoveryQueries(
-        searchObjective
+        searchObjective,
+        config,
     )
+    if config.verbose:
 
-    print(
-        "\n=== SEARCH PLAN ==="
-    )
+        print("\n=== SEARCH PLAN ===")
 
-    print(
-        "\nWeb queries:"
-    )
+        print("\nWeb queries:")
 
-    for query in searchPlan.webQueries:
-        print(f"- {query}")
+        for query in searchPlan.webQueries:
+            print(f"- {query}")
 
-    print(
-        "\nHugging Face queries:"
-    )
+        print("\nHugging Face queries:")
 
-    for query in searchPlan.huggingFaceQueries:
-        print(f"- {query}")
+        for query in searchPlan.huggingFaceQueries:
+            print(f"- {query}")
 
-    print(
-        "\nGitHub queries:"
-    )
+        print("\nGitHub queries:")
 
-    for query in searchPlan.githubQueries:
-        print(f"- {query}")
+        for query in searchPlan.githubQueries:
+            print(f"- {query}")
 
-    print(
-        "\narXiv queries:"
-    )
+        print("\narXiv queries:")
 
-    for query in searchPlan.arxivQueries:
-        print(f"- {query}")
+        for query in searchPlan.arxivQueries:
+            print(f"- {query}")
 
     allResults = []
 
-    print(
-        "\n=== WEB SEARCH ==="
-    )
+    if config.enableWebSearch:
 
-    allResults.extend(
-        searchWeb(
-            searchPlan.webQueries
+        if config.verbose:
+            print("\n=== WEB SEARCH ===")
+
+        allResults.extend(
+            searchWeb(
+                searchPlan.webQueries,
+                config,
+            )
         )
-    )
 
-    print(
-        "\n=== HUGGING FACE SEARCH ==="
-    )
+    if config.enableHuggingFaceSearch:
 
-    allResults.extend(
-        searchHuggingFace(
-            searchPlan.huggingFaceQueries
+        if config.verbose:
+            print("\n=== HUGGING FACE SEARCH ===")
+
+        allResults.extend(
+            searchHuggingFace(
+                searchPlan.huggingFaceQueries,
+                config,
+            )
         )
-    )
 
-    print(
-        "\n=== GITHUB SEARCH ==="
-    )
+    if config.enableGithubSearch:
 
-    allResults.extend(
-        searchGithub(
-            searchPlan.githubQueries
+        if config.verbose:
+            print("\n=== GITHUB SEARCH ===")
+
+        allResults.extend(
+            searchGithub(
+                searchPlan.githubQueries,
+                config,
+            )
         )
-    )
 
-    print(
-        "\n=== ARXIV SEARCH ==="
-    )
+    if config.enableArxivSearch:
 
-    allResults.extend(
-        searchArxiv(
-            searchPlan.arxivQueries
+        if config.verbose:
+            print("\n=== ARXIV SEARCH ===")
+
+        allResults.extend(
+            searchArxiv(
+                searchPlan.arxivQueries,
+                config,
+            )
         )
-    )
 
-    rawResultCount = len(
-        allResults
-    )
+    rawResultCount = len(allResults)
 
-    allResults = deduplicateResults(
-        allResults
-    )
+    allResults = deduplicateResults(allResults)
 
-    print(
-        f"\nRaw discovery results: "
-        f"{rawResultCount}"
-    )
+    if config.verbose:
+        print(f"\nRaw discovery results: " f"{rawResultCount}")
 
-    print(
-        f"Unique discovery results: "
-        f"{len(allResults)}"
-    )
+        print(f"Unique discovery results: " f"{len(allResults)}")
 
     return allResults

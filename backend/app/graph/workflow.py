@@ -1,15 +1,22 @@
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import (
+    StateGraph,
+    START,
+    END,
+)
 
 from app.models.state import ScanState
 
-from app.agents.discovery import discoveryAgent
-from app.agents.research import research_agent
-from app.agents.verification import verification_agent
+from app.agents.discovery import (
+    discoveryAgent,
+)
 
-from app.graph.routing import verification_router
+from app.agents.research import (
+    research_agent,
+)
 
 
 def build_graph():
+
     workflow = StateGraph(ScanState)
 
     workflow.add_node(
@@ -20,11 +27,6 @@ def build_graph():
     workflow.add_node(
         "research",
         research_agent,
-    )
-
-    workflow.add_node(
-        "verification",
-        verification_agent,
     )
 
     workflow.add_edge(
@@ -39,16 +41,7 @@ def build_graph():
 
     workflow.add_edge(
         "research",
-        "verification",
-    )
-
-    workflow.add_conditional_edges(
-        "verification",
-        verification_router,
-        {
-            "research_again": "research",
-            "done": END,
-        },
+        END,
     )
 
     return workflow.compile()

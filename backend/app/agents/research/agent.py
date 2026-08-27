@@ -1,3 +1,8 @@
+from app.agents.research.config import (
+    ResearchConfig,
+    defaultResearchConfig,
+)
+
 from app.agents.research.checkRecency import (
     checkRecency,
 )
@@ -13,22 +18,10 @@ from app.agents.research.buildTechnicalProfile import (
 
 def researchAgent(
     researchInput: dict,
+    researchConfig: ResearchConfig = defaultResearchConfig,
 ) -> dict:
-    """
-    Research one candidate produced by Discovery.
 
-    Research performs:
-    1. Recency check
-    2. Local deployability check
-    3. Technical profiling
-
-    Technical profiling only happens when both
-    checks pass.
-    """
-
-    candidate = researchInput[
-        "candidate"
-    ]
+    candidate = researchInput["candidate"]
 
     discoveryEvidence = researchInput.get(
         "discoveryEvidence",
@@ -42,7 +35,7 @@ def researchAgent(
     recencyResult = checkRecency(
         candidate,
         discoveryEvidence,
-        180
+        researchConfig,
     )
 
     if not recencyResult.get(
@@ -51,27 +44,28 @@ def researchAgent(
     ):
         return {
             "candidate": candidate,
-            "releaseDate": recencyResult.get(
-                "releaseDate"
-            ),
+            "releaseDate": recencyResult.get("releaseDate"),
             "isRecent": False,
             "isLocallyDeployable": None,
             "profile": None,
             "researchEvidence": {
-                "recencyEvidence": recencyResult.get(
-                    "evidence",
-                    [],
+                "recencyEvidence": (
+                    recencyResult.get(
+                        "evidence",
+                        [],
+                    )
                 ),
             },
         }
 
     # =================================================
-    # 2. LOCAL DEPLOYABILITY
+    # 2. DEPLOYABILITY
     # =================================================
 
     deployabilityResult = checkDeployability(
         candidate,
         discoveryEvidence,
+        researchConfig,
     )
 
     if not deployabilityResult.get(
@@ -80,16 +74,16 @@ def researchAgent(
     ):
         return {
             "candidate": candidate,
-            "releaseDate": recencyResult.get(
-                "releaseDate"
-            ),
+            "releaseDate": recencyResult.get("releaseDate"),
             "isRecent": True,
             "isLocallyDeployable": False,
             "profile": None,
             "researchEvidence": {
-                "recencyEvidence": recencyResult.get(
-                    "evidence",
-                    [],
+                "recencyEvidence": (
+                    recencyResult.get(
+                        "evidence",
+                        [],
+                    )
                 ),
                 "deployabilityEvidence": (
                     deployabilityResult.get(
@@ -115,25 +109,22 @@ def researchAgent(
             "evidence",
             [],
         ),
-        recencyResult.get(
-            "releaseDate"
-        ),
+        recencyResult.get("releaseDate"),
+        researchConfig,
     )
 
     return {
         "candidate": candidate,
-        "releaseDate": recencyResult.get(
-            "releaseDate"
-        ),
+        "releaseDate": recencyResult.get("releaseDate"),
         "isRecent": True,
         "isLocallyDeployable": True,
-        "profile": profileResult.get(
-            "profile"
-        ),
+        "profile": profileResult.get("profile"),
         "researchEvidence": {
-            "recencyEvidence": recencyResult.get(
-                "evidence",
-                [],
+            "recencyEvidence": (
+                recencyResult.get(
+                    "evidence",
+                    [],
+                )
             ),
             "deployabilityEvidence": (
                 deployabilityResult.get(
@@ -141,9 +132,11 @@ def researchAgent(
                     [],
                 )
             ),
-            "technicalEvidence": profileResult.get(
-                "evidence",
-                [],
+            "technicalEvidence": (
+                profileResult.get(
+                    "evidence",
+                    [],
+                )
             ),
         },
     }

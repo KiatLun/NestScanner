@@ -1,24 +1,40 @@
+import os
+
 import requests
+from dotenv import load_dotenv
 
-GITHUB_SEARCH_URL = "https://api.github.com/search/repositories"
+load_dotenv()
 
 
-def searchGithubRepositories(
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+
+
+def searchGitHubRepositories(
     query: str,
     limit: int = 10,
 ) -> list[dict]:
 
+    url = "https://api.github.com/" "search/repositories"
+
+    headers = {
+        "Accept": ("application/vnd.github+json"),
+    }
+
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+
     params = {
         "q": query,
+        "per_page": limit,
         "sort": "updated",
         "order": "desc",
-        "per_page": limit,
     }
 
     response = requests.get(
-        GITHUB_SEARCH_URL,
+        url,
+        headers=headers,
         params=params,
-        timeout=15,
+        timeout=30,
     )
 
     response.raise_for_status()
@@ -27,8 +43,10 @@ def searchGithubRepositories(
 
     results = []
 
-    for repo in data.get("items", []):
-
+    for repo in data.get(
+        "items",
+        [],
+    ):
         results.append(
             {
                 "source": "github",
@@ -36,12 +54,10 @@ def searchGithubRepositories(
                 "url": repo.get("html_url"),
                 "description": repo.get("description"),
                 "metadata": {
-                    "organisation": (repo.get("owner", {}).get("login")),
                     "stars": repo.get("stargazers_count"),
-                    "forks": repo.get("forks_count"),
                     "language": repo.get("language"),
-                    "updated_at": repo.get("updated_at"),
-                    "topics": repo.get("topics", []),
+                    "createdAt": repo.get("created_at"),
+                    "updatedAt": repo.get("updated_at"),
                 },
             }
         )

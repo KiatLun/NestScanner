@@ -1,13 +1,19 @@
 import json
 
-from fastapi import FastAPI
+from fastapi import (
+    FastAPI,
+    HTTPException,
+)
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.database.db import (
+    getAllScans,
+    getScan,
+    getLatestScan,
+)
 from app.agents.discovery import discoveryAgent
 from app.agents.research.agent import researchAgent
 from app.llm.client import getLLM
 from app.tools.huggingFace import searchHuggingFaceModels
-
 
 app = FastAPI()
 
@@ -44,18 +50,14 @@ def testLlm():
 
     llm = getLLM()
 
-    response = llm.invoke(
-        """
+    response = llm.invoke("""
 Return the current date in YYYY-MM-DD format.
 
 Also return:
 "LLM Connection Successful"
-"""
-    )
+""")
 
-    return {
-        "response": response.content
-    }
+    return {"response": response.content}
 
 
 # =====================================================
@@ -71,9 +73,7 @@ def getAsrModels():
         limit=20,
     )
 
-    return {
-        "models": models
-    }
+    return {"models": models}
 
 
 # =====================================================
@@ -91,13 +91,9 @@ def discoverAsrModels():
         )
     }
 
-    result = discoveryAgent(
-        state
-    )
+    result = discoveryAgent(state)
 
-    return {
-        "result": result
-    }
+    return {"result": result}
 
 
 # =====================================================
@@ -122,22 +118,51 @@ def testResearch(
         [],
     )
 
-    if (
-        candidateIndex < 0
-        or candidateIndex >= len(candidates)
-    ):
-        return {
-            "error": "Invalid candidateIndex"
-        }
+    if candidateIndex < 0 or candidateIndex >= len(candidates):
+        return {"error": "Invalid candidateIndex"}
 
-    researchInput = candidates[
-        candidateIndex
-    ]
+    researchInput = candidates[candidateIndex]
 
-    result = researchAgent(
-        researchInput
-    )
+    result = researchAgent(researchInput)
+
+    return {"result": result}
+
+
+@app.get("/api/getAllScans")
+def getAllScansEndpoint():
+
+    scans = getAllScans()
 
     return {
-        "result": result
+        "scans": scans,
     }
+
+
+@app.get("/api/getScan/{scanId}")
+def getScanEndpoint(
+    scanId: int,
+):
+
+    scan = getScan(scanId)
+
+    if scan is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(f"Scan {scanId} " "not found"),
+        )
+
+    return scan
+
+
+@app.get("/api/getLatestScan")
+def getLatestScanEndpoint():
+
+    scan = getLatestScan()
+
+    if scan is None:
+        raise HTTPException(
+            status_code=404,
+            detail=("No scans found"),
+        )
+
+    return scan

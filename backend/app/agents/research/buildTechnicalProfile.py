@@ -6,6 +6,10 @@ from app.models.schemas import (
     ModelProfile,
 )
 
+from app.agents.research.config import (
+    ResearchConfig,
+)
+
 from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
@@ -16,13 +20,12 @@ from app.tools.huggingFace import (
 )
 
 from app.tools.github import (
-    searchGithubRepositories,
+    searchGitHubRepositories,
 )
 
 from app.tools.arvixSearch import (
     searchArxivPapers,
 )
-
 
 llm = getLLM()
 
@@ -33,6 +36,7 @@ def buildTechnicalProfile(
     recencyEvidence: list[dict],
     deployabilityEvidence: list[dict],
     releaseDate: str | None,
+    config: ResearchConfig,
 ) -> dict:
     """
     Gather deeper technical evidence and build the final
@@ -60,17 +64,11 @@ def buildTechnicalProfile(
 
     evidence = []
 
-    evidence.extend(
-        discoveryEvidence
-    )
+    evidence.extend(discoveryEvidence)
 
-    evidence.extend(
-        recencyEvidence
-    )
+    evidence.extend(recencyEvidence)
 
-    evidence.extend(
-        deployabilityEvidence
-    )
+    evidence.extend(deployabilityEvidence)
 
     # =================================================
     # 1. GATHER TECHNICAL EVIDENCE
@@ -86,83 +84,86 @@ def buildTechnicalProfile(
     ]
 
     if organisation:
-        queries.append(
-            f'"{organisation}" "{modelName}" technical details'
-        )
+        queries.append(f'"{organisation}" ' f'"{modelName}" technical details')
 
     for query in queries:
+
+        if config.verbose:
+            print(f"\nTechnical web search: " f"{query}")
+
         try:
             results = webSearch(
                 query,
-                maxResults=5,
+                maxResults=(config.technicalResultsPerSearch),
             )
 
-            evidence.extend(
-                results
-            )
+            evidence.extend(results)
 
         except Exception as error:
-            print(
-                f"Technical web search failed: "
-                f"{query}"
-            )
 
-            print(error)
+            if config.verbose:
+                print(f"Technical web search failed: " f"{query}")
+
+                print(error)
+
+    # =================================================
+    # HUGGING FACE
+    # =================================================
 
     try:
         hfResults = searchHuggingFaceModels(
             modelName,
-            limit=10,
+            limit=(config.technicalHuggingFaceResults),
         )
 
-        evidence.extend(
-            hfResults
-        )
+        evidence.extend(hfResults)
 
     except Exception as error:
-        print(
-            "Technical Hugging Face search failed."
-        )
 
-        print(error)
+        if config.verbose:
+            print("Technical Hugging Face " "search failed.")
+
+            print(error)
+
+    # =================================================
+    # GITHUB
+    # =================================================
 
     try:
-        githubResults = searchGithubRepositories(
+        githubResults = searchGitHubRepositories(
             modelName,
-            limit=5,
+            limit=(config.technicalGithubResults),
         )
 
-        evidence.extend(
-            githubResults
-        )
+        evidence.extend(githubResults)
 
     except Exception as error:
-        print(
-            "Technical GitHub search failed."
-        )
 
-        print(error)
+        if config.verbose:
+            print("Technical GitHub search failed.")
+
+            print(error)
+
+    # =================================================
+    # ARXIV
+    # =================================================
 
     try:
         arxivResults = searchArxivPapers(
             modelName,
-            limit=5,
+            limit=(config.technicalArxivResults),
         )
 
-        evidence.extend(
-            arxivResults
-        )
+        evidence.extend(arxivResults)
 
     except Exception as error:
-        print(
-            "Technical arXiv search failed."
-        )
 
-        print(error)
+        if config.verbose:
+            print("Technical arXiv search failed.")
 
-    evidence = deduplicateResults(
-        evidence
-    )
+            print(error)
+
+    evidence = deduplicateResults(evidence)
 
     # =================================================
     # 2. BUILD PROFILE
@@ -249,13 +250,9 @@ Do not include code fences.
 Do not include explanations outside the JSON.
 """)
 
-    data = json.loads(
-        response.content
-    )
+    data = json.loads(response.content)
 
-    validated = ModelProfile.model_validate(
-        data
-    )
+    validated = ModelProfile.model_validate(data)
 
     return {
         "profile": validated.model_dump(),

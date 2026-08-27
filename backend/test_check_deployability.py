@@ -1,9 +1,12 @@
 import json
 
+from app.agents.research.config import (
+    ResearchConfig,
+)
+
 from app.agents.research.checkDeployability import (
     checkDeployability,
 )
-
 
 GREEN = "\033[92m"
 RED = "\033[91m"
@@ -11,187 +14,118 @@ RESET = "\033[0m"
 
 
 def main():
+
+    config = ResearchConfig()
+
     testCases = [
         {
             "name": "Mega-ASR",
-            "expectedDeployable": True,
-            "input": {
-                "candidate": {
-                    "name": "Mega-ASR",
-                    "organisation": None,
-                    "sourceUrl": "https://github.com/xzf-thu/Mega-ASR",
-                    "reason": (
-                        "Foundation ASR project with released "
-                        "inference/training codebase and model weights."
-                    ),
-                    "candidateType": "model",
-                },
-                "discoveryEvidence": [
-                    {
-                        "source": "web",
-                        "title": "GitHub - xzf-thu/Mega-ASR",
-                        "url": "https://github.com/xzf-thu/Mega-ASR",
-                        "description": (
-                            "May 20, 2026: We release the Mega-ASR "
-                            "Inference and Training Codebase. "
-                            "May 19, 2026: Mega-ASR model weights "
-                            "are now available on Hugging Face."
-                        ),
-                        "metadata": {},
-                    }
-                ],
+            "candidate": {
+                "name": "Mega-ASR",
+                "organisation": None,
+                "sourceUrl": ("https://github.com/" "xzf-thu/Mega-ASR"),
+                "candidateType": "model",
             },
-        },
-        {
-            "name": "cohere-transcribe-03-2026",
-            "expectedDeployable": True,
-            "input": {
-                "candidate": {
-                    "name": "cohere-transcribe-03-2026",
-                    "organisation": "Cohere",
-                    "sourceUrl": (
-                        "https://techcrunch.com/2026/03/26/"
-                        "cohere-launches-an-open-source-voice-model-"
-                        "specifically-for-transcription/"
+            "discoveryEvidence": [
+                {
+                    "source": "github",
+                    "title": "xzf-thu/Mega-ASR",
+                    "url": ("https://github.com/" "xzf-thu/Mega-ASR"),
+                    "description": (
+                        "Mega-ASR repository. "
+                        "Model weights are available "
+                        "with inference and training code."
                     ),
-                    "reason": (
-                        "Cohere open-source transcription model."
-                    ),
-                    "candidateType": "model",
-                },
-                "discoveryEvidence": [
-                    {
-                        "source": "web",
-                        "title": (
-                            "Cohere launches an open source voice model "
-                            "specifically for transcription"
-                        ),
-                        "url": (
-                            "https://techcrunch.com/2026/03/26/"
-                            "cohere-launches-an-open-source-voice-model-"
-                            "specifically-for-transcription/"
-                        ),
-                        "description": (
-                            "The model is meant for use with "
-                            "consumer-grade GPUs for those who "
-                            "want to self-host it."
-                        ),
-                        "metadata": {},
-                    }
-                ],
-            },
+                    "metadata": {},
+                }
+            ],
+            "expected": True,
         },
         {
             "name": "Qwen3-ASR",
-            "expectedDeployable": True,
-            "input": {
-                "candidate": {
-                    "name": "Qwen3-ASR",
-                    "organisation": "Qwen",
-                    "sourceUrl": "https://github.com/QwenLM/Qwen3-ASR",
-                    "reason": "Open-source ASR series from Qwen.",
-                    "candidateType": "model_family",
-                },
-                "discoveryEvidence": [
-                    {
-                        "source": "huggingface",
-                        "title": "Qwen/Qwen3-ASR-1.7B",
-                        "url": (
-                            "https://huggingface.co/"
-                            "Qwen/Qwen3-ASR-1.7B"
-                        ),
-                        "description": None,
-                        "metadata": {
-                            "organisation": "Qwen",
-                            "pipelineTag": (
-                                "automatic-speech-recognition"
-                            ),
-                            "tags": [
-                                "safetensors",
-                                "qwen3_asr",
-                                "automatic-speech-recognition",
-                                "license:apache-2.0",
-                            ],
-                        },
-                    }
-                ],
+            "candidate": {
+                "name": "Qwen3-ASR",
+                "organisation": "Qwen",
+                "sourceUrl": ("https://huggingface.co/" "Qwen/Qwen3-ASR-1.7B"),
+                "candidateType": "model_family",
             },
+            "discoveryEvidence": [
+                {
+                    "source": "huggingface",
+                    "title": ("Qwen/Qwen3-ASR-1.7B"),
+                    "url": ("https://huggingface.co/" "Qwen/Qwen3-ASR-1.7B"),
+                    "description": (
+                        "Qwen3-ASR model checkpoint " "hosted on Hugging Face."
+                    ),
+                    "metadata": {},
+                }
+            ],
+            "expected": True,
+        },
+        {
+            "name": "Cohere Transcribe",
+            "candidate": {
+                "name": ("cohere-transcribe-03-2026"),
+                "organisation": "Cohere",
+                "sourceUrl": None,
+                "candidateType": "model",
+            },
+            "discoveryEvidence": [
+                {
+                    "source": "web",
+                    "title": ("Cohere Transcribe"),
+                    "url": "https://example.com/cohere",
+                    "description": (
+                        "Cohere released its " "Transcribe speech recognition " "model."
+                    ),
+                    "metadata": {},
+                }
+            ],
+            "expected": True,
         },
         {
             "name": "GPT-Transcribe",
-            "expectedDeployable": False,
-            "input": {
-                "candidate": {
-                    "name": "GPT-Transcribe",
-                    "organisation": "OpenAI",
-                    "sourceUrl": (
-                        "https://spokenly.app/blog/"
-                        "gpt-transcribe"
-                    ),
-                    "reason": (
-                        "OpenAI speech-to-text model "
-                        "for transcription."
-                    ),
-                    "candidateType": "model",
-                },
-                "discoveryEvidence": [
-                    {
-                        "source": "web",
-                        "title": (
-                            "GPT-Transcribe: OpenAI's New "
-                            "Speech-to-Text Model"
-                        ),
-                        "url": (
-                            "https://spokenly.app/blog/"
-                            "gpt-transcribe"
-                        ),
-                        "description": (
-                            "GPT-Transcribe is OpenAI's "
-                            "speech-to-text model."
-                        ),
-                        "metadata": {},
-                    }
-                ],
+            "candidate": {
+                "name": "GPT-Transcribe",
+                "organisation": "OpenAI",
+                "sourceUrl": None,
+                "candidateType": "model",
             },
+            "discoveryEvidence": [
+                {
+                    "source": "web",
+                    "title": "GPT-Transcribe",
+                    "url": "https://example.com/gpt",
+                    "description": (
+                        "GPT-Transcribe is an " "OpenAI speech-to-text model."
+                    ),
+                    "metadata": {},
+                }
+            ],
+            "expected": False,
         },
     ]
 
-    passedCount = 0
+    passed = 0
 
-    for testCase in testCases:
+    for index, testCase in enumerate(
+        testCases,
+        start=1,
+    ):
+
+        print("\n" + "=" * 70)
+
+        print(f"TEST {index}: " f"{testCase['name']}")
+
+        print("=" * 70)
+
         result = checkDeployability(
-            testCase["input"]["candidate"],
-            testCase["input"]["discoveryEvidence"],
+            testCase["candidate"],
+            testCase["discoveryEvidence"],
+            config,
         )
 
-        actualDeployable = result.get(
-            "isLocallyDeployable",
-            False,
-        )
-
-        passed = (
-            actualDeployable
-            == testCase["expectedDeployable"]
-        )
-
-        if passed:
-            passedCount += 1
-
-        color = GREEN if passed else RED
-        status = "PASS" if passed else "FAIL"
-
-        print(
-            "\n"
-            + "=" * 70
-        )
-
-        print(
-            f"TEST: {testCase['name']}"
-        )
-
-        print(
-            "=" * 70
-        )
+        print("\n=== RESULT ===")
 
         print(
             json.dumps(
@@ -200,43 +134,37 @@ def main():
             )
         )
 
-        print(
-            f"\nExpected: "
-            f"{testCase['expectedDeployable']}"
-        )
+        actual = result.get("isLocallyDeployable")
 
-        print(
-            f"Actual: "
-            f"{actualDeployable}"
-        )
+        expected = testCase["expected"]
 
-        print(
-            f"\n{color}{status}{RESET}"
-        )
+        print(f"\nExpected: {expected}")
 
-    total = len(
-        testCases
-    )
+        print(f"Actual:   {actual}")
 
-    print(
-        "\n"
-        + "=" * 70
-    )
+        if actual == expected:
 
-    if passedCount == total:
-        print(
-            f"{GREEN}"
-            f"ALL TESTS PASSED "
-            f"({passedCount}/{total})"
-            f"{RESET}"
-        )
+            passed += 1
+
+            print(f"{GREEN}" "PASS" f"{RESET}")
+
+        else:
+            print(f"{RED}" "FAIL" f"{RESET}")
+
+    print("\n" + "=" * 70)
+
+    print("FINAL SUMMARY")
+
+    print("=" * 70)
+
+    print(f"Passed: " f"{passed}/{len(testCases)}")
+
+    if passed == len(testCases):
+
+        print(f"{GREEN}" "ALL TESTS PASSED" f"{RESET}")
+
     else:
-        print(
-            f"{RED}"
-            f"{passedCount}/{total} "
-            f"TESTS PASSED"
-            f"{RESET}"
-        )
+        print(f"{RED}" "SOME TESTS FAILED" f"{RESET}")
 
 
 if __name__ == "__main__":

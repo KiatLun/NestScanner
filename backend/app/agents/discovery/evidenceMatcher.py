@@ -6,12 +6,16 @@ from app.models.schemas import (
     DiscoveryCandidateList,
 )
 
+from app.agents.discovery.config import (
+    DiscoveryConfig,
+)
 
 llm = getLLM()
 
 
 def groupModelEvidence(
     searchResults: list[dict],
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Group cross-source evidence by ASR model/model family
@@ -24,9 +28,8 @@ def groupModelEvidence(
     if not searchResults:
         return []
 
-    print(
-        "\n=== CROSS-SOURCE EVIDENCE MATCHING ==="
-    )
+    if config.verbose:
+        print("\n=== CROSS-SOURCE EVIDENCE MATCHING ===")
 
     response = llm.invoke(f"""
 You are performing cross-source evidence matching for an
@@ -190,10 +193,6 @@ Prefer:
 5. arXiv paper
 6. credible announcement/article
 
-reason:
-- Give a short reason explaining why this is an
-  identifiable ASR model/model family.
-- Do NOT perform deep technical analysis.
 
 candidateType must be one of:
 
@@ -267,7 +266,6 @@ Use exactly this structure:
                 "name": "model name",
                 "organisation": "organisation or null",
                 "sourceUrl": "primary source URL or null",
-                "reason": "short reason this is an ASR model",
                 "candidateType": "model"
             }},
             "discoveryEvidence": [
@@ -290,31 +288,20 @@ Do not include explanations outside the JSON.
 
     rawContent = response.content
 
-    print(
-        "\n=== RAW EVIDENCE MATCHER RESPONSE ==="
-    )
+    if config.verbose:
+        print("\n=== RAW EVIDENCE MATCHER RESPONSE ===")
 
-    print(rawContent)
+        print(rawContent)
 
-    data = json.loads(
-        rawContent
-    )
+    data = json.loads(rawContent)
 
-    validated = (
-        DiscoveryCandidateList.model_validate(
-            data
-        )
-    )
+    validated = DiscoveryCandidateList.model_validate(data)
 
-    candidates = [
-        candidate.model_dump()
-        for candidate in validated.candidates
-    ]
+    candidates = [candidate.model_dump() for candidate in validated.candidates]
 
-    print(
-        f"\nCreated "
-        f"{len(candidates)} "
-        "Discovery candidates."
-    )
+    candidates = candidates[: config.maxCandidates]
+
+    if config.verbose:
+        print(f"\nCreated " f"{len(candidates)} " "Discovery candidates.")
 
     return candidates

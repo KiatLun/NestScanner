@@ -6,6 +6,10 @@ from app.models.schemas import (
     DiscoveryDecision,
 )
 
+from app.agents.discovery.config import (
+    DiscoveryConfig,
+)
+
 from app.agents.discovery.search import (
     getDiscoveryDateWindow,
 )
@@ -14,7 +18,6 @@ from app.tools.webSearch import (
     webSearch,
     deduplicateResults,
 )
-
 
 llm = getLLM()
 
@@ -42,20 +45,14 @@ def prepareCoverageEvidence(
             or ""
         )
 
-        compactEvidence.append({
-            "source": result.get(
-                "source"
-            ),
-            "title": result.get(
-                "title"
-            ),
-            "url": result.get(
-                "url"
-            ),
-            "description": (
-                description[:500]
-            ),
-        })
+        compactEvidence.append(
+            {
+                "source": result.get("source"),
+                "title": result.get("title"),
+                "url": result.get("url"),
+                "description": (description[:500]),
+            }
+        )
 
     return compactEvidence
 
@@ -63,21 +60,16 @@ def prepareCoverageEvidence(
 def evaluateDiscoveryCoverage(
     objective: str,
     evidence: list[dict],
+    config: DiscoveryConfig,
 ) -> DiscoveryDecision:
     """
     Decide whether Discovery has enough evidence
     to proceed to candidate selection.
     """
 
-    cutoffDate, currentDate = (
-        getDiscoveryDateWindow()
-    )
+    cutoffDate, currentDate = getDiscoveryDateWindow(config)
 
-    compactEvidence = (
-        prepareCoverageEvidence(
-            evidence
-        )
-    )
+    compactEvidence = prepareCoverageEvidence(evidence)
 
     response = llm.invoke(f"""
 You are evaluating search coverage for an ASR
@@ -159,45 +151,34 @@ Do not include code fences.
 Do not include explanations outside the JSON.
 """)
 
-    data = json.loads(
-        response.content
-    )
+    data = json.loads(response.content)
 
-    return DiscoveryDecision.model_validate(
-        data
-    )
+    return DiscoveryDecision.model_validate(data)
 
 
 def improveDiscoveryCoverage(
     objective: str,
     evidence: list[dict],
-    maxExtraSearches: int = 3,
+    config: DiscoveryConfig,
 ) -> list[dict]:
     """
     Adaptively perform additional targeted searches
     when current Discovery coverage is insufficient.
     """
 
-    for searchRound in range(
-        maxExtraSearches
-    ):
+    for searchRound in range(config.maxCoverageRounds):
 
-        print(
-            f"\n=== COVERAGE CHECK "
-            f"{searchRound + 1} ==="
+        if config.verbose:
+            print(f"\n=== COVERAGE CHECK " f"{searchRound + 1} ===")
+
+        decision = evaluateDiscoveryCoverage(
+            objective,
+            evidence,
+            config,
         )
 
-        decision = (
-            evaluateDiscoveryCoverage(
-                objective,
-                evidence,
-            )
-        )
-
-        print(
-            f"Enough information: "
-            f"{decision.enoughInformation}"
-        )
+        if config.verbose:
+            print(f"Enough information: " f"{decision.enoughInformation}")
 
         if decision.enoughInformation:
             break
@@ -205,37 +186,26 @@ def improveDiscoveryCoverage(
         if not decision.nextQuery:
             break
 
-        print(
-            "\nAdditional search requested:"
-        )
+        if config.verbose:
+            print("\nAdditional search requested:")
 
-        print(
-            decision.nextQuery
-        )
+            print(decision.nextQuery)
 
         try:
             newEvidence = webSearch(
                 decision.nextQuery,
-                maxResults=5,
+                maxResults=(config.webResultsPerQuery),
             )
 
-            print(
-                f"Found {len(newEvidence)} "
-                "additional results."
-            )
+            if config.verbose:
+                print(f"Found {len(newEvidence)} " "additional results.")
 
-            evidence.extend(
-                newEvidence
-            )
+            evidence.extend(newEvidence)
 
-            evidence = deduplicateResults(
-                evidence
-            )
+            evidence = deduplicateResults(evidence)
 
         except Exception as error:
-            print(
-                "Additional discovery search failed."
-            )
+            print("Additional discovery search failed.")
 
             print(error)
 
