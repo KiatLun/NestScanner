@@ -20,7 +20,7 @@ def main():
         "Discovery candidates."
     )
 
-    researchInput = candidates[0]
+    researchInput = candidates[1]
 
     result = researchAgent(
         researchInput

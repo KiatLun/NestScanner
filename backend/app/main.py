@@ -1,7 +1,10 @@
+import json
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agents.discovery import discoveryAgent
+from app.agents.research.agent import researchAgent
 from app.llm.client import getLLM
 from app.tools.huggingFace import searchHuggingFaceModels
 
@@ -29,7 +32,6 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {"message": "Backend is running"}
-
 
 
 # =====================================================
@@ -91,6 +93,49 @@ def discoverAsrModels():
 
     result = discoveryAgent(
         state
+    )
+
+    return {
+        "result": result
+    }
+
+
+# =====================================================
+# TEMP RESEARCH TEST
+# =====================================================
+
+
+@app.get("/api/test-research")
+def testResearch(
+    candidateIndex: int = 0,
+):
+
+    with open(
+        "app/agents/discovery/sampleOutput.txt",
+        "r",
+        encoding="utf-8",
+    ) as file:
+        discoveryOutput = json.load(file)
+
+    candidates = discoveryOutput.get(
+        "candidates",
+        [],
+    )
+
+    if (
+        candidateIndex < 0
+        or candidateIndex >= len(candidates)
+    ):
+        return {
+            "error": "Invalid candidateIndex"
+        }
+
+    researchInput = candidates[
+        candidateIndex
+    ]
+
+    result = researchAgent(
+        researchInput
     )
 
     return {
