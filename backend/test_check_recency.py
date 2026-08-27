@@ -26,7 +26,6 @@ def main():
                     "name": "GPT-Transcribe",
                     "organisation": "OpenAI",
                     "sourceUrl": "https://spokenly.app/blog/gpt-transcribe",
-                    "reason": ("OpenAI speech-to-text model released " "July 28 2026."),
                     "candidateType": "model",
                 },
                 "discoveryEvidence": [
@@ -57,9 +56,6 @@ def main():
                         "https://www.nextpulse.site/2026/07/"
                         "revolutionizing-multilingual-asr.html"
                     ),
-                    "reason": (
-                        "Open-source diffusion ASR model " "released July 2026."
-                    ),
                     "candidateType": "model",
                 },
                 "discoveryEvidence": [
@@ -87,7 +83,6 @@ def main():
                     "name": "Qwen3-ASR",
                     "organisation": "Qwen",
                     "sourceUrl": ("https://github.com/QwenLM/Qwen3-ASR"),
-                    "reason": ("Open-source ASR series from Qwen."),
                     "candidateType": "model_family",
                 },
                 "discoveryEvidence": [
@@ -114,7 +109,6 @@ def main():
                     "name": "Mega-ASR",
                     "organisation": None,
                     "sourceUrl": ("https://github.com/xzf-thu/Mega-ASR"),
-                    "reason": ("Foundation ASR project released " "in May 2026."),
                     "candidateType": "model",
                 },
                 "discoveryEvidence": [
@@ -143,7 +137,6 @@ def main():
                         "cohere-launches-an-open-source-voice-model-"
                         "specifically-for-transcription/"
                     ),
-                    "reason": ("Cohere transcription model released " "March 2026."),
                     "candidateType": "model",
                 },
                 "discoveryEvidence": [

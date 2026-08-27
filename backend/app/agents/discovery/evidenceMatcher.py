@@ -193,10 +193,6 @@ Prefer:
 5. arXiv paper
 6. credible announcement/article
 
-reason:
-- Give a short reason explaining why this is an
-  identifiable ASR model/model family.
-- Do NOT perform deep technical analysis.
 
 candidateType must be one of:
 
@@ -270,7 +266,6 @@ Use exactly this structure:
                 "name": "model name",
                 "organisation": "organisation or null",
                 "sourceUrl": "primary source URL or null",
-                "reason": "short reason this is an ASR model",
                 "candidateType": "model"
             }},
             "discoveryEvidence": [

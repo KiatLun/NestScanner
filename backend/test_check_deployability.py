@@ -24,7 +24,6 @@ def main():
                 "name": "Mega-ASR",
                 "organisation": None,
                 "sourceUrl": ("https://github.com/" "xzf-thu/Mega-ASR"),
-                "reason": ("Identifiable ASR model " "with public repository."),
                 "candidateType": "model",
             },
             "discoveryEvidence": [
@@ -48,9 +47,6 @@ def main():
                 "name": "Qwen3-ASR",
                 "organisation": "Qwen",
                 "sourceUrl": ("https://huggingface.co/" "Qwen/Qwen3-ASR-1.7B"),
-                "reason": (
-                    "Identifiable ASR model family " "with Hugging Face checkpoints."
-                ),
                 "candidateType": "model_family",
             },
             "discoveryEvidence": [
@@ -72,7 +68,6 @@ def main():
                 "name": ("cohere-transcribe-03-2026"),
                 "organisation": "Cohere",
                 "sourceUrl": None,
-                "reason": ("Identifiable Cohere ASR model."),
                 "candidateType": "model",
             },
             "discoveryEvidence": [
@@ -94,7 +89,6 @@ def main():
                 "name": "GPT-Transcribe",
                 "organisation": "OpenAI",
                 "sourceUrl": None,
-                "reason": ("Identifiable speech-to-text model."),
                 "candidateType": "model",
             },
             "discoveryEvidence": [

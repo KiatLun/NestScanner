@@ -62,7 +62,6 @@ def initializeDatabase():
             name TEXT NOT NULL,
             organisation TEXT,
             source_url TEXT,
-            reason TEXT,
             candidate_type TEXT,
 
             discovery_evidence TEXT,
@@ -199,7 +198,6 @@ def saveDiscoveryCandidate(
             name,
             organisation,
             source_url,
-            reason,
             candidate_type,
             discovery_evidence
         )
@@ -210,7 +208,6 @@ def saveDiscoveryCandidate(
             candidate.get("name"),
             candidate.get("organisation"),
             candidate.get("sourceUrl"),
-            candidate.get("reason"),
             candidate.get("candidateType"),
             json.dumps(
                 discoveryEvidence,
