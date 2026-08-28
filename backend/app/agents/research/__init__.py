@@ -5,64 +5,57 @@ from app.agents.research.agent import (
 )
 
 from app.agents.research.config import (
+    ResearchConfig,
     defaultResearchConfig,
 )
 
-from app.database.db import (
-    saveResearchResult,
-)
+from app.database.db import saveResearchResult, updateScanStage
 
 
 def research_agent(
     state: ScanState,
 ) -> dict:
 
-    researchConfig = defaultResearchConfig
-
     scanId = state.get("scanId")
+
+    if scanId is not None:
+        updateScanStage(
+            scanId,
+            "research",
+        )
 
     candidates = state.get(
         "candidates",
         [],
     )
 
+    # =================================================
+    # CONFIG
+    # =================================================
+
+    researchConfigData = state.get("researchConfig")
+
+    if researchConfigData:
+        researchConfig = ResearchConfig(**researchConfigData)
+    else:
+        researchConfig = defaultResearchConfig
+
+    # =================================================
+    # RESEARCH
+    # =================================================
+
     researchResults = []
 
-    for index, researchInput in enumerate(
-        candidates,
-        start=1,
-    ):
-
-        candidate = researchInput.get(
-            "candidate",
-            {},
-        )
-
-        modelName = candidate.get(
-            "name",
-            "Unknown",
-        )
+    for researchInput in candidates:
 
         candidateId = researchInput.get("candidateId")
-
-        if researchConfig.verbose:
-            print(f"\nResearching " f"{index}/{len(candidates)}: " f"{modelName}")
-
-        # =================================================
-        # RUN RESEARCH
-        # =================================================
 
         result = researchAgent(
             researchInput,
             researchConfig,
         )
 
-        # =================================================
-        # SAVE RESEARCH RESULT
-        # =================================================
-
         if scanId is not None and candidateId is not None:
-
             researchResultId = saveResearchResult(
                 scanId,
                 candidateId,
@@ -70,14 +63,6 @@ def research_agent(
             )
 
             result["researchResultId"] = researchResultId
-
-            if researchConfig.verbose:
-                print(
-                    f"Saved Research result "
-                    f"{researchResultId} "
-                    f"for candidate "
-                    f"{candidateId}"
-                )
 
         researchResults.append(result)
 

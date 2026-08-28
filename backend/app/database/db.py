@@ -42,13 +42,22 @@ def initializeDatabase():
     # =================================================
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS scans (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            query TEXT NOT NULL,
-            started_at TEXT NOT NULL,
-            completed_at TEXT
-        )
-        """)
+    CREATE TABLE IF NOT EXISTS scans (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        query TEXT NOT NULL,
+
+        discovery_config TEXT,
+        research_config TEXT,
+
+        status TEXT NOT NULL DEFAULT 'running',
+        stage TEXT,
+        error TEXT,
+
+        started_at TEXT NOT NULL,
+        completed_at TEXT
+    )
+    """)
 
     # =================================================
     # DISCOVERY CANDIDATES
@@ -57,7 +66,7 @@ def initializeDatabase():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS discovery_candidates (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
+            scan_id INTEGER NOT NULL,
 
             name TEXT NOT NULL,
             organisation TEXT,
@@ -66,7 +75,7 @@ def initializeDatabase():
 
             discovery_evidence TEXT,
 
-            FOREIGN KEY (run_id)
+            FOREIGN KEY (scan_id)
                 REFERENCES scans(id)
                 ON DELETE CASCADE
         )
@@ -79,17 +88,17 @@ def initializeDatabase():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS research_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id INTEGER NOT NULL,
+            scan_id INTEGER NOT NULL,
             candidate_id INTEGER NOT NULL,
 
             release_date TEXT,
             is_recent INTEGER,
             is_locally_deployable INTEGER,
 
-            profile TEXT,
+            technical_profile TEXT,
             research_evidence TEXT,
 
-            FOREIGN KEY (run_id)
+            FOREIGN KEY (scan_id)
                 REFERENCES scans(id)
                 ON DELETE CASCADE,
 
@@ -106,10 +115,9 @@ def initializeDatabase():
 
 def createScan(
     query: str,
+    discoveryConfig: dict,
+    researchConfig: dict,
 ) -> int:
-    """
-    Create one NestScanner run and return its run ID.
-    """
 
     currentTime = datetime.now(ZoneInfo("Asia/Singapore")).isoformat()
 
@@ -121,12 +129,26 @@ def createScan(
         """
         INSERT INTO scans (
             query,
+            discovery_config,
+            research_config,
+            status,
+            stage,
             started_at
         )
-        VALUES (?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
             query,
+            json.dumps(
+                discoveryConfig,
+                ensure_ascii=False,
+            ),
+            json.dumps(
+                researchConfig,
+                ensure_ascii=False,
+            ),
+            "running",
+            "discovery",
             currentTime,
         ),
     )
@@ -134,7 +156,6 @@ def createScan(
     scanId = cursor.lastrowid
 
     connection.commit()
-
     connection.close()
 
     return scanId
@@ -143,9 +164,6 @@ def createScan(
 def completeScan(
     scanId: int,
 ):
-    """
-    Mark a scan as completed.
-    """
 
     currentTime = datetime.now(ZoneInfo("Asia/Singapore")).isoformat()
 
@@ -156,18 +174,119 @@ def completeScan(
     cursor.execute(
         """
         UPDATE scans
-        SET completed_at = ?
+        SET
+            status = ?,
+            stage = ?,
+            completed_at = ?
         WHERE id = ?
         """,
         (
+            "completed",
+            None,
             currentTime,
             scanId,
         ),
     )
 
     connection.commit()
+    connection.close()
+
+
+def updateScanStage(
+    scanId: int,
+    stage: str,
+):
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        UPDATE scans
+        SET stage = ?
+        WHERE id = ?
+        """,
+        (
+            stage,
+            scanId,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def failScan(
+    scanId: int,
+    error: str,
+):
+
+    currentTime = datetime.now(ZoneInfo("Asia/Singapore")).isoformat()
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        UPDATE scans
+        SET
+            status = ?,
+            error = ?,
+            completed_at = ?
+        WHERE id = ?
+        """,
+        (
+            "failed",
+            error,
+            currentTime,
+            scanId,
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def getScanStatus(
+    scanId: int,
+) -> dict | None:
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            status,
+            stage,
+            error,
+            started_at,
+            completed_at
+        FROM scans
+        WHERE id = ?
+        """,
+        (scanId,),
+    )
+
+    row = cursor.fetchone()
 
     connection.close()
+
+    if row is None:
+        return None
+
+    return {
+        "scanId": row["id"],
+        "status": row["status"],
+        "stage": row["stage"],
+        "error": row["error"],
+        "startedAt": row["started_at"],
+        "completedAt": row["completed_at"],
+    }
 
 
 def saveDiscoveryCandidate(
@@ -194,7 +313,7 @@ def saveDiscoveryCandidate(
     cursor.execute(
         """
         INSERT INTO discovery_candidates (
-            run_id,
+            scan_id,
             name,
             organisation,
             source_url,
@@ -243,12 +362,12 @@ def saveResearchResult(
     cursor.execute(
         """
         INSERT INTO research_results (
-            run_id,
+            scan_id,
             candidate_id,
             release_date,
             is_recent,
             is_locally_deployable,
-            profile,
+            technical_profile,
             research_evidence
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -260,7 +379,7 @@ def saveResearchResult(
             result.get("isRecent"),
             result.get("isLocallyDeployable"),
             json.dumps(
-                result.get("profile"),
+                result.get("technicalProfile"),
                 ensure_ascii=False,
             ),
             json.dumps(
@@ -356,7 +475,7 @@ def getScan(
             candidate_type,
             discovery_evidence
         FROM discovery_candidates
-        WHERE run_id = ?
+        WHERE scan_id = ?
         ORDER BY id ASC
         """,
         (scanId,),
@@ -423,3 +542,122 @@ def getLatestScan() -> dict | None:
         return None
 
     return getScan(row["id"])
+
+
+def getResearchByScan(
+    scanId: int,
+) -> dict | None:
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    # =================================================
+    # CHECK SCAN EXISTS
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            query,
+            started_at,
+            completed_at
+        FROM scans
+        WHERE id = ?
+        """,
+        (scanId,),
+    )
+
+    scanRow = cursor.fetchone()
+
+    if scanRow is None:
+        connection.close()
+        return None
+
+    # =================================================
+    # GET RESEARCH RESULTS
+    # =================================================
+
+    cursor.execute(
+        """
+        SELECT
+            rr.id AS research_result_id,
+            rr.candidate_id,
+            rr.release_date,
+            rr.is_recent,
+            rr.is_locally_deployable,
+            rr.technical_profile,
+            rr.research_evidence,
+
+            dc.name,
+            dc.organisation,
+            dc.source_url,
+            dc.candidate_type
+
+        FROM research_results rr
+
+        JOIN discovery_candidates dc
+            ON rr.candidate_id = dc.id
+
+        WHERE rr.scan_id = ?
+
+        ORDER BY rr.id ASC
+        """,
+        (scanId,),
+    )
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    researchResults = []
+
+    for row in rows:
+
+        technicalProfile = None
+
+        if row["technical_profile"]:
+            try:
+                technicalProfile = json.loads(row["technical_profile"])
+            except json.JSONDecodeError:
+                technicalProfile = None
+
+        researchEvidence = {}
+
+        if row["research_evidence"]:
+            try:
+                researchEvidence = json.loads(row["research_evidence"])
+            except json.JSONDecodeError:
+                researchEvidence = {}
+
+        researchResults.append(
+            {
+                "researchResultId": (row["research_result_id"]),
+                "candidateId": (row["candidate_id"]),
+                "candidate": {
+                    "name": row["name"],
+                    "organisation": (row["organisation"]),
+                    "sourceUrl": (row["source_url"]),
+                    "candidateType": (row["candidate_type"]),
+                },
+                "releaseDate": (row["release_date"]),
+                "isRecent": (
+                    None if row["is_recent"] is None else bool(row["is_recent"])
+                ),
+                "isLocallyDeployable": (
+                    None
+                    if row["is_locally_deployable"] is None
+                    else bool(row["is_locally_deployable"])
+                ),
+                "technicalProfile": (technicalProfile),
+                "researchEvidence": (researchEvidence),
+            }
+        )
+
+    return {
+        "scan": dict(scanRow),
+        "research": {
+            "results": researchResults,
+        },
+    }

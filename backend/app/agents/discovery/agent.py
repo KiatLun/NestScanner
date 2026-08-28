@@ -19,17 +19,38 @@ from app.agents.discovery.evidenceMatcher import (
 
 from app.database.db import (
     saveDiscoveryCandidate,
+    updateScanStage,
 )
 
 
 def discoveryAgent(
     state: ScanState,
-    discoveryConfig: DiscoveryConfig = defaultDiscoveryConfig,
 ) -> dict:
 
     objective = state["query"]
 
     scanId = state.get("scanId")
+
+    if scanId is not None:
+        updateScanStage(
+            scanId,
+            "discovery",
+        )
+
+    # =================================================
+    # CONFIG
+    # =================================================
+
+    discoveryConfigData = state.get("discoveryConfig")
+
+    if discoveryConfigData:
+        discoveryConfig = DiscoveryConfig(**discoveryConfigData)
+    else:
+        discoveryConfig = defaultDiscoveryConfig
+
+    # =================================================
+    # GATHER EVIDENCE
+    # =================================================
 
     discoveryEvidence = gatherDiscoveryEvidence(
         objective,
@@ -43,6 +64,10 @@ def discoveryAgent(
             discoveryConfig,
         )
 
+    # =================================================
+    # CREATE CANDIDATES
+    # =================================================
+
     candidates = groupModelEvidence(
         discoveryEvidence,
         discoveryConfig,
@@ -51,7 +76,7 @@ def discoveryAgent(
     candidates = candidates[: discoveryConfig.maxCandidates]
 
     # =================================================
-    # SAVE DISCOVERY CANDIDATES
+    # SAVE CANDIDATES
     # =================================================
 
     if scanId is not None:
@@ -64,17 +89,6 @@ def discoveryAgent(
             )
 
             candidatePackage["candidateId"] = candidateId
-
-            if discoveryConfig.verbose:
-                modelName = candidatePackage.get(
-                    "candidate",
-                    {},
-                ).get(
-                    "name",
-                    "Unknown",
-                )
-
-                print(f"Saved Discovery candidate " f"{candidateId}: " f"{modelName}")
 
     return {
         "candidates": candidates,
