@@ -1,5 +1,10 @@
+import os
 import subprocess
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ECHOFORGE_PATH = Path("/mnt/c/Users/AJ/Desktop/echoforge")
 
@@ -31,10 +36,12 @@ def downloadHuggingFaceModel(
 
     print(f"Cache name: {cacheName}")
 
+    env = os.environ.copy()
     result = subprocess.run(
         command,
         cwd=modelDownloadPath,
         text=True,
+        env=env,
     )
 
     if result.returncode != 0:
