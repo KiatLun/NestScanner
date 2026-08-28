@@ -49,3 +49,10 @@ class VerificationResult(BaseModel):
     missingFields: list[str] = Field(default_factory=list)
 
     issues: list[str] = Field(default_factory=list)
+
+
+class StartScanRequest(BaseModel):
+    query: str = "Find automatic speech recognition " "models from recent sources."
+
+    discoveryConfig: dict | None = None
+    researchConfig: dict | None = None
