@@ -15,7 +15,7 @@ const navItems = [
     icon: LayoutDashboard,
   },
   {
-    label: "ModelsDatabase",
+    label: "Models Database",
     url: "/database",
     icon: Database,
   },

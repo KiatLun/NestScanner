@@ -1,34 +1,49 @@
-import { useState } from "react"
+import { useState, useEffect} from "react"
 
 import AppSidebar from "@/components/layout/AppSidebar"
 import ModelsTable from "@/components/dashboard/ModelsTable"
 import StatCard from "@/components/dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 
-import SampleOutput from "@/mock/sampleOutput.json"
 
 import {
   Database,
-  FileSearch,
   Layers3,
   Sparkles,
 } from "lucide-react"
 
-import type { ASRModel } from "@/types/model"
+import type {StoredModel} from "@/types/model"
 
-import {discoverASRModels} from "@/services/api"
+import {getAllModels, startScan, waitforScanCompletion} from "@/services/api"
 
-function DashboardPage() {
-  const [models, setModels] = useState<ASRModel[]>([])
+ function DashboardPage() {
+  const [models, setModels] = useState<StoredModel[]>([])
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    async function fetchModels() {
+      try {
+        const allModels = await getAllModels();
+        setModels(allModels);
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+      }
+    }
+
+    fetchModels();
+  }, []);
+
+ 
 
   async function handleScan() {
     try {
       setLoading(true)
 
-      //const discoveredModels = await discoverASRModels();
-      const discoveredModels: ASRModel[] = SampleOutput.candidates;
-      setModels(discoveredModels);
+      const scan = await startScan();
+      console.log("Scan started:", scan);
+      const finalStatus = await waitforScanCompletion(scan.scanId);
+      console.log("Scan completed:", finalStatus);
+
     } catch (error) {
       console.error("Scan failed:", error)
     } finally {
@@ -36,15 +51,9 @@ function DashboardPage() {
     }
   }
 
-  const evidenceCount = models.reduce(
-    (total, model) =>
-      total + model.discoveryEvidence.length,
-    0
-  )
-
   const organisations = new Set(
     models.map(
-      (model) => model.candidate.organisation
+      (model) => model.organisation
     )
   ).size
 
@@ -82,17 +91,10 @@ function DashboardPage() {
           
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              title="Candidates"
+              title="Models"
               value={models.length}
-              description="ASR candidates discovered"
+              description="ASR models discovered"
               icon={Database}
-            />
-
-            <StatCard
-              title="Evidence"
-              value={evidenceCount}
-              description="Supporting discovery evidence"
-              icon={FileSearch}
             />
 
             <StatCard
@@ -102,20 +104,6 @@ function DashboardPage() {
               icon={Layers3}
             />
 
-            <StatCard
-              title="Sources"
-              value={
-                new Set(
-                  models.flatMap((model) =>
-                    model.discoveryEvidence.map(
-                      (evidence) => evidence.source
-                    )
-                  )
-                ).size
-              }
-              description="Discovery sources represented"
-              icon={Sparkles}
-            />
           </div>
 
 
