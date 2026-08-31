@@ -1,76 +1,126 @@
-import { useState } from 'react'
-import { testLLM, getASRModels } from '../services/api'
-import type { HuggingFaceModel } from '../types/model'
+import { useState } from "react"
+
+import AppSidebar from "@/components/layout/AppSidebar"
+import ModelsTable from "@/components/dashboard/ModelsTable"
+import StatCard from "@/components/dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 
-const DashboardPage = () => {
-  const [response, setResponse] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(false)
-  const [models, setModels] = useState<HuggingFaceModel[]>([])
-  const [modelsLoading, setModelsLoading] = useState<boolean>(false)
+import SampleOutput from "@/mock/sampleOutput.json"
 
-  async function handleTestLLM() {
+import {
+  Database,
+  FileSearch,
+  Layers3,
+  Sparkles,
+} from "lucide-react"
+
+import type { ASRModel } from "@/types/model"
+
+import {discoverASRModels} from "@/services/api"
+
+function DashboardPage() {
+  const [models, setModels] = useState<ASRModel[]>([])
+  const [loading, setLoading] = useState(false)
+
+  async function handleScan() {
     try {
       setLoading(true)
 
-      const data = await testLLM()
-
-      setResponse(data.response)
+      //const discoveredModels = await discoverASRModels();
+      const discoveredModels: ASRModel[] = SampleOutput.candidates;
+      setModels(discoveredModels);
     } catch (error) {
-      console.error(error)
-      setResponse("Something went wrong")
+      console.error("Scan failed:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleGetASRModels() {
-    try {
-      setModelsLoading(true)
+  const evidenceCount = models.reduce(
+    (total, model) =>
+      total + model.discoveryEvidence.length,
+    0
+  )
 
-      const data = await getASRModels()
-      console.log("Fetched ASR models:", data.models)
-      setModels(data.models)
-    } catch (error) {
-      console.error(error)
-      setResponse("Something went wrong")
-    } finally {
-      setModelsLoading(false)
-    }
-  }
+  const organisations = new Set(
+    models.map(
+      (model) => model.candidate.organisation
+    )
+  ).size
 
   return (
-    <div className="min-h-screen bg-white p-8 text-slate-900">
-      <h1 className="mb-6 text-4xl font-bold">
-        ASR Research Dashboard
-      </h1>
+    <div className="flex min-h-screen bg-muted/30">
+      <AppSidebar />
 
-      <div className="flex gap-4">
-        <Button
-          onClick={handleTestLLM}
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "Test LLM"}
-        </Button>
+      <main className="min-w-0 flex-1">
+        <div className="mx-auto max-w-7xl space-y-8 p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                ASR Model Intelligence
+              </h1>
 
-        <Button
-          onClick={handleGetASRModels}
-          disabled={modelsLoading}
-          variant="secondary"
-        >
-          {modelsLoading ? "Loading..." : "Get ASR Models"}
-        </Button>
-      </div>
+              <p className="mt-1 text-muted-foreground">
+                Scan and analyse speech recognition models.
+              </p>
+            </div>
 
-      <p className="mt-4">{response}</p>
+            <Button
+              onClick={handleScan}
+              disabled={loading}
+              className="gap-2"
+            >
+              <Sparkles className="size-4" />
 
-      <ul className="mt-6">
-        {models.map((model) => (
-          <li key={model.url}>
-            {model.title}
-          </li>
-        ))}
-      </ul>
+              {loading
+                ? "Scanning..."
+                : "Run Scan"}
+            </Button>
+          </div>
+
+          <ModelsTable models={models} />
+          
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Candidates"
+              value={models.length}
+              description="ASR candidates discovered"
+              icon={Database}
+            />
+
+            <StatCard
+              title="Evidence"
+              value={evidenceCount}
+              description="Supporting discovery evidence"
+              icon={FileSearch}
+            />
+
+            <StatCard
+              title="Organisations"
+              value={organisations}
+              description="Distinct organisations found"
+              icon={Layers3}
+            />
+
+            <StatCard
+              title="Sources"
+              value={
+                new Set(
+                  models.flatMap((model) =>
+                    model.discoveryEvidence.map(
+                      (evidence) => evidence.source
+                    )
+                  )
+                ).size
+              }
+              description="Discovery sources represented"
+              icon={Sparkles}
+            />
+          </div>
+
+
+        </div>
+      </main>
     </div>
   )
 }
