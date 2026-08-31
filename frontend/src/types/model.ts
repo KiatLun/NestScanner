@@ -15,7 +15,7 @@ export interface DiscoveryEvidence {
 }
 
 export interface ASRModel {
-  candidateId?: number
+  modelId: number
   candidate: ASRCandidate
   discoveryEvidence: DiscoveryEvidence[]
 }
@@ -28,21 +28,7 @@ export interface DiscoverApiResponse {
   result: DiscoveryResult
 }
 
-export interface HuggingFaceModel {
-  source: string
-  title: string
-  url: string
-  description: string | null
-  metadata: {
-    createdAt: string | null
-    downloads: number | null
-    lastModified: string | null
-    likes: number | null
-    organisation: string | null
-    pipelineTag: string | null
-    tags: string[]
-  }
-}
+
 
 export interface Scan {
   id: number
@@ -54,4 +40,30 @@ export interface Scan {
 
 export interface AllScans {
   scans: Scan[]
+}
+
+export interface StoredModel {
+  modelId: number
+  name: string
+  organisation: string
+  sourceUrl: string
+  candidateType: string
+}
+
+export interface startScanResponse {
+  scanId: number
+  query: string
+  status: "running"
+  stage: string
+  discoveryConfig: Record<string, unknown>
+  researchConfig: Record<string, unknown>
+}
+
+export interface scanStatusResponse {
+  scanId: number,
+  status: "running" | "completed" | "failed"
+  stage: string
+  error: string | null
+  started_at: string
+  completed_at: string | null
 }

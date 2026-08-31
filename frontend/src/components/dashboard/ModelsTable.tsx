@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -17,18 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import type { ASRModel } from "@/types/model"
+import type { StoredModel } from "@/types/model"
 
 interface ModelsTableProps {
-  models: ASRModel[]
-}
-
-function getUniqueSources(model: ASRModel): string[] {
-  return [
-    ...new Set(
-      model.discoveryEvidence.map((evidence) => evidence.source)
-    ),
-  ]
+  models: StoredModel[]
 }
 
 export default function ModelsTable({
@@ -40,7 +32,7 @@ export default function ModelsTable({
         <CardTitle>Discovered Models</CardTitle>
 
         <p className="text-sm text-muted-foreground">
-          ASR candidates discovered from available research sources.
+          ASR models currently stored in the database.
         </p>
       </CardHeader>
 
@@ -51,76 +43,53 @@ export default function ModelsTable({
               <TableHead>Model</TableHead>
               <TableHead>Organisation</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Sources</TableHead>
-              <TableHead>Evidence</TableHead>
-              <TableHead className="text-right">Link</TableHead>
+              <TableHead className="text-right">
+                Link
+              </TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {models.map((model) => {
-              const sources = getUniqueSources(model)
+            {models.map((model) => (
+              <TableRow key={model.modelId}>
+                <TableCell>
+                  <div>
+                    <p className="font-medium">
+                      {model.name}
+                    </p>
 
-              return (
-                <TableRow key={model.candidateId}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">
-                        {model.candidate.name}
-                      </p>
+                    <p className="text-xs text-muted-foreground">
+                      ID: {model.modelId}
+                    </p>
+                  </div>
+                </TableCell>
 
-                      <p className="text-xs text-muted-foreground">
-                        ID: {model.candidateId}
-                      </p>
-                    </div>
-                  </TableCell>
+                <TableCell>
+                  {model.organisation}
+                </TableCell>
 
-                  <TableCell>
-                    {model.candidate.organisation}
-                  </TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {model.candidateType}
+                  </Badge>
+                </TableCell>
 
-                  <TableCell>
-                    <Badge variant="outline">
-                      {model.candidate.candidateType}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {sources.map((source) => (
-                        <Badge
-                          key={source}
-                          variant="secondary"
-                        >
-                          {source}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    {model.discoveryEvidence.length}
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      asChild
-                    >
-                      <a
-                        href={model.candidate.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Open ${model.candidate.name}`}
-                      >
-                        <ExternalLink className="size-4" />
-                      </a>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+                <TableCell className="text-right">
+                  <a
+                    href={model.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${model.name}`}
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "icon",
+                    })}
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </CardContent>
