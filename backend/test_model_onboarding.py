@@ -6,12 +6,19 @@ from app.services.onboarding.modelOnboarding import (
 
 
 def main():
+
     result = onboardModel(
-        modelName="whisper-tiny",
+        modelName="whisper-base",
         sourceType="huggingface",
-        source="openai/whisper-tiny",
-        cacheName="onboarding-whisper-test",
+        source="openai/whisper-base",
+        cacheName="onboarding-whisper-base-test",
     )
+
+    # result = onboardModel(
+    #     modelName="silero",
+    #     sourceType="github",
+    #     source="https://github.com/snakers4/silero-models",
+    # )
 
     print("\n=== ONBOARDING RESULT ===")
 

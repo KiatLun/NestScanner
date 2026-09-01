@@ -90,3 +90,26 @@ def getModelUploadStatus(
     response.raise_for_status()
 
     return response.json()
+
+
+def createDownloader(
+    name: str,
+    modelName: str,
+    sourceType: str,
+    source: str,
+) -> dict:
+
+    response = requests.post(
+        f"{ECHOFORGE_API_URL}/api/capabilities/downloaders/create",
+        json={
+            "name": name,
+            "modelName": modelName,
+            "sourceType": sourceType,
+            "source": source,
+        },
+        timeout=10,
+    )
+
+    response.raise_for_status()
+
+    return response.json()

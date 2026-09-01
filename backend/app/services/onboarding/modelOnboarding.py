@@ -1,6 +1,7 @@
 import time
 
 from app.services.echoforge.echoforgeClient import (
+    createDownloader,
     getDownloaderCapabilities,
     startModelDownload,
     getModelDownloadStatus,
@@ -47,47 +48,65 @@ def onboardModel(
 
     cacheName = cacheName or modelName
 
-    # 1. Ask EchoForge what it supports.
+    # 1. Ask EchoForge what downloaders it currently supports.
     capabilities = getDownloaderCapabilities()
-
-    # 2. Resolve the appropriate downloader.
+    # 2. Try to resolve an existing downloader.
     downloader = resolveDownloader(
         modelName=modelName,
         sourceType=sourceType,
         capabilities=capabilities,
     )
-
+    # 3. If no downloader exists, ask EchoForge to create one.
     if not downloader:
-        return {
-            "modelName": modelName,
-            "status": "unsupported",
-            "reason": ("No compatible EchoForge " "downloader found."),
-        }
+        downloaderName = modelName.lower().replace("/", "-").replace(" ", "-")
+
+        createDownloader(
+            name=downloaderName,
+            modelName=modelName,
+            sourceType=sourceType,
+            source=source,
+        )
+
+        # Refresh EchoForge capabilities.
+        capabilities = getDownloaderCapabilities()
+
+        # Resolve again using the newly created capability.
+        downloader = resolveDownloader(
+            modelName=modelName,
+            sourceType=sourceType,
+            capabilities=capabilities,
+        )
+
+        if not downloader:
+            raise RuntimeError("Downloader was created but " "could not be resolved.")
 
     downloaderName = downloader["name"]
 
-    # 3. Start download.
+    # 4. Use downloader-specific cache name if EchoForge defines one.
+    resolvedCacheName = downloader.get("cacheName") or cacheName
+
+    # 5. Start model download.
     downloadJob = startModelDownload(
         downloader=downloaderName,
         modelName=modelName,
-        cacheName=cacheName,
+        cacheName=resolvedCacheName,
         sourceType=sourceType,
         source=source,
     )
 
-    # 4. Wait for download.
+    # 6. Wait for download to complete.
     downloadResult = waitForJob(
         getStatus=getModelDownloadStatus,
         jobId=downloadJob["jobId"],
     )
 
-    # 5. Start upload.
+    # 7. Start model upload.
     uploadJob = startModelUpload(
-        cacheName=cacheName,
+        cacheName=resolvedCacheName,
         modelName=modelName,
     )
 
-    # 6. Wait for upload.
+    # 8. Wait for upload to complete.
     uploadResult = waitForJob(
         getStatus=getModelUploadStatus,
         jobId=uploadJob["jobId"],
@@ -98,7 +117,7 @@ def onboardModel(
         "sourceType": sourceType,
         "source": source,
         "downloader": downloaderName,
-        "cacheName": cacheName,
+        "cacheName": resolvedCacheName,
         "cachePath": downloadResult["cachePath"],
         "clearmlModelId": uploadResult["clearmlModelId"],
         "status": "completed",
