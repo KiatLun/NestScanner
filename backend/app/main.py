@@ -25,6 +25,7 @@ from app.database.db import (
     getResearchByScan,
     getAllModels,
     getModel,
+    getModelDetails,
 )
 
 from app.graph.workflow import (
@@ -455,3 +456,19 @@ def getModelEndpoint(
         )
 
     return model
+
+@app.get("/api/getModelDetails/{modelId}")
+def getModelDetailsEndpoint(
+    modelId: int,
+):
+
+    modelDetails = getModelDetails(modelId)
+
+    if modelDetails is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail=(f"Model {modelId} " "not found"),
+        )
+
+    return modelDetails
