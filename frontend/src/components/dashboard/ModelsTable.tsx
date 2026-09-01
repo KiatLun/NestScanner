@@ -1,7 +1,8 @@
 import { ExternalLink } from "lucide-react"
+import {Link} from "react-router-dom"
 
 import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -37,13 +38,25 @@ export default function ModelsTable({
       </CardHeader>
 
       <CardContent>
-        <Table>
-          <TableHeader>
+        <Table
+          containerClassName="max-h-[500px] overflow-auto"
+          className="min-w-[600px]"
+        >
+          <TableHeader className="sticky top-0 z-20 bg-card">
             <TableRow>
-              <TableHead>Model</TableHead>
-              <TableHead>Organisation</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">
+              <TableHead className="min-w-[250px]">
+                Model
+              </TableHead>
+
+              <TableHead className="min-w-[180px]">
+                Organisation
+              </TableHead>
+
+              <TableHead className="min-w-[150px]">
+                Type
+              </TableHead>
+
+              <TableHead className="w-[80px] text-right">
                 Link
               </TableHead>
             </TableRow>
@@ -54,9 +67,12 @@ export default function ModelsTable({
               <TableRow key={model.modelId}>
                 <TableCell>
                   <div>
-                    <p className="font-medium">
+                    <Link
+                      to={`/models/${model.modelId}`}
+                      className="font-medium hover:underline"
+                    >
                       {model.name}
-                    </p>
+                    </Link>
 
                     <p className="text-xs text-muted-foreground">
                       ID: {model.modelId}

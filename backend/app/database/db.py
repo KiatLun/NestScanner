@@ -829,3 +829,92 @@ def getModel(
         "sourceUrl": row["source_url"],
         "candidateType": row["candidate_type"],
     }
+
+def getModelDetails(
+    modelId: int,
+) -> dict | None:
+
+    connection = getConnection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            m.id AS model_id,
+            m.name,
+            m.organisation,
+            m.source_url,
+            m.candidate_type,
+
+            rr.id AS research_result_id,
+            rr.scan_id,
+            rr.release_date,
+            rr.is_recent,
+            rr.is_locally_deployable,
+            rr.technical_profile,
+            rr.research_evidence
+
+        FROM models m
+
+        LEFT JOIN research_results rr
+            ON rr.id = (
+                SELECT rr2.id
+                FROM research_results rr2
+                WHERE rr2.model_id = m.id
+                ORDER BY rr2.id DESC
+                LIMIT 1
+            )
+
+        WHERE m.id = ?
+        """,
+        (modelId,),
+    )
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+    
+    technicalProfile = None
+    researchEvidence = {}
+
+    if row["technical_profile"]:
+        technicalProfile = json.loads(
+            row["technical_profile"]
+        )
+
+    if row["research_evidence"]:
+        researchEvidence = json.loads(
+            row["research_evidence"]
+        )
+    return {
+        "modelId": row["model_id"],
+        "name": row["name"],
+        "organisation": row["organisation"],
+        "sourceUrl": row["source_url"],
+        "candidateType": row["candidate_type"],
+
+        "research": (
+            None
+            if row["research_result_id"] is None
+            else {
+                "researchResultId": row["research_result_id"],
+                "scanId": row["scan_id"],
+                "releaseDate": row["release_date"],
+                "isRecent": (
+                    None
+                    if row["is_recent"] is None
+                    else bool(row["is_recent"])
+                ),
+                "isLocallyDeployable": (
+                    None
+                    if row["is_locally_deployable"] is None
+                    else bool(row["is_locally_deployable"])
+                ),
+                "technicalProfile": technicalProfile,
+                "researchEvidence": researchEvidence,
+            }
+        ),
+    }

@@ -67,3 +67,42 @@ export interface scanStatusResponse {
   started_at: string
   completed_at: string | null
 }
+
+export interface TechnicalProfile {
+  architecture: string | null
+  parameterCount: string | null
+  languages: string[]
+  reportedWer: string | null
+  fineTuningSupport: string | null
+  license: string | null
+}
+
+export interface ResearchEvidenceItem {
+  source: string
+  title: string
+  url: string
+  description: string | null
+  metadata: Record<string, unknown>
+}
+
+export interface ResearchEvidence {
+  recencyEvidence: ResearchEvidenceItem[]
+  deployabilityEvidence: ResearchEvidenceItem[]
+  technicalEvidence: ResearchEvidenceItem[]
+}
+
+export interface ModelResearch {
+  researchResultId: number
+  scanId: number
+
+  releaseDate: string | null
+  isRecent: boolean | null
+  isLocallyDeployable: boolean | null
+
+  technicalProfile: TechnicalProfile | null
+  // researchEvidence?: ResearchEvidence  
+}
+
+export interface ModelDetails extends StoredModel {
+  research: ModelResearch | null
+}
