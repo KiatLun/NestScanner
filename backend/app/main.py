@@ -58,6 +58,10 @@ from app.tools.huggingFace import (
     searchHuggingFaceModels,
 )
 
+from app.services.echoforge.modelInfoReader import (
+    getAllSupportedModels,
+)
+
 app = FastAPI()
 
 # =====================================================
@@ -430,16 +434,19 @@ def getScanStatusEndpoint(
 # GET ALL MODELS
 # =====================================================
 
+
 @app.get("/api/getAllModels")
 def getAllModelsEndpoint():
-    
+
     models = getAllModels()
 
     return {"models": models}
 
+
 # =====================================================
 # GET MODEL
 # =====================================================
+
 
 @app.get("/api/getModel/{modelId}")
 def getModelEndpoint(
@@ -457,6 +464,7 @@ def getModelEndpoint(
 
     return model
 
+
 @app.get("/api/getModelDetails/{modelId}")
 def getModelDetailsEndpoint(
     modelId: int,
@@ -472,3 +480,19 @@ def getModelDetailsEndpoint(
         )
 
     return modelDetails
+
+
+# =====================================================
+# GET ALL ECHOFORGE MODELS
+# =====================================================
+
+
+@app.get("/api/getAllEchoforgeModels")
+def getAllEchoforgeModelsEndpoint():
+
+    models = getAllSupportedModels()
+
+    return {
+        "models": models,
+        "count": len(models),
+    }
