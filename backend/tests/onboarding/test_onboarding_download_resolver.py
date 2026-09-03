@@ -53,7 +53,7 @@ EXPECTED_RESULTS = {
 def main():
 
     with open(
-        "app/agents/research/sampleOutput.json",
+        "tests/onboarding/sampleOutput.json",
         "r",
         encoding="utf-8",
     ) as file:
