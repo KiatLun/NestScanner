@@ -60,26 +60,45 @@ def initializeDatabase():
     """)
 
     # =================================================
-    # DISCOVERY CANDIDATES
+    # MODELS
     # =================================================
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS discovery_candidates (
+        CREATE TABLE IF NOT EXISTS models (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            scan_id INTEGER NOT NULL,
 
             name TEXT NOT NULL,
             organisation TEXT,
             source_url TEXT,
             candidate_type TEXT,
+            UNIQUE(name, source_url)
+        )
+    """)
+
+    # =================================================
+    # SCAN MODELS
+    # =================================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scan_models (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            scan_id INTEGER NOT NULL,
+            model_id INTEGER NOT NULL,
 
             discovery_evidence TEXT,
 
             FOREIGN KEY (scan_id)
                 REFERENCES scans(id)
-                ON DELETE CASCADE
+                ON DELETE CASCADE,
+
+            FOREIGN KEY (model_id)
+                REFERENCES models(id)
+                ON DELETE CASCADE,
+
+            UNIQUE(scan_id, model_id)
         )
-        """)
+    """)
 
     # =================================================
     # RESEARCH RESULTS
@@ -88,8 +107,9 @@ def initializeDatabase():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS research_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
             scan_id INTEGER NOT NULL,
-            candidate_id INTEGER NOT NULL,
+            model_id INTEGER NOT NULL,
 
             release_date TEXT,
             is_recent INTEGER,
@@ -102,11 +122,13 @@ def initializeDatabase():
                 REFERENCES scans(id)
                 ON DELETE CASCADE,
 
-            FOREIGN KEY (candidate_id)
-                REFERENCES discovery_candidates(id)
-                ON DELETE CASCADE
+            FOREIGN KEY (model_id)
+                REFERENCES models(id)
+                ON DELETE CASCADE,
+
+            UNIQUE(scan_id, model_id)
         )
-        """)
+    """)
 
     connection.commit()
 
@@ -294,12 +316,22 @@ def saveDiscoveryCandidate(
     discoveryCandidate: dict,
 ) -> int:
     """
-    Save one Discovery candidate.
+    Save one discovered model.
 
-    Returns the database candidate ID.
+    If the model already exists, reuse its model ID.
+
+    A model is uniquely identified by:
+        (name, source_url)
+
+    Then associate the model with this scan.
+
+    Returns the model ID.
     """
 
     candidate = discoveryCandidate["candidate"]
+
+    name = candidate.get("name")
+    sourceUrl = candidate.get("sourceUrl")
 
     discoveryEvidence = discoveryCandidate.get(
         "discoveryEvidence",
@@ -307,27 +339,73 @@ def saveDiscoveryCandidate(
     )
 
     connection = getConnection()
-
     cursor = connection.cursor()
+
+    # =================================================
+    # CHECK IF MODEL ALREADY EXISTS
+    # =================================================
 
     cursor.execute(
         """
-        INSERT INTO discovery_candidates (
-            scan_id,
+        SELECT id
+        FROM models
+        WHERE name = ?
+          AND source_url = ?
+        """,
+        (
             name,
-            organisation,
-            source_url,
-            candidate_type,
+            sourceUrl,
+        ),
+    )
+
+    row = cursor.fetchone()
+
+    # =================================================
+    # CREATE MODEL IF IT DOES NOT EXIST
+    # =================================================
+
+    if row is None:
+
+        cursor.execute(
+            """
+            INSERT INTO models (
+                name,
+                organisation,
+                source_url,
+                candidate_type
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                name,
+                candidate.get("organisation"),
+                sourceUrl,
+                candidate.get("candidateType"),
+            ),
+        )
+
+        modelId = cursor.lastrowid
+
+    else:
+
+        modelId = row["id"]
+
+    # =================================================
+    # LINK MODEL TO THIS SCAN
+    # =================================================
+
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO scan_models (
+            scan_id,
+            model_id,
             discovery_evidence
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?)
         """,
         (
             scanId,
-            candidate.get("name"),
-            candidate.get("organisation"),
-            candidate.get("sourceUrl"),
-            candidate.get("candidateType"),
+            modelId,
             json.dumps(
                 discoveryEvidence,
                 ensure_ascii=False,
@@ -335,22 +413,19 @@ def saveDiscoveryCandidate(
         ),
     )
 
-    candidateId = cursor.lastrowid
-
     connection.commit()
-
     connection.close()
 
-    return candidateId
-
+    return modelId
 
 def saveResearchResult(
     scanId: int,
-    candidateId: int,
+    modelId: int,
     result: dict,
 ) -> int:
     """
-    Save one Research result.
+    Save one Research result for a model
+    during a particular scan.
 
     Returns the database research result ID.
     """
@@ -363,7 +438,7 @@ def saveResearchResult(
         """
         INSERT INTO research_results (
             scan_id,
-            candidate_id,
+            model_id,
             release_date,
             is_recent,
             is_locally_deployable,
@@ -374,7 +449,7 @@ def saveResearchResult(
         """,
         (
             scanId,
-            candidateId,
+            modelId,
             result.get("releaseDate"),
             result.get("isRecent"),
             result.get("isLocallyDeployable"),
@@ -395,7 +470,6 @@ def saveResearchResult(
     researchResultId = cursor.lastrowid
 
     connection.commit()
-
     connection.close()
 
     return researchResultId
@@ -468,52 +542,60 @@ def getScan(
     cursor.execute(
         """
         SELECT
-            id,
-            name,
-            organisation,
-            source_url,
-            candidate_type,
-            discovery_evidence
-        FROM discovery_candidates
-        WHERE scan_id = ?
-        ORDER BY id ASC
+            m.id AS model_id,
+            m.name,
+            m.organisation,
+            m.source_url,
+            m.candidate_type,
+            sm.discovery_evidence
+
+        FROM scan_models sm
+
+        JOIN models m
+            ON sm.model_id = m.id
+
+        WHERE sm.scan_id = ?
+
+        ORDER BY sm.id ASC
         """,
         (scanId,),
     )
 
-    candidateRows = cursor.fetchall()
+    modelRows = cursor.fetchall()
 
     connection.close()
 
-    candidates = []
+    models = []
 
-    for row in candidateRows:
+    for row in modelRows:
 
         discoveryEvidence = []
 
         if row["discovery_evidence"]:
             try:
-                discoveryEvidence = json.loads(row["discovery_evidence"])
+                discoveryEvidence = json.loads(
+                    row["discovery_evidence"]
+                )
             except json.JSONDecodeError:
                 discoveryEvidence = []
 
-        candidates.append(
+        models.append(
             {
-                "candidateId": row["id"],
+                "modelId": row["model_id"],
                 "candidate": {
                     "name": row["name"],
-                    "organisation": (row["organisation"]),
-                    "sourceUrl": (row["source_url"]),
-                    "candidateType": (row["candidate_type"]),
+                    "organisation": row["organisation"],
+                    "sourceUrl": row["source_url"],
+                    "candidateType": row["candidate_type"],
                 },
-                "discoveryEvidence": (discoveryEvidence),
+                "discoveryEvidence": discoveryEvidence,
             }
         )
 
     return {
         "scan": dict(scanRow),
         "discovery": {
-            "candidates": candidates,
+            "candidates": models,
         },
     }
 
@@ -583,22 +665,22 @@ def getResearchByScan(
         """
         SELECT
             rr.id AS research_result_id,
-            rr.candidate_id,
+            rr.model_id,
             rr.release_date,
             rr.is_recent,
             rr.is_locally_deployable,
             rr.technical_profile,
             rr.research_evidence,
 
-            dc.name,
-            dc.organisation,
-            dc.source_url,
-            dc.candidate_type
+            m.name,
+            m.organisation,
+            m.source_url,
+            m.candidate_type
 
         FROM research_results rr
 
-        JOIN discovery_candidates dc
-            ON rr.candidate_id = dc.id
+        JOIN models m
+            ON rr.model_id = m.id
 
         WHERE rr.scan_id = ?
 
@@ -633,25 +715,34 @@ def getResearchByScan(
 
         researchResults.append(
             {
-                "researchResultId": (row["research_result_id"]),
-                "candidateId": (row["candidate_id"]),
+                "researchResultId": row["research_result_id"],
+
+                "modelId": row["model_id"],
+
                 "candidate": {
                     "name": row["name"],
-                    "organisation": (row["organisation"]),
-                    "sourceUrl": (row["source_url"]),
-                    "candidateType": (row["candidate_type"]),
+                    "organisation": row["organisation"],
+                    "sourceUrl": row["source_url"],
+                    "candidateType": row["candidate_type"],
                 },
-                "releaseDate": (row["release_date"]),
+
+                "releaseDate": row["release_date"],
+
                 "isRecent": (
-                    None if row["is_recent"] is None else bool(row["is_recent"])
+                    None
+                    if row["is_recent"] is None
+                    else bool(row["is_recent"])
                 ),
+
                 "isLocallyDeployable": (
                     None
                     if row["is_locally_deployable"] is None
                     else bool(row["is_locally_deployable"])
                 ),
-                "technicalProfile": (technicalProfile),
-                "researchEvidence": (researchEvidence),
+
+                "technicalProfile": technicalProfile,
+
+                "researchEvidence": researchEvidence,
             }
         )
 
@@ -660,4 +751,170 @@ def getResearchByScan(
         "research": {
             "results": researchResults,
         },
+    }
+
+
+def getAllModels() -> list[dict]:
+    """
+    Return all unique models in the models table, newest first.
+    """
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            name,
+            organisation,
+            source_url,
+            candidate_type
+        FROM models
+        ORDER BY id DESC
+        """)
+
+    rows = cursor.fetchall()
+
+    connection.close()
+
+    return [
+        {
+            "modelId": row["id"],
+            "name": row["name"],
+            "organisation": row["organisation"],
+            "sourceUrl": row["source_url"],
+            "candidateType": row["candidate_type"],
+        }
+         for row in rows
+    ]
+
+
+def getModel(
+    modelId: int,
+) -> dict | None:
+    """
+    Return one model by its ID.
+    """
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            name,
+            organisation,
+            source_url,
+            candidate_type
+        FROM models
+        WHERE id = ?
+        """,
+        (modelId,),
+    )
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+
+    return {
+        "modelId": row["id"],
+        "name": row["name"],
+        "organisation": row["organisation"],
+        "sourceUrl": row["source_url"],
+        "candidateType": row["candidate_type"],
+    }
+
+def getModelDetails(
+    modelId: int,
+) -> dict | None:
+
+    connection = getConnection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            m.id AS model_id,
+            m.name,
+            m.organisation,
+            m.source_url,
+            m.candidate_type,
+
+            rr.id AS research_result_id,
+            rr.scan_id,
+            rr.release_date,
+            rr.is_recent,
+            rr.is_locally_deployable,
+            rr.technical_profile,
+            rr.research_evidence
+
+        FROM models m
+
+        LEFT JOIN research_results rr
+            ON rr.id = (
+                SELECT rr2.id
+                FROM research_results rr2
+                WHERE rr2.model_id = m.id
+                ORDER BY rr2.id DESC
+                LIMIT 1
+            )
+
+        WHERE m.id = ?
+        """,
+        (modelId,),
+    )
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+    
+    technicalProfile = None
+    researchEvidence = {}
+
+    if row["technical_profile"]:
+        technicalProfile = json.loads(
+            row["technical_profile"]
+        )
+
+    if row["research_evidence"]:
+        researchEvidence = json.loads(
+            row["research_evidence"]
+        )
+    return {
+        "modelId": row["model_id"],
+        "name": row["name"],
+        "organisation": row["organisation"],
+        "sourceUrl": row["source_url"],
+        "candidateType": row["candidate_type"],
+
+        "research": (
+            None
+            if row["research_result_id"] is None
+            else {
+                "researchResultId": row["research_result_id"],
+                "scanId": row["scan_id"],
+                "releaseDate": row["release_date"],
+                "isRecent": (
+                    None
+                    if row["is_recent"] is None
+                    else bool(row["is_recent"])
+                ),
+                "isLocallyDeployable": (
+                    None
+                    if row["is_locally_deployable"] is None
+                    else bool(row["is_locally_deployable"])
+                ),
+                "technicalProfile": technicalProfile,
+                "researchEvidence": researchEvidence,
+            }
+        ),
     }

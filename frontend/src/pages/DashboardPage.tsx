@@ -1,76 +1,114 @@
-import { useState } from 'react'
-import { testLLM, getASRModels } from '../services/api'
-import type { HuggingFaceModel } from '../types/model'
+import { useState, useEffect} from "react"
+
+import AppSidebar from "@/components/layout/AppSidebar"
+import ModelsTable from "@/components/dashboard/ModelsTable"
+import StatCard from "@/components/dashboard/StatCard"
 import { Button } from "@/components/ui/button"
 
-const DashboardPage = () => {
-  const [response, setResponse] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(false)
-  const [models, setModels] = useState<HuggingFaceModel[]>([])
-  const [modelsLoading, setModelsLoading] = useState<boolean>(false)
 
-  async function handleTestLLM() {
+import {
+  Database,
+  Layers3,
+  Sparkles,
+} from "lucide-react"
+
+import type {StoredModel} from "@/types/model"
+
+import {getAllModels, startScan, waitforScanCompletion} from "@/services/api"
+
+ function DashboardPage() {
+  const [models, setModels] = useState<StoredModel[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    async function fetchModels() {
+      try {
+        const allModels = await getAllModels();
+        setModels(allModels);
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+      }
+    }
+
+    fetchModels();
+  }, []);
+
+ 
+
+  async function handleScan() {
     try {
       setLoading(true)
 
-      const data = await testLLM()
+      const scan = await startScan();
+      console.log("Scan started:", scan);
+      const finalStatus = await waitforScanCompletion(scan.scanId);
+      console.log("Scan completed:", finalStatus);
 
-      setResponse(data.response)
     } catch (error) {
-      console.error(error)
-      setResponse("Something went wrong")
+      console.error("Scan failed:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleGetASRModels() {
-    try {
-      setModelsLoading(true)
-
-      const data = await getASRModels()
-      console.log("Fetched ASR models:", data.models)
-      setModels(data.models)
-    } catch (error) {
-      console.error(error)
-      setResponse("Something went wrong")
-    } finally {
-      setModelsLoading(false)
-    }
-  }
+  const organisations = new Set(
+    models.map(
+      (model) => model.organisation
+    )
+  ).size
 
   return (
-    <div className="min-h-screen bg-white p-8 text-slate-900">
-      <h1 className="mb-6 text-4xl font-bold">
-        ASR Research Dashboard
-      </h1>
+    <div className="flex min-h-screen bg-muted/30">
+      <AppSidebar />
 
-      <div className="flex gap-4">
-        <Button
-          onClick={handleTestLLM}
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "Test LLM"}
-        </Button>
+      <main className="min-w-0 flex-1">
+        <div className="mx-auto max-w-7xl space-y-8 p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                ASR Model Intelligence
+              </h1>
 
-        <Button
-          onClick={handleGetASRModels}
-          disabled={modelsLoading}
-          variant="secondary"
-        >
-          {modelsLoading ? "Loading..." : "Get ASR Models"}
-        </Button>
-      </div>
+              <p className="mt-1 text-muted-foreground">
+                Scan and analyse speech recognition models.
+              </p>
+            </div>
 
-      <p className="mt-4">{response}</p>
+            <Button
+              onClick={handleScan}
+              disabled={loading}
+              className="gap-2"
+            >
+              <Sparkles className="size-4" />
 
-      <ul className="mt-6">
-        {models.map((model) => (
-          <li key={model.url}>
-            {model.title}
-          </li>
-        ))}
-      </ul>
+              {loading
+                ? "Scanning..."
+                : "Run Scan"}
+            </Button>
+          </div>
+
+          <ModelsTable models={models} />
+          
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Models"
+              value={models.length}
+              description="ASR models discovered"
+              icon={Database}
+            />
+
+            <StatCard
+              title="Organisations"
+              value={organisations}
+              description="Distinct organisations found"
+              icon={Layers3}
+            />
+
+          </div>
+
+
+        </div>
+      </main>
     </div>
   )
 }

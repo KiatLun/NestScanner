@@ -23,6 +23,9 @@ from app.database.db import (
     getScan,
     getLatestScan,
     getResearchByScan,
+    getAllModels,
+    getModel,
+    getModelDetails,
 )
 
 from app.graph.workflow import (
@@ -421,3 +424,51 @@ def getScanStatusEndpoint(
         )
 
     return status
+
+
+# =====================================================
+# GET ALL MODELS
+# =====================================================
+
+@app.get("/api/getAllModels")
+def getAllModelsEndpoint():
+    
+    models = getAllModels()
+
+    return {"models": models}
+
+# =====================================================
+# GET MODEL
+# =====================================================
+
+@app.get("/api/getModel/{modelId}")
+def getModelEndpoint(
+    modelId: int,
+):
+
+    model = getModel(modelId)
+
+    if model is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail=(f"Model {modelId} " "not found"),
+        )
+
+    return model
+
+@app.get("/api/getModelDetails/{modelId}")
+def getModelDetailsEndpoint(
+    modelId: int,
+):
+
+    modelDetails = getModelDetails(modelId)
+
+    if modelDetails is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail=(f"Model {modelId} " "not found"),
+        )
+
+    return modelDetails

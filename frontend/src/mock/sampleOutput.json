@@ -1,0 +1,197 @@
+{
+  "candidates": [
+      {
+          "candidateId": 1,
+          "candidate": {
+              "name": "Qwen3-ASR",
+              "organisation": "Qwen",
+              "sourceUrl": "https://github.com/QwenLM/Qwen3-ASR",
+              "candidateType": "model_family"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "web",
+                  "title": "GitHub - QwenLM/Qwen3-ASR: Qwen3-ASR is an open-source series ...",
+                  "url": "https://github.com/QwenLM/Qwen3-ASR",
+                  "description": "Jan 29, 2026 · Qwen3-ASR is an open-source series of ASR models developed by the Qwen team at Alibaba Cloud, supporting stable multilingual speech/music/song recognition, language detection and timestamp prediction. - QwenLM/Qwen3-ASR",
+                  "metadata": {
+                      "s": "open source ASR model 2026"
+                  }
+              }
+          ]
+      },
+      {
+          "candidateId": 2,
+          "candidate": {
+              "name": "Transcribe",
+              "organisation": "Cohere",
+              "sourceUrl": "https://cohere.com/blog/transcribe",
+              "candidateType": "model"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "web",
+                  "title": "Cohere Transcribe: Open-Source Speech Recognition | CohereBest open source speech-to-text (STT) model in 2026 (with ...GitHub - xzf-thu/Mega-ASR: First foundation ASR built for the ...",
+                  "url": "https://cohere.com/blog/transcribe",
+                  "description": "Mar 26, 2026 · Cohere is announcing Transcribe, a state-of-the-art automatic speech recognition (ASR) model that is open source and available today for download. Speech is rapidly becoming a core modality for AI-enabled workloads and automations — from meeting transcription and speech analytics to real-time customer support agents. Jan 6, 2026 · Compare the best open source speech-to-text (STT) models in 2026. Benchmarks for WER, latency, languages, and deployment tips for Canary, Granite, Whisper and more. First foundation ASR built for the real world - 7 atomic acoustic conditions, 54 compound scenarios, 2.6M samples, and up to ~30% gains over SOTA where every other model falls apart. **You'll come back to MEGA-ASR, after the rest fail in the wild.** ⭐ - xzf-thu/Mega-ASR",
+                  "metadata": {
+                      "s": "open source ASR model 2026"
+                  }
+              }
+          ]
+      },
+      {
+          "candidateId": 3,
+          "candidate": {
+              "name": "MAI-Transcribe-1",
+              "organisation": "Microsoft",
+              "sourceUrl": "https://microsoft.ai/news/state-of-the-art-speech-recognition-with-mai-transcribe-1/",
+              "candidateType": "model"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "web",
+                  "title": "State of the Art Speech Recognition with MAI-Transcribe-1",
+                  "url": "https://microsoft.ai/news/state-of-the-art-speech-recognition-with-mai-transcribe-1/",
+                  "description": "Apr 2, 2026 · Meet MAI-Transcribe-1, the most accurate transcription model in the world across 25 languages. Speech is the most natural way humans communicate, often in noisy environments – conference rooms, phone lines, busy streets – across many languages.",
+                  "metadata": {
+                      "s": "new transcription model announcement 2026"
+                  }
+              }
+          ]
+      },
+      {
+          "candidateId": 4,
+          "candidate": {
+              "name": "VibeVoice ASR",
+              "organisation": "Microsoft",
+              "sourceUrl": "https://github.com/microsoft/VibeVoice",
+              "candidateType": "model_family"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "github",
+                  "title": "GitHub - microsoft/VibeVoice: Open-Source Frontier Voice AI",
+                  "url": "https://github.com/microsoft/VibeVoice",
+                  "description": "Aug 25, 2025 · You can now explore and test our unified speech-to-text capabilities directly through Microsoft Foundry. 2026-03-06: 🚀 VibeVoice ASR is now part of a Transformers release! You can now use our speech recognition model directly through the Hugging Face Transformers library for seamless integration into your projects.",
+                  "metadata": {
+                      "s": "new open source speech recognition model 2026"
+                  }
+              }
+          ]
+      },
+      {
+          "candidateId": 5,
+          "candidate": {
+              "name": "Nemotron-3.5-asr-streaming-0.6b",
+              "organisation": "nvidia",
+              "sourceUrl": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+              "candidateType": "model"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "huggingface",
+                  "title": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+                  "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b",
+                  "description": null,
+                  "metadata": {
+                      "organisation": "nvidia",
+                      "pipelineTag": "automatic-speech-recognition",
+                      "downloads": 955979,
+                      "likes": 1066,
+                      "createdAt": "2026-05-15T21:52:25+00:00",
+                      "lastModified": "2026-08-05T18:52:16+00:00",
+                      "tags": [
+                          "nemo",
+                          "safetensors",
+                          "gguf",
+                          "nemotron3_5_asr",
+                          "feature-extraction",
+                          "transformers",
+                          "speech-recognition",
+                          "cache-aware ASR",
+                          "automatic-speech-recognition",
+                          "streaming-asr",
+                          "multilingual",
+                          "speech",
+                          "audio",
+                          "FastConformer",
+                          "RNNT",
+                          "Parakeet",
+                          "ASR",
+                          "pytorch",
+                          "NeMo",
+                          "en",
+                          "es",
+                          "de",
+                          "fr",
+                          "it",
+                          "ar",
+                          "ja",
+                          "ko",
+                          "pt",
+                          "ru",
+                          "hi",
+                          "zh",
+                          "vi",
+                          "he",
+                          "nl",
+                          "cs",
+                          "da",
+                          "pl",
+                          "no",
+                          "sv",
+                          "th",
+                          "tr",
+                          "bg",
+                          "el",
+                          "et",
+                          "fi",
+                          "hr",
+                          "hu",
+                          "lt",
+                          "lv",
+                          "ro",
+                          "sk",
+                          "uk",
+                          "mt",
+                          "sl",
+                          "dataset:nvidia/Granary",
+                          "dataset:multilingual_librispeech",
+                          "dataset:fleurs",
+                          "dataset:mozilla-foundation/common_voice_8_0",
+                          "dataset:voxpopuli",
+                          "dataset:europarl",
+                          "arxiv:2312.17279",
+                          "arxiv:2305.05084",
+                          "license:other",
+                          "model-index",
+                          "eval-results",
+                          "region:us"
+                      ]
+                  }
+              }
+          ]
+      },
+      {
+          "candidateId": 6,
+          "candidate": {
+              "name": "GPT-Transcribe",
+              "organisation": "OpenAI",
+              "sourceUrl": "https://community.openai.com/t/gpt-live-transcribe-and-gpt-transcribe-two-new-transcription-models-in-the-api/1388318",
+              "candidateType": "model_family"
+          },
+          "discoveryEvidence": [
+              {
+                  "source": "web",
+                  "title": "GPT-Live-Transcribe and GPT-Transcribe: Two New Transcription ...",
+                  "url": "https://community.openai.com/t/gpt-live-transcribe-and-gpt-transcribe-two-new-transcription-models-in-the-api/1388318",
+                  "description": "Jul 29, 2026 · We’re introducing two new transcription models in the API: • GPT-Live-Transcribe: built for low-latency live transcription. • GPT-Transcribe: optimized for asynchronous transcription of completed audio files and batch workloads. Both models better understand context and deliver more accurate transcription on real world audio across accents and languages, including for short phrases ...",
+                  "metadata": {
+                      "s": "new transcription model announcement 2026"
+                  }
+              }
+          ]
+      }
+  ]
+}
