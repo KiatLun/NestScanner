@@ -1,0 +1,50 @@
+{
+  "research": {
+    "results": [
+      {
+        "researchResultId": 10,
+        "modelId": 7,
+        "candidate": {
+          "name": "Mega-ASR",
+          "organisation": null,
+          "sourceUrl": "https://github.com/xzf-thu/Mega-ASR",
+          "candidateType": "model"
+        },
+        "releaseDate": "2026-05-19",
+        "isRecent": true,
+        "isLocallyDeployable": true,
+        "technicalProfile": {
+          "architecture": "Qwen3-ASR-based speech-to-text model fine-tuned with Acoustic-to-Semantic Progressive Supervised Fine-Tuning and Dual-Granularity WER-Gated Policy Optimization",
+          "parameterCount": "1.7B",
+          "languages": [
+            "en",
+            "zh"
+          ],
+          "reportedWer": "45.69% WER on VOiCES R4-B-F and 21.49% WER on NOIZEUS Sta-0",
+          "fineTuningSupport": "Supported; official A2S-SFT code provides supervised fine-tuning for Qwen3-ASR-style speech-to-text models",
+          "license": "Apache-2.0"
+        },
+        "researchEvidence": {
+          "recencyEvidence": [],
+          "deployabilityEvidence": [
+            {
+              "source": "web",
+              "title": "GitHub - xzf-thu/Mega-ASR",
+              "url": "https://github.com/xzf-thu/Mega-ASR",
+              "description": "Mega-ASR inference and training codebase. Model weights are available on Hugging Face.",
+              "metadata": {}
+            },
+            {
+              "source": "web",
+              "title": "zhifeixie/Mega-ASR · Hugging Face",
+              "url": "https://huggingface.co/zhifeixie/Mega-ASR",
+              "description": "Mega-ASR model weights hosted on Hugging Face.",
+              "metadata": {}
+            }
+          ],
+          "technicalEvidence": []
+        }
+      }
+    ]
+  }
+}
