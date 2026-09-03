@@ -1,7 +1,13 @@
+import re
 import subprocess
-from pathlib import Path
+import sys
 
-ECHOFORGE_PATH = Path("/mnt/c/Users/AJ/Desktop/echoforge")
+from app.services.echoforge.echoforgeConfig import (
+    MODEL_UPLOAD_DIR,
+    CLEARML_ENV_FILE,
+)
+
+CLEARML_MODEL_ID_PATTERN = re.compile(r"CLEARML_MODEL_ID=([A-Za-z0-9_-]+)")
 
 
 def uploadModel(
@@ -10,26 +16,17 @@ def uploadModel(
     project: str = "model-registry",
 ) -> dict:
 
-    modelsUploadPath = ECHOFORGE_PATH / "deployment" / "models_upload"
-
-    scriptPath = modelsUploadPath / "models_upload.py"
-
-    envFilePath = ECHOFORGE_PATH / "services" / "clearml-agent" / "clearml.env"
-
-    cachePath = ECHOFORGE_PATH / "deployment" / ".cache" / cacheName
+    scriptPath = MODEL_UPLOAD_DIR / "models_upload.py"
 
     if not scriptPath.exists():
-        raise FileNotFoundError(f"EchoForge uploader not found: " f"{scriptPath}")
+        raise RuntimeError(f"EchoForge upload script not found: " f"{scriptPath}")
 
-    if not envFilePath.exists():
-        raise FileNotFoundError(f"ClearML env file not found: " f"{envFilePath}")
-
-    if not cachePath.exists():
-        raise FileNotFoundError(f"Model cache not found: " f"{cachePath}")
+    if not CLEARML_ENV_FILE.exists():
+        raise RuntimeError(f"ClearML env file not found: " f"{CLEARML_ENV_FILE}")
 
     command = [
-        "python3",
-        "models_upload.py",
+        sys.executable,
+        str(scriptPath),
         "--name",
         cacheName,
         "--model-name",
@@ -37,62 +34,80 @@ def uploadModel(
         "--project",
         project,
         "--env-file",
-        str(envFilePath),
+        str(CLEARML_ENV_FILE),
     ]
 
-    print("\n=== ECHOFORGE MODEL UPLOAD ===")
+    print()
+    print("[Onboarding] Starting EchoForge upload")
+    print(f"[Onboarding] Model: {modelName}")
+    print(f"[Onboarding] Cache name: {cacheName}")
 
-    print(f"Cache name: {cacheName}")
-
-    print(f"Model name: {modelName}")
-
-    print(f"Project: {project}")
-
-    result = subprocess.run(
+    process = subprocess.Popen(
         command,
-        cwd=modelsUploadPath,
-        capture_output=True,
+        cwd=str(MODEL_UPLOAD_DIR),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
+        bufsize=1,
     )
 
-    if result.stdout:
-        print(
-            result.stdout,
-            end="",
-        )
-
-    if result.stderr:
-        print(
-            result.stderr,
-            end="",
-        )
-
-    if result.returncode != 0:
-        raise RuntimeError("EchoForge model upload failed.")
-
+    outputLines = []
     clearmlModelId = None
 
-    for line in result.stdout.splitlines():
+    if process.stdout:
 
-        strippedLine = line.strip()
+        for line in process.stdout:
 
-        if strippedLine.startswith("CLEARML_MODEL_ID="):
-            clearmlModelId = strippedLine.split(
-                "=",
-                1,
-            )[1].strip()
+            line = line.rstrip()
 
-            break
+            outputLines.append(line)
+
+            print(f"[EchoForge] {line}")
+
+            match = CLEARML_MODEL_ID_PATTERN.search(line)
+
+            if match:
+                clearmlModelId = match.group(1)
+
+    returnCode = process.wait()
+
+    if returnCode != 0:
+        raise RuntimeError(
+            "EchoForge model upload failed." "\n\n" + "\n".join(outputLines)
+        )
 
     if not clearmlModelId:
         raise RuntimeError(
-            "EchoForge upload completed but " "no ClearML model ID was returned."
+            "EchoForge upload completed, "
+            "but no CLEARML_MODEL_ID "
+            "was found in the output."
         )
 
     return {
-        "cacheName": cacheName,
         "modelName": modelName,
+        "cacheName": cacheName,
         "project": project,
         "clearmlModelId": clearmlModelId,
         "status": "completed",
     }
+
+
+from app.services.echoforge.modelUploader import (
+    uploadModel,
+)
+
+
+def main():
+
+    result = uploadModel(
+        cacheName="silero",
+        modelName="silero",
+    )
+
+    print()
+    print("UPLOAD RESULT:")
+    print(result)
+
+
+if __name__ == "__main__":
+    main()

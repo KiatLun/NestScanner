@@ -1,22 +1,41 @@
-from app.services.echoforge.echoforgeClient import (
-    getDownloaderCapabilities,
-)
-from app.services.echoforge.downloadResolver import (
-    resolveDownloader,
-)
+from app.services.echoforge.modelInfoReader import getAllModelInfo
+from app.services.echoforge.downloadResolver import resolveDownloader
 
 
 def main():
-    # NestScanner queries Echoforge on what downloaders are available for a given model and source type. It first fetches the capabilities from Echoforge, then resolves the appropriate downloader based on the model name and source type.
-    capabilities = getDownloaderCapabilities()
+    modelInfo = getAllModelInfo()
 
-    result = resolveDownloader(
-        modelName="nemotron-speech-streaming-en-0.6b",
-        sourceType="huggingface",
-        capabilities=capabilities,
-    )
+    tests = [
+        {
+            "modelName": "whisper-tiny",
+            "sourceType": "huggingface",
+            "source": "openai/whisper-tiny",
+        },
+        {
+            "modelName": "silero",
+            "sourceType": "github",
+            "source": "silero",
+        },
+        {
+            "modelName": "nemotron-speech-streaming-en-0.6b",
+            "sourceType": "huggingface",
+            "source": "nvidia/nemotron-speech-streaming-en-0.6b",
+        },
+    ]
 
-    print(result)
+    for test in tests:
+        result = resolveDownloader(
+            modelName=test["modelName"],
+            sourceType=test["sourceType"],
+            source=test["source"],
+            modelInfo=modelInfo,
+        )
+
+        print(result)
+        print("MODEL:", test["modelName"])
+        print("SOURCE TYPE:", test["sourceType"])
+        print("SOURCE:", test["source"])
+        print("RESOLVED:", result)
 
 
 if __name__ == "__main__":

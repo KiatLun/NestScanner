@@ -1,35 +1,73 @@
 def resolveDownloader(
     modelName: str,
     sourceType: str,
-    capabilities: list[dict],
+    source: str,
+    modelInfo: list[dict],
 ) -> dict | None:
 
     normalizedModelName = modelName.lower()
+    normalizedSourceType = sourceType.lower()
+    normalizedSource = source.lower()
 
+    # ----------------------------------------
     # 1. Prefer model-specific downloader
-    for capability in capabilities:
+    # ----------------------------------------
 
-        if capability.get("scope") != "model-specific":
+    for entry in modelInfo:
+
+        if entry.get("scope") != "model-specific":
             continue
 
-        supportedModels = capability.get(
+        supportedModels = entry.get(
             "supportedModels",
             [],
         )
 
         for supportedModel in supportedModels:
 
-            if supportedModel.lower() in normalizedModelName:
-                return capability
+            supportedSource = supportedModel.get("source")
 
-    # 2. Fall back to generic downloader
-    for capability in capabilities:
+            if not supportedSource:
+                continue
 
-        if (
-            capability.get("scope") == "generic"
-            and capability.get("sourceType") == sourceType
-        ):
-            return capability
+            normalizedSupportedSource = supportedSource.lower()
 
-    # 3. Nothing currently supported
+            # Best match:
+            # Research source matches supported source exactly
+            if normalizedSource == normalizedSupportedSource:
+                return {
+                    **entry,
+                    "cacheName": supportedModel.get("cacheName"),
+                }
+
+            # Secondary fallback:
+            # model/family name appears in modelName
+            modelPart = normalizedSupportedSource.split("/")[-1]
+
+            if modelPart in normalizedModelName:
+                return {
+                    **entry,
+                    "cacheName": supportedModel.get("cacheName"),
+                }
+
+    # ----------------------------------------
+    # 2. Generic downloader fallback
+    # ----------------------------------------
+
+    for entry in modelInfo:
+
+        if entry.get("scope") != "generic":
+            continue
+
+        entrySourceType = entry.get("sourceType")
+
+        if not entrySourceType:
+            continue
+
+        if entrySourceType.lower() == normalizedSourceType:
+            return {
+                **entry,
+                "cacheName": None,
+            }
+
     return None
