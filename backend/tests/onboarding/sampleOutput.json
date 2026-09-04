@@ -1,0 +1,139 @@
+{
+  "research": {
+    "results": [
+      {
+        "candidate": {
+          "name": "Qwen3-ASR-1.7B",
+          "organisation": "Qwen",
+          "sourceUrl": "https://github.com/QwenLM/Qwen3-ASR",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "huggingface",
+              "title": "Qwen/Qwen3-ASR-1.7B",
+              "url": "https://huggingface.co/Qwen/Qwen3-ASR-1.7B",
+              "description": "Official Qwen3-ASR 1.7B model repository containing downloadable model weights."
+            }
+          ],
+          "technicalEvidence": []
+        }
+      },
+      {
+        "candidate": {
+          "name": "Voxtral-Mini-3B-2507",
+          "organisation": "Mistral AI",
+          "sourceUrl": "https://huggingface.co/mistralai/Voxtral-Mini-3B-2507",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "huggingface",
+              "title": "mistralai/Voxtral-Mini-3B-2507",
+              "url": "https://huggingface.co/mistralai/Voxtral-Mini-3B-2507",
+              "description": "Official Mistral AI Hugging Face repository containing the model weights."
+            }
+          ],
+          "technicalEvidence": []
+        }
+      },
+      {
+        "candidate": {
+          "name": "Whisper Medium",
+          "organisation": "OpenAI",
+          "sourceUrl": "https://github.com/openai/whisper",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "huggingface",
+              "title": "openai/whisper-medium",
+              "url": "https://huggingface.co/openai/whisper-medium",
+              "description": "Official Whisper Medium model repository containing model weights."
+            },
+            {
+              "source": "github",
+              "title": "OpenAI Whisper",
+              "url": "https://github.com/openai/whisper",
+              "description": "Official source code repository for Whisper."
+            }
+          ],
+          "technicalEvidence": []
+        }
+      },
+      {
+        "candidate": {
+          "name": "Silero VAD",
+          "organisation": "Silero",
+          "sourceUrl": "https://github.com/snakers4/silero-vad",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "github",
+              "title": "Silero VAD",
+              "url": "https://github.com/snakers4/silero-vad",
+              "description": "Official Silero VAD repository. The model is obtained through the project repository and its model loading procedure."
+            }
+          ],
+          "technicalEvidence": []
+        }
+      },
+      {
+        "candidate": {
+          "name": "Mega-ASR",
+          "organisation": null,
+          "sourceUrl": "https://github.com/xzf-thu/Mega-ASR",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "github",
+              "title": "xzf-thu/Mega-ASR",
+              "url": "https://github.com/xzf-thu/Mega-ASR",
+              "description": "Official Mega-ASR code repository. Model weights are available separately on Hugging Face."
+            }
+          ],
+          "technicalEvidence": [
+            {
+              "source": "huggingface",
+              "title": "zhifeixie/Mega-ASR",
+              "url": "https://huggingface.co/zhifeixie/Mega-ASR",
+              "description": "Official Mega-ASR model weights."
+            }
+          ]
+        }
+      },
+      {
+        "candidate": {
+          "name": "Example Direct ASR",
+          "organisation": "Example Research",
+          "sourceUrl": "https://example.org/example-asr",
+          "candidateType": "model"
+        },
+        "isLocallyDeployable": true,
+        "researchEvidence": {
+          "deployabilityEvidence": [
+            {
+              "source": "web",
+              "title": "Example Direct ASR Download",
+              "url": "https://example.org/models/example-asr/model.bin",
+              "description": "The official model weights are provided directly as a downloadable model.bin file."
+            }
+          ],
+          "technicalEvidence": []
+        }
+      }
+    ]
+  }
+}

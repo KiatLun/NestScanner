@@ -2,7 +2,7 @@ from app.services.echoforge.modelInfoReader import (
     getAllModelInfo,
 )
 
-from app.services.echoforge.downloadResolver import (
+from app.services.echoforge.downloaderResolver import (
     resolveDownloader,
 )
 
