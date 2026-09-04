@@ -6,7 +6,7 @@ from app.services.echoforge.downloadSourceResolver import (
     determineDownloadSource,
 )
 
-from app.services.echoforge.downloadResolver import (
+from backend.app.services.echoforge.downloaderResolver import (
     resolveDownloader,
 )
 

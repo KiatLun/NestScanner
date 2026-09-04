@@ -2,7 +2,7 @@ from app.services.echoforge.modelInfoReader import (
     getAllModelInfo,
 )
 
-from app.services.echoforge.downloadResolver import (
+from backend.app.services.echoforge.downloaderResolver import (
     resolveDownloader,
 )
 
@@ -59,20 +59,20 @@ def main():
     # ----------------------------------------
 
     testModel(
-        modelName="silero",
-        sourceType="github",
-        source="silero",
+        modelName="whisper-medium",
+        sourceType="huggingface",
+        source="openai/whisper-medium",
     )
 
     # ----------------------------------------
     # Test 2: generic Hugging Face
     # ----------------------------------------
 
-    testModel(
-        modelName=("nemotron-speech-streaming-en-0.6b"),
-        sourceType="huggingface",
-        source=("nvidia/" "nemotron-speech-streaming-en-0.6b"),
-    )
+    # testModel(
+    #     modelName=("nemotron-speech-streaming-en-0.6b"),
+    #     sourceType="huggingface",
+    #     source=("nvidia/" "nemotron-speech-streaming-en-0.6b"),
+    # )
 
 
 if __name__ == "__main__":
