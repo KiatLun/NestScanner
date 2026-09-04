@@ -1,9 +1,5 @@
-from app.services.echoforge.modelInfoReader import (
-    getAllModelInfo,
-)
-
-from app.services.echoforge.downloaderResolver import (
-    resolveDownloader,
+from app.services.echoforge.onboardingDownloadResolver import (
+    resolveOnboardingDownload,
 )
 
 from app.services.echoforge.modelDownloader import (
@@ -15,94 +11,62 @@ from app.services.echoforge.modelUploader import (
 )
 
 
-def onboardModel(
-    modelName: str,
-    sourceType: str,
-    source: str,
-    cacheName: str | None = None,
+def executeOnboardingDownloadAndUpload(
+    researchResult: dict,
 ) -> dict:
 
-    print()
-    print("=" * 60)
-    print(f"[Onboarding] Starting: {modelName}")
-    print("=" * 60)
+    # 1. Resolve source + downloader
+    downloadDecision = resolveOnboardingDownload(researchResult)
 
-    # ----------------------------------------
-    # 1. Read EchoForge model information
-    # ----------------------------------------
+    if not downloadDecision["hasUsableDownloader"]:
+        return {
+            **downloadDecision,
+            "status": "needs-downloader",
+        }
 
-    modelInfo = getAllModelInfo()
-
-    print(f"[Onboarding] Found " f"{len(modelInfo)} EchoForge downloaders")
-
-    # ----------------------------------------
-    # 2. Resolve downloader
-    # ----------------------------------------
-
-    downloader = resolveDownloader(
-        modelName=modelName,
-        sourceType=sourceType,
-        source=source,
-        modelInfo=modelInfo,
-    )
-
-    if not downloader:
-        raise RuntimeError(
-            "No suitable EchoForge downloader "
-            f"found for '{modelName}'. "
-            "Automatic downloader creation "
-            "is currently TODO."
+    # 2. Download model
+    try:
+        downloadResult = downloadModel(
+            downloader={
+                "downloader": downloadDecision["downloader"],
+                "scope": downloadDecision["scope"],
+                "sourceType": downloadDecision["sourceType"],
+                "cacheName": downloadDecision["cacheName"],
+            },
+            modelName=downloadDecision["modelName"],
+            sourceType=downloadDecision["sourceType"],
+            source=downloadDecision["source"],
+            cacheName=downloadDecision["cacheName"],
         )
 
-    downloaderName = downloader["downloader"]
+    except Exception as error:
+        return {
+            **downloadDecision,
+            "status": "download-failed",
+            "error": str(error),
+        }
 
-    print(f"[Onboarding] Resolved downloader: " f"{downloaderName}")
+    # 3. Upload/register model
+    try:
+        uploadResult = uploadModel(
+            cacheName=downloadResult["cacheName"],
+            modelName=downloadDecision["modelName"],
+        )
 
-    if downloader.get("cacheName"):
-        print(f"[Onboarding] Resolved cache: " f"{downloader['cacheName']}")
+    except Exception as error:
+        return {
+            **downloadDecision,
+            "status": "upload-failed",
+            "cacheName": downloadResult.get("cacheName"),
+            "cachePath": downloadResult.get("cachePath"),
+            "error": str(error),
+        }
 
-    # ----------------------------------------
-    # 3. Download
-    # ----------------------------------------
-
-    downloadResult = downloadModel(
-        downloader=downloader,
-        modelName=modelName,
-        sourceType=sourceType,
-        source=source,
-        cacheName=cacheName,
-    )
-
-    print(f"[Onboarding] Download completed: " f"{downloadResult['cachePath']}")
-
-    # ----------------------------------------
-    # 4. Upload to ClearML / MinIO
-    # ----------------------------------------
-
-    uploadResult = uploadModel(
-        cacheName=downloadResult["cacheName"],
-        modelName=modelName,
-    )
-
-    print(f"[Onboarding] Upload completed")
-
-    print(f"[Onboarding] ClearML model ID: " f"{uploadResult['clearmlModelId']}")
-
-    # ----------------------------------------
-    # 5. Final result
-    # ----------------------------------------
-
-    result = {
-        "modelName": modelName,
-        "sourceType": sourceType,
-        "source": source,
-        "downloader": downloaderName,
+    # 4. Completed
+    return {
+        **downloadDecision,
+        "status": "completed",
         "cacheName": downloadResult["cacheName"],
         "cachePath": downloadResult["cachePath"],
         "clearmlModelId": uploadResult["clearmlModelId"],
-        "status": "completed",
     }
-
-    print(f"[Onboarding] Completed: {modelName}")
-
-    return result
