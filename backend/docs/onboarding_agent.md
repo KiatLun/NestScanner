@@ -76,10 +76,23 @@ If no usable downloader exists:
 status = needs-downloader
 ```
 
+### 6. Upload and register the downloaded model — `modelOnboarding.py` + `modelUploader.py`
+
+If the download succeeds, upload the cached model through `echoforge`.
+
+```text
+Downloaded model cache
+→ run echoforge upload
+→ upload model files to MinIO
+→ register model in ClearML
+→ capture ClearML model ID
+→ onboarding complete
+```
+
 ## Overall Flow
 
 ```text
-New Research Agent model
+New model from Research Agent
         ↓
 Known model family?
    ┌────┴────┐
@@ -88,23 +101,34 @@ Known model family?
 Use model-   Research evidence
 specific     + LLM reasoning
 downloader        ↓
-             Determine actual
-             download source
-                  ↓
-             Existing downloader
-             can handle it?
-             ┌────┴────┐
-            Yes        No
-             ↓          ↓
-           Use it    Hugging Face?
-                      ┌───┴───┐
-                     Yes      No
-                      ↓        ↓
-                  Generic    needs-
-                  HF         downloader
-                  downloader
-                      ↓
-                 Attempt download
-                      ↓
-                 Verify cache
+   │         Determine actual
+   │         download source
+   │              ↓
+   │         Existing downloaders
+   │         can handle it?
+   │         ┌────┴────┐
+   │        Yes        No
+   │         ↓          ↓
+   │       Use it    Hugging Face?
+   │         │         ┌───┴───┐
+   │         │        Yes      No
+   │         │         ↓        ↓
+   │         │      Generic    needs-
+   │         │      HF         downloader
+   │         │      downloader
+   │         │         │
+   └─────────┴─────────┘
+             ↓
+        Attempt download
+             ↓
+        Verify cache
+             ↓
+        Upload model
+             ↓
+   Register in ClearML
+   + store files in MinIO
+             ↓
+      Capture model ID
+             ↓
+         completed
 ```
