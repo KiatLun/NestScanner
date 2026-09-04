@@ -27,15 +27,15 @@ def main():
 
     # Model-specific example
     testUpload(
-        cacheName="silero",
-        modelName="silero",
+        cacheName="Qwen3-ASR-1.7B",
+        modelName="Qwen3-ASR-1.7B",
     )
 
     # Generic Hugging Face example
-    testUpload(
-        cacheName="nemotron-speech-streaming-en-0.6b",
-        modelName="nemotron-speech-streaming-en-0.6b",
-    )
+    # testUpload(
+    #     cacheName="nemotron-speech-streaming-en-0.6b",
+    #     modelName="nemotron-speech-streaming-en-0.6b",
+    # )
 
 
 if __name__ == "__main__":
