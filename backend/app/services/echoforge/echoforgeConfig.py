@@ -1,30 +1,53 @@
 from pathlib import Path
 import os
 
-ECHOFORGE_ROOT = Path(
-    os.getenv(
-        "ECHOFORGE_ROOT",
-        "/mnt/c/Users/AJ/Desktop/echoforge",
-    )
-)
 
-MODEL_DOWNLOAD_DIR = ECHOFORGE_ROOT / "deployment" / "model_download"
+def getRequiredPath(
+    environmentVariable: str,
+) -> Path:
+
+    value = os.getenv(environmentVariable)
+
+    if not value:
+        raise RuntimeError(
+            f"Missing required environment variable: " f"{environmentVariable}"
+        )
+
+    return Path(value).expanduser().resolve()
+
+
+# ----------------------------------------
+# echoforge root
+# ----------------------------------------
+
+ECHOFORGE_ROOT = getRequiredPath("ECHOFORGE_ROOT")
+
+
+# ----------------------------------------
+# echoforge paths
+# ----------------------------------------
+
+DEPLOYMENT_DIR = ECHOFORGE_ROOT / "deployment"
+
+MODEL_DOWNLOAD_DIR = DEPLOYMENT_DIR / "model_download"
+
+MODEL_UPLOAD_DIR = DEPLOYMENT_DIR / "models_upload"
 
 MODEL_INFO_FILE = MODEL_DOWNLOAD_DIR / "model_info.json"
 
-MODEL_UPLOAD_DIR = ECHOFORGE_ROOT / "deployment" / "models_upload"
-
-CACHE_DIR = ECHOFORGE_ROOT / "deployment" / ".cache"
+CACHE_DIR = DEPLOYMENT_DIR / ".cache"
 
 CLEARML_ENV_FILE = ECHOFORGE_ROOT / "services" / "clearml-agent" / "clearml.env"
 
+ECHOFORGE_ENV_FILE = ECHOFORGE_ROOT / ".env"
 
-def getEchoForgeEnvironment() -> dict[str, str]:
+
+def getEchoforgeEnvironment() -> dict[str, str]:
     """
-    Build the environment passed to EchoForge subprocesses.
+    Build the environment passed to echoforge subprocesses.
 
-    Starts with NestScanner's current environment, then adds values
-    from EchoForge's root .env file such as HF_TOKEN.
+    Starts with NestScanner's current environment and supplements it
+    with values from echoforge's root .env file.
     """
 
     env = os.environ.copy()
@@ -36,7 +59,9 @@ def getEchoForgeEnvironment() -> dict[str, str]:
         "r",
         encoding="utf-8",
     ) as file:
+
         for line in file:
+
             line = line.strip()
 
             if not line:
@@ -48,7 +73,10 @@ def getEchoForgeEnvironment() -> dict[str, str]:
             if "=" not in line:
                 continue
 
-            key, value = line.split("=", 1)
+            key, value = line.split(
+                "=",
+                1,
+            )
 
             key = key.strip()
             value = value.strip()
@@ -56,7 +84,7 @@ def getEchoForgeEnvironment() -> dict[str, str]:
             if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
                 value = value[1:-1]
 
-            # Existing environment takes priority.
+            # NestScanner environment takes priority.
             if key not in env:
                 env[key] = value
 

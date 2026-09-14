@@ -1,62 +1,14 @@
-import os
 import subprocess
 import sys
 
 from app.services.echoforge.echoforgeConfig import (
-    MODEL_DOWNLOAD_DIR,
     CACHE_DIR,
-    ECHOFORGE_ROOT,
+    MODEL_DOWNLOAD_DIR,
+    getEchoforgeEnvironment,
 )
 
-
-def getEchoforgeEnvironment() -> dict[str, str]:
-    """
-    Build environment for echoforge subprocesses.
-
-    Reads echoforge's root .env so values such as
-    HF_TOKEN are available to models_download.py.
-    """
-
-    env = os.environ.copy()
-
-    envFile = ECHOFORGE_ROOT / ".env"
-
-    if not envFile.exists():
-        return env
-
-    with envFile.open(
-        "r",
-        encoding="utf-8",
-    ) as file:
-
-        for line in file:
-
-            line = line.strip()
-
-            if not line:
-                continue
-
-            if line.startswith("#"):
-                continue
-
-            if "=" not in line:
-                continue
-
-            key, value = line.split(
-                "=",
-                1,
-            )
-
-            key = key.strip()
-            value = value.strip()
-
-            if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
-                value = value[1:-1]
-
-            if key not in env:
-                env[key] = value
-
-    return env
+GENERIC_HF_DOWNLOADER = "hugging_face_download"
+MODEL_DOWNLOAD_SCRIPT = "models_download.py"
 
 
 def downloadModel(
@@ -89,7 +41,7 @@ def downloadModel(
         )
     )
 
-    scriptPath = MODEL_DOWNLOAD_DIR / "models_download.py"
+    scriptPath = MODEL_DOWNLOAD_DIR / MODEL_DOWNLOAD_SCRIPT
 
     if not scriptPath.exists():
 
@@ -99,7 +51,7 @@ def downloadModel(
     # Generic Hugging Face downloader
     # ----------------------------------------
 
-    if scope == "generic" and downloaderName == "hugging_face_download":
+    if scope == "generic" and downloaderName == GENERIC_HF_DOWNLOADER:
 
         command = [
             sys.executable,
@@ -116,8 +68,6 @@ def downloadModel(
 
     elif scope == "model-specific":
 
-        # A model_list-backed specific
-        # downloader needs the exact variant.
         if modelListName:
 
             command = [
@@ -127,9 +77,6 @@ def downloadModel(
                 (f"{downloaderName}:" f"{modelListName}"),
             ]
 
-        # Some model-specific downloaders may
-        # have no model_list and therefore only
-        # need the downloader folder name.
         else:
 
             command = [
@@ -148,7 +95,6 @@ def downloadModel(
     # ----------------------------------------
 
     print()
-
     print("[Onboarding] Starting " "echoforge download")
 
     print(f"[Onboarding] Model: " f"{modelName}")
@@ -164,14 +110,10 @@ def downloadModel(
     print("[Onboarding] Command: " + " ".join(command))
 
     # ----------------------------------------
-    # Environment
+    # Run echoforge
     # ----------------------------------------
 
     env = getEchoforgeEnvironment()
-
-    # ----------------------------------------
-    # Run echoforge
-    # ----------------------------------------
 
     process = subprocess.Popen(
         command,
@@ -231,7 +173,7 @@ def downloadModel(
         "source": source,
         "downloader": downloaderName,
         "modelListName": modelListName,
-        "cacheName": (resolvedCacheName),
+        "cacheName": resolvedCacheName,
         "cachePath": str(cachePath),
         "status": "completed",
     }
