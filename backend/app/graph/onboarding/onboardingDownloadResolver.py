@@ -1,4 +1,4 @@
-from app.services.echoforge.downloadSourceResolver import (
+from app.graph.onboarding.downloadSourceResolver import (
     resolveDownloadSource,
 )
 
@@ -6,7 +6,7 @@ from app.services.echoforge.modelInfoReader import (
     getAllModelInfo,
 )
 
-from app.services.echoforge.downloaderResolver import (
+from app.graph.onboarding.downloaderResolver import (
     resolveDownloader,
 )
 
