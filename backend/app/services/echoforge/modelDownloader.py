@@ -9,11 +9,11 @@ from app.services.echoforge.echoforgeConfig import (
 )
 
 
-def getEchoForgeEnvironment() -> dict[str, str]:
+def getEchoforgeEnvironment() -> dict[str, str]:
     """
-    Build environment for EchoForge subprocesses.
+    Build environment for echoforge subprocesses.
 
-    Reads EchoForge's root .env so values such as
+    Reads echoforge's root .env so values such as
     HF_TOKEN are available to models_download.py.
     """
 
@@ -71,18 +71,29 @@ def downloadModel(
 
     scope = downloader.get("scope")
 
-    # Resolver may already know the exact cache
-    # name from EchoForge model_info.json.
+    modelListName = downloader.get("modelListName")
+
+    # ----------------------------------------
+    # Resolve actual cache directory
+    # ----------------------------------------
+
     resolvedCacheName = (
         downloader.get("cacheName")
         or cacheName
-        or modelName.replace("/", "-").replace(" ", "-")
+        or modelName.replace(
+            "/",
+            "-",
+        ).replace(
+            " ",
+            "-",
+        )
     )
 
     scriptPath = MODEL_DOWNLOAD_DIR / "models_download.py"
 
     if not scriptPath.exists():
-        raise RuntimeError("EchoForge models_download.py " f"not found: {scriptPath}")
+
+        raise RuntimeError("echoforge models_download.py " f"not found: {scriptPath}")
 
     # ----------------------------------------
     # Generic Hugging Face downloader
@@ -105,24 +116,62 @@ def downloadModel(
 
     elif scope == "model-specific":
 
-        command = [
-            sys.executable,
-            str(scriptPath),
-            "--name",
-            downloaderName,
-        ]
+        # A model_list-backed specific
+        # downloader needs the exact variant.
+        if modelListName:
+
+            command = [
+                sys.executable,
+                str(scriptPath),
+                "--name",
+                (f"{downloaderName}:" f"{modelListName}"),
+            ]
+
+        # Some model-specific downloaders may
+        # have no model_list and therefore only
+        # need the downloader folder name.
+        else:
+
+            command = [
+                sys.executable,
+                str(scriptPath),
+                "--name",
+                downloaderName,
+            ]
 
     else:
 
-        raise RuntimeError("Unsupported EchoForge downloader: " f"{downloaderName}")
+        raise RuntimeError("Unsupported echoforge downloader: " f"{downloaderName}")
+
+    # ----------------------------------------
+    # Logging
+    # ----------------------------------------
 
     print()
-    print("[Onboarding] Starting EchoForge download")
-    print(f"[Onboarding] Model: {modelName}")
+
+    print("[Onboarding] Starting " "echoforge download")
+
+    print(f"[Onboarding] Model: " f"{modelName}")
+
     print(f"[Onboarding] Downloader: " f"{downloaderName}")
+
+    if modelListName:
+
+        print("[Onboarding] Model list name: " f"{modelListName}")
+
     print(f"[Onboarding] Cache name: " f"{resolvedCacheName}")
 
-    env = getEchoForgeEnvironment()
+    print("[Onboarding] Command: " + " ".join(command))
+
+    # ----------------------------------------
+    # Environment
+    # ----------------------------------------
+
+    env = getEchoforgeEnvironment()
+
+    # ----------------------------------------
+    # Run echoforge
+    # ----------------------------------------
 
     process = subprocess.Popen(
         command,
@@ -144,32 +193,45 @@ def downloadModel(
 
             outputLines.append(line)
 
-            print(f"[EchoForge] {line}")
+            print(f"[echoforge] {line}")
 
     returnCode = process.wait()
+
+    # ----------------------------------------
+    # Handle process failure
+    # ----------------------------------------
 
     if returnCode != 0:
 
         raise RuntimeError(
-            "EchoForge model download failed." "\n\n" + "\n".join(outputLines)
+            "echoforge model download failed." "\n\n" + "\n".join(outputLines)
         )
+
+    # ----------------------------------------
+    # Verify actual cache directory
+    # ----------------------------------------
 
     cachePath = CACHE_DIR / resolvedCacheName
 
     if not cachePath.exists():
 
         raise RuntimeError(
-            "EchoForge download completed, "
+            "echoforge download completed, "
             "but expected cache was not found: "
             f"{cachePath}"
         )
+
+    # ----------------------------------------
+    # Completed
+    # ----------------------------------------
 
     return {
         "modelName": modelName,
         "sourceType": sourceType,
         "source": source,
         "downloader": downloaderName,
-        "cacheName": resolvedCacheName,
+        "modelListName": modelListName,
+        "cacheName": (resolvedCacheName),
         "cachePath": str(cachePath),
         "status": "completed",
     }

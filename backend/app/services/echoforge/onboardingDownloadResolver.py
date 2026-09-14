@@ -15,6 +15,10 @@ def resolveOnboardingDownload(
     researchResult: dict,
 ) -> dict:
 
+    # ----------------------------------------
+    # 1. Resolve actual model weight source
+    # ----------------------------------------
+
     sourceResult = resolveDownloadSource(researchResult)
 
     modelName = sourceResult["modelName"]
@@ -23,7 +27,15 @@ def resolveOnboardingDownload(
 
     source = sourceResult["source"]
 
+    # ----------------------------------------
+    # 2. Read echoforge downloader metadata
+    # ----------------------------------------
+
     modelInfo = getAllModelInfo()
+
+    # ----------------------------------------
+    # 3. Find suitable downloader
+    # ----------------------------------------
 
     downloaderResult = resolveDownloader(
         modelName=modelName,
@@ -32,26 +44,36 @@ def resolveOnboardingDownload(
         modelInfo=modelInfo,
     )
 
+    # ----------------------------------------
+    # 4. No suitable downloader
+    # ----------------------------------------
+
     if not downloaderResult:
 
         return {
             "modelName": modelName,
             "sourceType": sourceType,
             "source": source,
-            "sourceReason": sourceResult.get("reason"),
+            "sourceReason": (sourceResult.get("reason")),
             "hasUsableDownloader": False,
             "downloader": None,
             "scope": None,
+            "modelListName": None,
             "cacheName": None,
         }
+
+    # ----------------------------------------
+    # 5. Downloader found
+    # ----------------------------------------
 
     return {
         "modelName": modelName,
         "sourceType": sourceType,
         "source": source,
-        "sourceReason": sourceResult.get("reason"),
+        "sourceReason": (sourceResult.get("reason")),
         "hasUsableDownloader": True,
-        "downloader": downloaderResult.get("downloader"),
-        "scope": downloaderResult.get("scope"),
-        "cacheName": downloaderResult.get("cacheName"),
+        "downloader": (downloaderResult.get("downloader")),
+        "scope": (downloaderResult.get("scope")),
+        "modelListName": (downloaderResult.get("modelListName")),
+        "cacheName": (downloaderResult.get("cacheName")),
     }

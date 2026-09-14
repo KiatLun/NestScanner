@@ -61,7 +61,7 @@ def main():
 
             print(f"       ClearML Model ID: " f"{result.get('clearmlModelId')}")
 
-        elif status == "needs-downloader":
+        elif status == "downloader-required":
             print()
             print(f"[SKIP] {modelName}")
             print("       No usable existing downloader.")

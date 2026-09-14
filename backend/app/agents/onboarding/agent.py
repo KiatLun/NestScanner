@@ -91,7 +91,7 @@ def onboardingAgent(
 
         return {
             "modelName": modelName,
-            "status": "needs-downloader",
+            "status": "downloader-required",
             "sourceType": sourceType,
             "source": source,
             "sourceReason": sourceReason,

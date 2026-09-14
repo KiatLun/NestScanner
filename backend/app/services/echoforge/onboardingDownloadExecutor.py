@@ -17,7 +17,7 @@ def executeOnboardingDownload(
 
         return {
             **downloadDecision,
-            "status": "needs-downloader",
+            "status": "downloader-required",
         }
 
     downloadResult = downloadModel(

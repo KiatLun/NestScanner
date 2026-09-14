@@ -56,7 +56,7 @@ If no existing model-specific downloader is suitable:
 ```text
 Source is Hugging Face?
    ├─ Yes → use generic hugging_face_download
-   └─ No  → mark as needs-downloader
+   └─ No  → mark as downloader-required
 ```
 
 ### 5. Attempt the download — `onboardingDownloadExecutor.py` + `modelDownloader.py`
@@ -73,7 +73,7 @@ Selected downloader
 If no usable downloader exists:
 
 ```text
-status = needs-downloader
+status = downloader-required
 ```
 
 ### 6. Upload and register the downloaded model — `modelOnboarding.py` + `modelUploader.py`
@@ -92,43 +92,57 @@ Downloaded model cache
 ## Overall Flow
 
 ```text
-New model from Research Agent
-        ↓
-Known model family?
-   ┌────┴────┐
-  Yes        No
-   ↓          ↓
-Use model-   Research evidence
-specific     + LLM reasoning
-downloader        ↓
-   │         Determine actual
-   │         download source
-   │              ↓
-   │         Existing downloaders
-   │         can handle it?
-   │         ┌────┴────┐
-   │        Yes        No
-   │         ↓          ↓
-   │       Use it    Hugging Face?
-   │         │         ┌───┴───┐
-   │         │        Yes      No
-   │         │         ↓        ↓
-   │         │      Generic    needs-
-   │         │      HF         downloader
-   │         │      downloader
-   │         │         │
-   └─────────┴─────────┘
-             ↓
-        Attempt download
-             ↓
-        Verify cache
-             ↓
-        Upload model
-             ↓
-   Register in ClearML
-   + store files in MinIO
-             ↓
-      Capture model ID
-             ↓
-         completed
+                              New Research Agent model
+                                         │
+                                         ▼
+                              Known model family?
+                         ┌───────────────┴───────────────┐
+                        Yes                              No
+                         │                                │
+                         ▼                                ▼
+              Use model-specific              Research evidence + LLM
+                  downloader                           reasoning
+                         │                                │
+                         │                                ▼
+                         │                    Determine actual download
+                         │                            source
+                         │                                │
+                         │                                ▼
+                         │                 Existing downloader can handle it?
+                         │                      ┌─────────┴─────────┐
+                         │                     Yes                  No
+                         │                      │                    │
+                         │                      ▼                    ▼
+                         │                   Use it            Hugging Face?
+                         │                      │               ┌─────┴─────┐
+                         │                      │              Yes          No
+                         │                      │               │            │
+                         │                      │               ▼            ▼
+                         │                      │       Try generic HF   downloader-required
+                         │                      │          downloader
+                         │                      │               │
+                         └──────────────────────┴───────────────┘
+                                                │
+                                                ▼
+                                         Attempt download
+                                                │
+                                                ▼
+                                        Download succeeds?
+                                      ┌─────────┴─────────┐
+                                     Yes                  No
+                                      │                    │
+                                      ▼                    ▼
+                                 Verify cache        downloader-required
+                                      │
+                                      ▼
+                                 Upload model
+                                      │
+                                      ▼
+                     Register in ClearML + store files in MinIO
+                                      │
+                                      ▼
+                              Capture ClearML model ID
+                                      │
+                                      ▼
+                                  completed
 ```

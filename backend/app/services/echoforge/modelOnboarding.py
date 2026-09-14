@@ -15,58 +15,77 @@ def executeOnboardingDownloadAndUpload(
     researchResult: dict,
 ) -> dict:
 
+    # ----------------------------------------
     # 1. Resolve source + downloader
+    # ----------------------------------------
+
     downloadDecision = resolveOnboardingDownload(researchResult)
 
     if not downloadDecision["hasUsableDownloader"]:
+
         return {
             **downloadDecision,
-            "status": "needs-downloader",
+            "status": ("downloader-required"),
         }
 
-    # 2. Download model
+    # ----------------------------------------
+    # 2. Download
+    # ----------------------------------------
+
     try:
+
         downloadResult = downloadModel(
             downloader={
-                "downloader": downloadDecision["downloader"],
-                "scope": downloadDecision["scope"],
-                "sourceType": downloadDecision["sourceType"],
-                "cacheName": downloadDecision["cacheName"],
+                "downloader": (downloadDecision["downloader"]),
+                "scope": (downloadDecision["scope"]),
+                "sourceType": (downloadDecision["sourceType"]),
+                "modelListName": (downloadDecision.get("modelListName")),
+                "cacheName": (downloadDecision.get("cacheName")),
             },
-            modelName=downloadDecision["modelName"],
-            sourceType=downloadDecision["sourceType"],
-            source=downloadDecision["source"],
-            cacheName=downloadDecision["cacheName"],
+            modelName=(downloadDecision["modelName"]),
+            sourceType=(downloadDecision["sourceType"]),
+            source=(downloadDecision["source"]),
+            cacheName=(downloadDecision.get("cacheName")),
         )
 
     except Exception as error:
+
         return {
             **downloadDecision,
-            "status": "download-failed",
+            "status": ("download-failed"),
             "error": str(error),
         }
 
-    # 3. Upload/register model
+    # ----------------------------------------
+    # 3. Upload/register
+    # ----------------------------------------
+
     try:
+
         uploadResult = uploadModel(
-            cacheName=downloadResult["cacheName"],
-            modelName=downloadDecision["modelName"],
+            cacheName=(downloadResult["cacheName"]),
+            modelName=(downloadDecision["modelName"]),
         )
 
     except Exception as error:
+
         return {
             **downloadDecision,
             "status": "upload-failed",
-            "cacheName": downloadResult.get("cacheName"),
-            "cachePath": downloadResult.get("cachePath"),
+            "cacheName": (downloadResult.get("cacheName")),
+            "cachePath": (downloadResult.get("cachePath")),
             "error": str(error),
         }
 
+    # ----------------------------------------
     # 4. Completed
+    # ----------------------------------------
+
     return {
         **downloadDecision,
         "status": "completed",
-        "cacheName": downloadResult["cacheName"],
-        "cachePath": downloadResult["cachePath"],
-        "clearmlModelId": uploadResult["clearmlModelId"],
+        "modelListName": (downloadResult.get("modelListName")),
+        "cacheName": (downloadResult["cacheName"]),
+        "cachePath": (downloadResult["cachePath"]),
+        "clearmlModelId": (uploadResult["clearmlModelId"]),
     }

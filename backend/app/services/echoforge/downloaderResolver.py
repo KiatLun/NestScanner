@@ -6,7 +6,9 @@ def resolveDownloader(
 ) -> dict | None:
 
     normalizedModelName = modelName.lower()
+
     normalizedSourceType = sourceType.lower()
+
     normalizedSource = source.lower()
 
     # ----------------------------------------
@@ -32,22 +34,30 @@ def resolveDownloader(
 
             normalizedSupportedSource = supportedSource.lower()
 
-            # Best match:
-            # Research source matches supported source exactly
+            # --------------------------------
+            # Exact source match
+            # --------------------------------
+
             if normalizedSource == normalizedSupportedSource:
+
                 return {
                     **entry,
-                    "cacheName": supportedModel.get("cacheName"),
+                    "modelListName": (supportedModel.get("modelListName")),
+                    "cacheName": (supportedModel.get("cacheName")),
                 }
 
-            # Secondary fallback:
-            # model/family name appears in modelName
+            # --------------------------------
+            # Model-name/family match
+            # --------------------------------
+
             modelPart = normalizedSupportedSource.split("/")[-1]
 
             if modelPart in normalizedModelName:
+
                 return {
                     **entry,
-                    "cacheName": supportedModel.get("cacheName"),
+                    "modelListName": (supportedModel.get("modelListName")),
+                    "cacheName": (supportedModel.get("cacheName")),
                 }
 
     # ----------------------------------------
@@ -65,8 +75,33 @@ def resolveDownloader(
             continue
 
         if entrySourceType.lower() == normalizedSourceType:
+
+            # If this exact model already exists
+            # in the generic model_list, reuse
+            # its metadata.
+            for supportedModel in entry.get(
+                "supportedModels",
+                [],
+            ):
+
+                supportedSource = supportedModel.get("source")
+
+                if not supportedSource:
+                    continue
+
+                if supportedSource.lower() == normalizedSource:
+
+                    return {
+                        **entry,
+                        "modelListName": (supportedModel.get("modelListName")),
+                        "cacheName": (supportedModel.get("cacheName")),
+                    }
+
+            # Unknown HF model can still try the
+            # generic HF downloader.
             return {
                 **entry,
+                "modelListName": None,
                 "cacheName": None,
             }
 
