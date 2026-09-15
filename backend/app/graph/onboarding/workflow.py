@@ -2,6 +2,10 @@ from app.graph.onboarding.onboardingDownloadResolver import (
     resolveOnboardingDownload,
 )
 
+from app.services.echoforge.modelListManager import (
+    addModelToModelList,
+)
+
 from app.services.echoforge.modelDownloader import (
     downloadModel,
 )
@@ -65,34 +69,89 @@ def runOnboardingWorkflow(
     # 3. Download model
     # ----------------------------------------
 
-    try:
+    downloadResult = None
+    downloadError = None
 
-        downloadResult = downloadModel(
-            downloader={
-                "downloader": (downloadDecision["downloader"]),
-                "scope": (downloadDecision["scope"]),
-                "sourceType": (downloadDecision["sourceType"]),
-                "modelListName": (downloadDecision.get("modelListName")),
-                "cacheName": (downloadDecision.get("cacheName")),
-            },
-            modelName=modelName,
-            sourceType=downloadDecision["sourceType"],
-            source=downloadDecision["source"],
-            cacheName=downloadDecision.get("cacheName"),
+    for attempt in range(2):
+
+        try:
+
+            print(
+                f"[Onboarding Workflow] "
+                f"Download attempt {attempt + 1}/2"
+            )
+
+            downloadResult = downloadModel(
+                downloader={
+                    "downloader": downloadDecision["downloader"],
+                    "scope": downloadDecision["scope"],
+                    "sourceType": downloadDecision["sourceType"],
+                    "modelListName": downloadDecision.get("modelListName"),
+                    "cacheName": downloadDecision.get("cacheName"),
+                },
+                modelName=modelName,
+                sourceType=downloadDecision["sourceType"],
+                source=downloadDecision["source"],
+                cacheName=downloadDecision.get("cacheName"),
+            )
+
+            downloadError = None
+            break
+
+        except Exception as error:
+
+            downloadError = error
+
+            print(
+                f"[Onboarding Workflow] "
+                f"Download attempt {attempt + 1}/2 failed: {error}"
+            )
+
+    if downloadError is not None:
+
+        print(
+            "[Onboarding Workflow] "
+            "Downloader failed after retry."
         )
-
-    except Exception as error:
-
-        print("[Onboarding Workflow] " f"Download failed: {error}")
 
         return {
             **downloadDecision,
-            "status": "download-failed",
-            "error": str(error),
+            "status": "downloader-required",
+            "error": str(downloadError),
         }
 
     # ----------------------------------------
-    # 4. Upload/register model
+    # 4. Persist successful downloader mapping
+    # ----------------------------------------
+
+    try:
+
+        modelListResult = addModelToModelList(
+            downloaderName=downloadDecision["downloader"],
+            source=downloadDecision["source"],
+            modelListName=downloadResult["cacheName"],
+        )
+
+        if modelListResult["added"]:
+            print(
+                "[Onboarding Workflow] "
+                f"Added model to {downloadDecision['downloader']}/model_list"
+            )
+        else:
+            print(
+                "[Onboarding Workflow] "
+                "Model already exists in model_list."
+            )
+
+    except Exception as error:
+
+        print(
+            "[Onboarding Workflow] "
+            f"Could not update model_list: {error}"
+        )
+
+    # ----------------------------------------
+    # 5. Upload/register model
     # ----------------------------------------
 
     try:
@@ -116,7 +175,7 @@ def runOnboardingWorkflow(
         }
 
     # ----------------------------------------
-    # 5. Completed
+    # 6. Completed
     # ----------------------------------------
 
     result = {

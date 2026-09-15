@@ -207,6 +207,7 @@ Required format:
     llm = getLLM()
 
     response = llm.invoke(prompt)
+    print(response)
 
     content = response.content.strip()
 

@@ -8,7 +8,7 @@ from app.graph.onboarding.workflow import (
 def main():
 
     with open(
-        "tests/onboarding/sampleOutput.json",
+        "tests/onboarding/sampleOutput_15_09.json",
         "r",
         encoding="utf-8",
     ) as file:
