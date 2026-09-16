@@ -1,0 +1,193 @@
+[
+  {
+    "downloader": "brouhaha_download",
+    "scope": "model-specific",
+    "sourceType": "github",
+    "supportedModels": [
+      {
+        "source": "brouhaha",
+        "modelListName": null,
+        "cacheName": "brouhaha"
+      }
+    ]
+  },
+  {
+    "downloader": "hugging_face_download",
+    "scope": "generic",
+    "sourceType": "huggingface",
+    "supportedModels": [
+      {
+        "source": "Systran/faster-whisper-medium",
+        "modelListName": "faster-whisper-medium",
+        "cacheName": "faster-whisper-medium"
+      },
+      {
+        "source": "Systran/faster-whisper-large-v2",
+        "modelListName": "faster-whisper-large-v2",
+        "cacheName": "faster-whisper-large-v2"
+      },
+      {
+        "source": "facebook/wav2vec2-base-960h",
+        "modelListName": "wav2vec2-ctc-base",
+        "cacheName": "wav2vec2-ctc-base"
+      },
+      {
+        "source": "MERaLiON/MERaLiON-2-10B-ASR",
+        "modelListName": "meralion-2-10b-asr",
+        "cacheName": "meralion-2-10b-asr"
+      },
+      {
+        "source": "speechbrain/vad-crdnn-libriparty",
+        "modelListName": "speechbrain-vad",
+        "cacheName": "speechbrain-vad"
+      },
+      {
+        "source": "Qwen/Qwen3-ASR-0.6B",
+        "modelListName": "qwen3-asr-0.6b",
+        "cacheName": "qwen3-asr-0.6b"
+      },
+      {
+        "source": "Qwen/Qwen3-ASR-1.7B",
+        "modelListName": "qwen3-asr-1.7b",
+        "cacheName": "qwen3-asr-1.7b"
+      },
+      {
+        "source": "FunAudioLLM/Fun-ASR-Nano-2512",
+        "modelListName": "Fun-ASR-Nano-2512",
+        "cacheName": "Fun-ASR-Nano-2512"
+      },
+      {
+        "source": "FunAudioLLM/SenseVoiceSmall",
+        "modelListName": "SenseVoiceSmall",
+        "cacheName": "SenseVoiceSmall"
+      }
+    ]
+  },
+  {
+    "downloader": "omnilingual_download",
+    "scope": "model-specific",
+    "sourceType": "github",
+    "supportedModels": [
+      {
+        "source": "omniASR_CTC_300M",
+        "modelListName": "omniASR_CTC_300M",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_CTC_1B",
+        "modelListName": "omniASR_CTC_1B",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_CTC_3B",
+        "modelListName": "omniASR_CTC_3B",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_CTC_7B",
+        "modelListName": "omniASR_CTC_7B",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_LLM_300M",
+        "modelListName": "omniASR_LLM_300M",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_LLM_1B",
+        "modelListName": "omniASR_LLM_1B",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_LLM_3B",
+        "modelListName": "omniASR_LLM_3B",
+        "cacheName": "omnilingual"
+      },
+      {
+        "source": "omniASR_LLM_7B",
+        "modelListName": "omniASR_LLM_7B",
+        "cacheName": "omnilingual"
+      }
+    ]
+  },
+  {
+    "downloader": "pyannote_download",
+    "scope": "model-specific",
+    "sourceType": "huggingface",
+    "supportedModels": [
+      {
+        "source": "pyannote_segmentation_3",
+        "modelListName": null,
+        "cacheName": "pyannote_segmentation_3"
+      }
+    ]
+  },
+  {
+    "downloader": "silero_download",
+    "scope": "model-specific",
+    "sourceType": "github",
+    "supportedModels": [
+      {
+        "source": "silero",
+        "modelListName": null,
+        "cacheName": "silero"
+      }
+    ]
+  },
+  {
+    "downloader": "trvad_download",
+    "scope": "model-specific",
+    "sourceType": "github",
+    "supportedModels": [
+      {
+        "source": "trvad",
+        "modelListName": null,
+        "cacheName": "trvad"
+      }
+    ]
+  },
+  {
+    "downloader": "voxtral_download",
+    "scope": "model-specific",
+    "sourceType": "huggingface",
+    "supportedModels": [
+      {
+        "source": "mistralai/Voxtral-Mini-3B-2507",
+        "modelListName": "voxtral-3b",
+        "cacheName": "voxtral"
+      },
+      {
+        "source": "mistralai/Voxtral-Mini-4B-Realtime-2602",
+        "modelListName": "Voxtral-Mini-4B-Realtime-2602",
+        "cacheName": "voxtral"
+      }
+    ]
+  },
+  {
+    "downloader": "whisper_download",
+    "scope": "model-specific",
+    "sourceType": "huggingface",
+    "supportedModels": [
+      {
+        "source": "openai/whisper-tiny",
+        "modelListName": "whisper-tiny",
+        "cacheName": "whisper"
+      },
+      {
+        "source": "openai/whisper-medium",
+        "modelListName": "whisper-medium",
+        "cacheName": "whisper"
+      },
+      {
+        "source": "openai/whisper-large-v2",
+        "modelListName": "whisper-large-v2",
+        "cacheName": "whisper"
+      },
+      {
+        "source": "openai/whisper-small",
+        "modelListName": "whisper-small",
+        "cacheName": "whisper"
+      }
+    ]
+  }
+]

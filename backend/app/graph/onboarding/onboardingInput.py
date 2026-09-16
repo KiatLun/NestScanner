@@ -16,7 +16,12 @@ def inferSourceType(
     if "github.com" in normalizedUrl:
         return "github"
 
-    if normalizedUrl.startswith(("http://", "https://")):
+    if normalizedUrl.startswith(
+        (
+            "http://",
+            "https://",
+        )
+    ):
         return "directUrl"
 
     return None
@@ -30,19 +35,11 @@ def normalizeSource(
     if not sourceUrl:
         return ""
 
-    # Hugging Face:
-    # https://huggingface.co/Qwen/Qwen3-ASR-1.7B
-    # ->
-    # Qwen/Qwen3-ASR-1.7B
-
     if sourceType == "huggingface":
 
         parsed = urlparse(sourceUrl)
 
         return parsed.path.strip("/")
-
-    # For GitHub/direct URL,
-    # preserve the actual URL for now.
 
     return sourceUrl
 
