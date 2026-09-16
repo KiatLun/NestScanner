@@ -70,8 +70,8 @@ def initializeDatabase():
             name TEXT NOT NULL,
             organisation TEXT,
             source_url TEXT,
-            candidate_type TEXT,
-            UNIQUE(name, source_url)
+            repository_id TEXT NOT NULL,
+            UNIQUE(repository_id)
         )
     """)
 
@@ -331,7 +331,14 @@ def saveDiscoveryCandidate(
     candidate = discoveryCandidate["candidate"]
 
     name = candidate.get("name")
+    organisation = candidate.get("organisation")
+    repositoryId = candidate.get("repositoryId")
     sourceUrl = candidate.get("sourceUrl")
+
+    if not repositoryId:
+        raise ValueError(
+            f"Discovery candidate '{name}' has no Hugging Face repository ID."
+        )
 
     discoveryEvidence = discoveryCandidate.get(
         "discoveryEvidence",
@@ -349,13 +356,9 @@ def saveDiscoveryCandidate(
         """
         SELECT id
         FROM models
-        WHERE name = ?
-          AND source_url = ?
+        WHERE repository_id = ?
         """,
-        (
-            name,
-            sourceUrl,
-        ),
+        (repositoryId,),
     )
 
     row = cursor.fetchone()
@@ -371,16 +374,16 @@ def saveDiscoveryCandidate(
             INSERT INTO models (
                 name,
                 organisation,
-                source_url,
-                candidate_type
+                repository_id,
+                source_url
             )
             VALUES (?, ?, ?, ?)
             """,
             (
                 name,
-                candidate.get("organisation"),
+                organisation,
+                repositoryId,
                 sourceUrl,
-                candidate.get("candidateType"),
             ),
         )
 
@@ -546,7 +549,7 @@ def getScan(
             m.name,
             m.organisation,
             m.source_url,
-            m.candidate_type,
+            m.repository_id,
             sm.discovery_evidence
 
         FROM scan_models sm
@@ -585,8 +588,8 @@ def getScan(
                 "candidate": {
                     "name": row["name"],
                     "organisation": row["organisation"],
+                    "repositoryId": row["repository_id"],
                     "sourceUrl": row["source_url"],
-                    "candidateType": row["candidate_type"],
                 },
                 "discoveryEvidence": discoveryEvidence,
             }
@@ -675,7 +678,7 @@ def getResearchByScan(
             m.name,
             m.organisation,
             m.source_url,
-            m.candidate_type
+            m.repository_id
 
         FROM research_results rr
 
@@ -723,7 +726,7 @@ def getResearchByScan(
                     "name": row["name"],
                     "organisation": row["organisation"],
                     "sourceUrl": row["source_url"],
-                    "candidateType": row["candidate_type"],
+                    "repositoryId": row["repository_id"],
                 },
 
                 "releaseDate": row["release_date"],
@@ -769,7 +772,7 @@ def getAllModels() -> list[dict]:
             name,
             organisation,
             source_url,
-            candidate_type
+            repository_id
         FROM models
         ORDER BY id DESC
         """)
@@ -784,7 +787,7 @@ def getAllModels() -> list[dict]:
             "name": row["name"],
             "organisation": row["organisation"],
             "sourceUrl": row["source_url"],
-            "candidateType": row["candidate_type"],
+            "repositoryId": row["repository_id"],
         }
          for row in rows
     ]
@@ -808,7 +811,7 @@ def getModel(
             name,
             organisation,
             source_url,
-            candidate_type
+            repository_id
         FROM models
         WHERE id = ?
         """,
@@ -827,7 +830,7 @@ def getModel(
         "name": row["name"],
         "organisation": row["organisation"],
         "sourceUrl": row["source_url"],
-        "candidateType": row["candidate_type"],
+        "repositoryId": row["repository_id"],
     }
 
 def getModelDetails(
@@ -844,7 +847,7 @@ def getModelDetails(
             m.name,
             m.organisation,
             m.source_url,
-            m.candidate_type,
+            m.repository_id,
 
             rr.id AS research_result_id,
             rr.scan_id,
@@ -861,6 +864,7 @@ def getModelDetails(
                 SELECT rr2.id
                 FROM research_results rr2
                 WHERE rr2.model_id = m.id
+                    AND rr2.technical_profile IS NOT NULL
                 ORDER BY rr2.id DESC
                 LIMIT 1
             )
@@ -879,7 +883,7 @@ def getModelDetails(
     
     technicalProfile = None
     researchEvidence = {}
-
+    print(row["technical_profile"])
     if row["technical_profile"]:
         technicalProfile = json.loads(
             row["technical_profile"]
@@ -894,7 +898,7 @@ def getModelDetails(
         "name": row["name"],
         "organisation": row["organisation"],
         "sourceUrl": row["source_url"],
-        "candidateType": row["candidate_type"],
+        "repositoryId": row["repository_id"],
 
         "research": (
             None

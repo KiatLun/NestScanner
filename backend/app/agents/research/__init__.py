@@ -48,17 +48,23 @@ def research_agent(
 
     for researchInput in candidates:
 
-        candidateId = researchInput.get("candidateId")
+        modelId = researchInput.get("modelId")
+        print(
+            "Researching:",
+            researchInput["candidate"]["name"],
+            "modelId:",
+            modelId,
+        )
 
         result = researchAgent(
             researchInput,
             researchConfig,
         )
 
-        if scanId is not None and candidateId is not None:
+        if scanId is not None and modelId is not None:
             researchResultId = saveResearchResult(
                 scanId,
-                candidateId,
+                modelId,
                 result,
             )
 

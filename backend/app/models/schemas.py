@@ -16,8 +16,7 @@ class Candidate(BaseModel):
     name: str
     organisation: str | None = None
     sourceUrl: str | None = None
-    candidateType: str | None = None
-
+    repositoryId: str | None = None  
 
 class DiscoveryCandidate(BaseModel):
     candidate: Candidate

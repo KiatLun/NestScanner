@@ -40,15 +40,6 @@ def researchAgent(
 
     releaseDate = recencyResult.get("releaseDate")
 
-    isRecent = recencyResult.get(
-        "isRecent",
-        False,
-    )
-
-    recencyEvidence = recencyResult.get(
-        "evidence",
-        [],
-    )
 
     # =================================================
     # 2. DEPLOYABILITY
@@ -77,12 +68,11 @@ def researchAgent(
     technicalProfile = None
     technicalEvidence = []
 
-    if isRecent and isLocallyDeployable:
+    if isLocallyDeployable:
 
         profileResult = buildTechnicalProfile(
             candidate,
             discoveryEvidence,
-            recencyEvidence,
             deployabilityEvidence,
             releaseDate,
             researchConfig,
@@ -101,11 +91,9 @@ def researchAgent(
 
     return {
         "releaseDate": releaseDate,
-        "isRecent": isRecent,
         "isLocallyDeployable": (isLocallyDeployable),
         "technicalProfile": (technicalProfile),
         "researchEvidence": {
-            "recencyEvidence": (recencyEvidence),
             "deployabilityEvidence": (deployabilityEvidence),
             "technicalEvidence": (technicalEvidence),
         },

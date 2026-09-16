@@ -1,7 +1,12 @@
 from pathlib import Path
 import os
 
-from dotenv import load_dotenv
+ECHOFORGE_ROOT = Path(
+    os.getenv(
+        "ECHOFORGE_ROOT",
+        "/mnt/c/Users/kiatlun/Documents/GitHub/EchoForge",
+    )
+)
 
 # ----------------------------------------
 # NestScanner root

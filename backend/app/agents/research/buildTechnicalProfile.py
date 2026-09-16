@@ -33,7 +33,6 @@ llm = getLLM()
 def buildTechnicalProfile(
     candidate: dict,
     discoveryEvidence: list[dict],
-    recencyEvidence: list[dict],
     deployabilityEvidence: list[dict],
     releaseDate: str | None,
     config: ResearchConfig,
@@ -65,8 +64,6 @@ def buildTechnicalProfile(
     evidence = []
 
     evidence.extend(discoveryEvidence)
-
-    evidence.extend(recencyEvidence)
 
     evidence.extend(deployabilityEvidence)
 
@@ -209,8 +206,8 @@ Do NOT return:
 
 - name
 - organisation
+- repositoryId
 - sourceUrl
-- candidateType
 - releaseDate
 - sourceUrls
 
@@ -233,10 +230,9 @@ Rules:
 6. For parameterCount:
 
    - use the parameter count for the exact candidate
-     when possible
    - do not use the parameter count of another model
-     variant unless the candidate represents the entire
-     model family and the distinction is clearly stated
+     variant
+   - parameter-size variants are distinct models
    - use null if it cannot be established
 
 7. For languages:
@@ -270,10 +266,13 @@ Rules:
 
 11. Prefer official sources when evidence conflicts.
 
-12. Be strict about model identity. Do not mix technical
-    details from different model variants unless the
-    candidate represents a model family and the evidence
-    clearly applies to the family.
+12. Be strict about model identity.
+
+    - do not mix technical details from different model
+      variants
+    - different parameter sizes are different models
+    - only use evidence that applies to the exact
+      candidate being researched
 
 Return ONLY valid JSON:
 

@@ -101,6 +101,7 @@ function ModelDetailsPage() {
   const profile =
     model.research?.technicalProfile
 
+  console.log(profile)
 
   return (
     <div className="flex min-h-screen bg-muted/30">

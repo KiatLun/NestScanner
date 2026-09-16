@@ -1,11 +1,3 @@
-from datetime import (
-    date,
-    datetime,
-    timedelta,
-)
-
-from zoneinfo import ZoneInfo
-
 from app.agents.discovery.config import (
     DiscoveryConfig,
 )
@@ -32,24 +24,6 @@ from app.tools.arvixSearch import (
     searchArxivPapers,
 )
 
-
-def getDiscoveryDateWindow(
-    config: DiscoveryConfig,
-) -> tuple[date, date]:
-    """
-    Return a recent-source search window.
-
-    This is used only to guide Discovery searches.
-
-    It is NOT treated as verified model release-date
-    information.
-    """
-
-    currentDate = datetime.now(ZoneInfo("Asia/Singapore")).date()
-
-    cutoffDate = currentDate - timedelta(days=config.discoveryWindowDays)
-
-    return cutoffDate, currentDate
 
 
 def searchWeb(
@@ -205,28 +179,31 @@ def gatherDiscoveryEvidence(
     web, Hugging Face, GitHub, and arXiv.
     """
 
-    cutoffDate, currentDate = getDiscoveryDateWindow(config)
-
     searchObjective = f"""
-{objective}
+    {objective}
 
-Current date: {currentDate}
+    Find identifiable automatic speech recognition models.
 
-Recent discovery window:
+    Hugging Face should be treated as the primary discovery
+    source.
 
-{cutoffDate} to {currentDate}
+    Focus on specific published models or checkpoints.
 
-Find likely automatic speech recognition models or
-model families appearing in recent sources.
+    Different parameter-size variants must be treated as
+    different models.
 
-This date range is a Discovery search heuristic only.
+    For example:
 
-Do NOT attempt to prove that the model itself was
-released during this period.
+    Qwen3-ASR-0.6B
 
-The Research Agent will later verify the true
-release date and recency.
-"""
+    and:
+
+    Qwen3-ASR-1.7B
+
+    are separate models.
+
+    Do not collapse distinct checkpoints into a model family.
+    """
 
     searchPlan = buildDiscoveryQueries(
         searchObjective,
@@ -258,18 +235,6 @@ release date and recency.
 
     allResults = []
 
-    if config.enableWebSearch:
-
-        if config.verbose:
-            print("\n=== WEB SEARCH ===")
-
-        allResults.extend(
-            searchWeb(
-                searchPlan.webQueries,
-                config,
-            )
-        )
-
     if config.enableHuggingFaceSearch:
 
         if config.verbose:
@@ -278,6 +243,17 @@ release date and recency.
         allResults.extend(
             searchHuggingFace(
                 searchPlan.huggingFaceQueries,
+                config,
+            )
+        )
+    if config.enableWebSearch:
+
+        if config.verbose:
+            print("\n=== WEB SEARCH ===")
+
+        allResults.extend(
+            searchWeb(
+                searchPlan.webQueries,
                 config,
             )
         )

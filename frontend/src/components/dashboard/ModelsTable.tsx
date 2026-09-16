@@ -18,10 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import type { StoredModel } from "@/types/model"
+import type { ModelWithDeploymentStatus } from "@/types/model"
 
 interface ModelsTableProps {
-  models: StoredModel[]
+  models: ModelWithDeploymentStatus[]
 }
 
 export default function ModelsTable({
@@ -53,7 +53,7 @@ export default function ModelsTable({
               </TableHead>
 
               <TableHead className="min-w-[150px]">
-                Type
+                Echoforge Status
               </TableHead>
 
               <TableHead className="w-[80px] text-right">
@@ -85,9 +85,15 @@ export default function ModelsTable({
                 </TableCell>
 
                 <TableCell>
-                  <Badge variant="outline">
-                    {model.candidateType}
-                  </Badge>
+                  {model.deploymentStatus === "deployed" ? (
+                    <Badge>
+                      Deployed
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">
+                      Not Deployed
+                    </Badge>
+                  )}
                 </TableCell>
 
                 <TableCell className="text-right">
