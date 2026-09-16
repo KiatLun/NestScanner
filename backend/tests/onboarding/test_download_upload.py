@@ -1,14 +1,14 @@
 import json
 
-from app.services.echoforge.modelOnboarding import (
-    executeOnboardingDownloadAndUpload,
+from app.graph.onboarding.workflow import (
+    runOnboardingWorkflow,
 )
 
 
 def main():
 
     with open(
-        "tests/onboarding/sampleOutput.json",
+        "tests/onboarding/sampleOutput_15_09.json",
         "r",
         encoding="utf-8",
     ) as file:
@@ -18,15 +18,16 @@ def main():
 
     passed = 0
     failed = 0
+    skipped = 0
 
     print()
     print("=" * 80)
-    print("DOWNLOAD + UPLOAD TEST")
+    print("ONBOARDING WORKFLOW TEST")
     print("=" * 80)
 
     for researchResult in researchResults:
 
-        modelName = researchResult["candidate"]["name"]
+        modelName = researchResult.get("candidate", {}).get("name", "Unknown Model")
 
         print()
         print("-" * 80)
@@ -34,16 +35,20 @@ def main():
         print("-" * 80)
 
         try:
-            result = executeOnboardingDownloadAndUpload(researchResult)
+
+            result = runOnboardingWorkflow(researchResult)
 
         except Exception as error:
+
             failed += 1
 
+            print()
             print(f"[FAIL] {modelName}")
-            print(f"       {error}")
+            print(f"       Exception: {error}")
 
             continue
 
+        print()
         print(
             json.dumps(
                 result,
@@ -53,7 +58,12 @@ def main():
 
         status = result.get("status")
 
+        # ----------------------------------------
+        # Completed
+        # ----------------------------------------
+
         if status == "completed":
+
             passed += 1
 
             print()
@@ -61,23 +71,45 @@ def main():
 
             print(f"       ClearML Model ID: " f"{result.get('clearmlModelId')}")
 
-        elif status == "needs-downloader":
+            print(f"       Cache: " f"{result.get('cachePath')}")
+
+        # ----------------------------------------
+        # Downloader required
+        # ----------------------------------------
+
+        elif status == "downloader-required":
+
+            skipped += 1
+
             print()
             print(f"[SKIP] {modelName}")
-            print("       No usable existing downloader.")
+            print("       No usable existing " "downloader.")
+
+        # ----------------------------------------
+        # Failed
+        # ----------------------------------------
 
         else:
+
             failed += 1
 
             print()
             print(f"[FAIL] {modelName}")
             print(f"       Status: {status}")
 
+            error = result.get("error")
+
+            if error:
+
+                print(f"       Error: {error}")
+
     print()
     print("=" * 80)
     print("SUMMARY")
     print("=" * 80)
+
     print(f"Completed: {passed}")
+    print(f"Skipped:   {skipped}")
     print(f"Failed:    {failed}")
     print(f"Total:     {len(researchResults)}")
 
