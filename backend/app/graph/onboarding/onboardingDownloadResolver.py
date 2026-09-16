@@ -60,6 +60,7 @@ def resolveOnboardingDownload(
             "scope": None,
             "modelListName": None,
             "cacheName": None,
+            "existingModelListEntryBeforeDownload": False,
         }
 
     # ----------------------------------------
@@ -76,4 +77,10 @@ def resolveOnboardingDownload(
         "scope": (downloaderResult.get("scope")),
         "modelListName": (downloaderResult.get("modelListName")),
         "cacheName": (downloaderResult.get("cacheName")),
+        "existingModelListEntryBeforeDownload": (
+            downloaderResult.get(
+                "existingModelListEntryBeforeDownload",
+                False,
+            )
+        ),
     }

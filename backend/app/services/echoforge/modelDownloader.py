@@ -7,7 +7,6 @@ from app.services.echoforge.echoforgeConfig import (
     getEchoforgeEnvironment,
 )
 
-GENERIC_HF_DOWNLOADER = "hugging_face_download"
 MODEL_DOWNLOAD_SCRIPT = "models_download.py"
 
 
@@ -21,25 +20,23 @@ def downloadModel(
 
     downloaderName = downloader["downloader"]
 
-    scope = downloader.get("scope")
-
     modelListName = downloader.get("modelListName")
+
+    # ----------------------------------------
+    # model_list entry is required
+    # ----------------------------------------
+
+    if not modelListName:
+
+        raise RuntimeError(
+            "No modelListName provided for " f"downloader: {downloaderName}"
+        )
 
     # ----------------------------------------
     # Resolve actual cache directory
     # ----------------------------------------
 
-    resolvedCacheName = (
-        downloader.get("cacheName")
-        or cacheName
-        or modelName.replace(
-            "/",
-            "-",
-        ).replace(
-            " ",
-            "-",
-        )
-    )
+    resolvedCacheName = downloader.get("cacheName") or cacheName or modelListName
 
     scriptPath = MODEL_DOWNLOAD_DIR / MODEL_DOWNLOAD_SCRIPT
 
@@ -48,47 +45,15 @@ def downloadModel(
         raise RuntimeError("echoforge models_download.py " f"not found: {scriptPath}")
 
     # ----------------------------------------
-    # Generic Hugging Face downloader
+    # Build echoforge command
     # ----------------------------------------
 
-    if scope == "generic" and downloaderName == GENERIC_HF_DOWNLOADER:
-
-        command = [
-            sys.executable,
-            str(scriptPath),
-            "--hf-repo",
-            source,
-            "--cache-name",
-            resolvedCacheName,
-        ]
-
-    # ----------------------------------------
-    # Existing model-specific downloader
-    # ----------------------------------------
-
-    elif scope == "model-specific":
-
-        if modelListName:
-
-            command = [
-                sys.executable,
-                str(scriptPath),
-                "--name",
-                (f"{downloaderName}:" f"{modelListName}"),
-            ]
-
-        else:
-
-            command = [
-                sys.executable,
-                str(scriptPath),
-                "--name",
-                downloaderName,
-            ]
-
-    else:
-
-        raise RuntimeError("Unsupported echoforge downloader: " f"{downloaderName}")
+    command = [
+        sys.executable,
+        str(scriptPath),
+        "--name",
+        (f"{downloaderName}:" f"{modelListName}"),
+    ]
 
     # ----------------------------------------
     # Logging
@@ -99,11 +64,11 @@ def downloadModel(
 
     print(f"[Onboarding] Model: " f"{modelName}")
 
+    print(f"[Onboarding] Source: " f"{source}")
+
     print(f"[Onboarding] Downloader: " f"{downloaderName}")
 
-    if modelListName:
-
-        print("[Onboarding] Model list name: " f"{modelListName}")
+    print(f"[Onboarding] Model list name: " f"{modelListName}")
 
     print(f"[Onboarding] Cache name: " f"{resolvedCacheName}")
 

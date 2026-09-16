@@ -3,7 +3,13 @@ from app.graph.onboarding.onboardingDownloadResolver import (
 )
 
 from app.services.echoforge.modelListManager import (
-    addModelToModelList,
+    addModelListEntry,
+    removeModelListEntry,
+)
+
+from app.services.echoforge.modelInfoBuilder import (
+    buildModelInfo,
+    writeModelInfo,
 )
 
 from app.services.echoforge.modelDownloader import (
@@ -20,7 +26,7 @@ def runOnboardingWorkflow(
 ) -> dict:
 
     # ----------------------------------------
-    # 1. Resolve source + existing downloader
+    # 1. Resolve source + downloader
     # ----------------------------------------
 
     try:
@@ -49,7 +55,7 @@ def runOnboardingWorkflow(
     print(f"[Onboarding Workflow] Source: " f"{downloadDecision['source']}")
 
     # ----------------------------------------
-    # 2. No usable existing downloader
+    # 2. No usable downloader
     # ----------------------------------------
 
     if not downloadDecision["hasUsableDownloader"]:
@@ -66,7 +72,57 @@ def runOnboardingWorkflow(
     print(f"[Onboarding Workflow] Downloader: " f"{downloaderName}")
 
     # ----------------------------------------
-    # 3. Download model
+    # 3. Ensure model_list entry exists
+    # ----------------------------------------
+
+    modelListEntryAdded = False
+
+    try:
+
+        existingModelListEntryBeforeDownload = downloadDecision.get(
+            "existingModelListEntryBeforeDownload",
+            False,
+        )
+
+        if existingModelListEntryBeforeDownload:
+
+            print("[Onboarding Workflow] " "Model already exists in model_list.")
+
+        else:
+
+            modelListResult = addModelListEntry(
+                downloaderName=downloaderName,
+                source=downloadDecision["source"],
+            )
+
+            downloadDecision["modelListName"] = modelListResult["modelListName"]
+
+            modelListEntryAdded = modelListResult["added"]
+
+            if modelListEntryAdded:
+
+                print(
+                    "[Onboarding Workflow] "
+                    f"Added model to "
+                    f"{downloaderName}/model_list"
+                )
+
+            else:
+
+                print("[Onboarding Workflow] " "Model already exists in model_list.")
+
+    except Exception as error:
+
+        print("[Onboarding Workflow] " f"Could not prepare model_list: " f"{error}")
+
+        return {
+            **downloadDecision,
+            "status": "download-resolution-failed",
+            "error": str(error),
+        }
+
+    # ----------------------------------------
+    # 4. Download model
     # ----------------------------------------
 
     downloadResult = None
@@ -76,26 +132,24 @@ def runOnboardingWorkflow(
 
         try:
 
-            print(
-                f"[Onboarding Workflow] "
-                f"Download attempt {attempt + 1}/2"
-            )
+            print(f"[Onboarding Workflow] " f"Download attempt " f"{attempt + 1}/2")
 
             downloadResult = downloadModel(
                 downloader={
-                    "downloader": downloadDecision["downloader"],
-                    "scope": downloadDecision["scope"],
-                    "sourceType": downloadDecision["sourceType"],
-                    "modelListName": downloadDecision.get("modelListName"),
-                    "cacheName": downloadDecision.get("cacheName"),
+                    "downloader": (downloadDecision["downloader"]),
+                    "scope": (downloadDecision["scope"]),
+                    "sourceType": (downloadDecision["sourceType"]),
+                    "modelListName": (downloadDecision.get("modelListName")),
+                    "cacheName": (downloadDecision.get("cacheName")),
                 },
                 modelName=modelName,
-                sourceType=downloadDecision["sourceType"],
-                source=downloadDecision["source"],
-                cacheName=downloadDecision.get("cacheName"),
+                sourceType=(downloadDecision["sourceType"]),
+                source=(downloadDecision["source"]),
+                cacheName=(downloadDecision.get("cacheName")),
             )
 
             downloadError = None
+
             break
 
         except Exception as error:
@@ -104,15 +158,45 @@ def runOnboardingWorkflow(
 
             print(
                 f"[Onboarding Workflow] "
-                f"Download attempt {attempt + 1}/2 failed: {error}"
+                f"Download attempt "
+                f"{attempt + 1}/2 failed: "
+                f"{error}"
             )
+
+    # ----------------------------------------
+    # 5. Download failed after retry
+    # ----------------------------------------
 
     if downloadError is not None:
 
-        print(
-            "[Onboarding Workflow] "
-            "Downloader failed after retry."
-        )
+        print("[Onboarding Workflow] " "Downloader failed after retry.")
+
+        # Only remove the entry if
+        # NestScanner added it.
+        if modelListEntryAdded:
+
+            try:
+
+                removed = removeModelListEntry(
+                    downloaderName=(downloaderName),
+                    source=(downloadDecision["source"]),
+                )
+
+                if removed:
+
+                    print(
+                        "[Onboarding Workflow] "
+                        "Removed temporary "
+                        "model_list entry."
+                    )
+
+            except Exception as error:
+
+                print(
+                    "[Onboarding Workflow] "
+                    "Could not remove temporary "
+                    f"model_list entry: {error}"
+                )
 
         return {
             **downloadDecision,
@@ -121,43 +205,35 @@ def runOnboardingWorkflow(
         }
 
     # ----------------------------------------
-    # 4. Persist successful downloader mapping
+    # 6. Persist updated model metadata
     # ----------------------------------------
 
-    try:
+    if modelListEntryAdded:
 
-        modelListResult = addModelToModelList(
-            downloaderName=downloadDecision["downloader"],
-            source=downloadDecision["source"],
-            modelListName=downloadResult["cacheName"],
-        )
+        try:
 
-        if modelListResult["added"]:
+            modelInfo = buildModelInfo()
+
+            writeModelInfo(modelInfo)
+
+            print("[Onboarding Workflow] " "Updated model_info.json.")
+
+        except Exception as error:
+
             print(
                 "[Onboarding Workflow] "
-                f"Added model to {downloadDecision['downloader']}/model_list"
+                f"Could not update "
+                f"model_info.json: {error}"
             )
-        else:
-            print(
-                "[Onboarding Workflow] "
-                "Model already exists in model_list."
-            )
-
-    except Exception as error:
-
-        print(
-            "[Onboarding Workflow] "
-            f"Could not update model_list: {error}"
-        )
 
     # ----------------------------------------
-    # 5. Upload/register model
+    # 7. Upload/register model
     # ----------------------------------------
 
     try:
 
         uploadResult = uploadModel(
-            cacheName=downloadResult["cacheName"],
+            cacheName=(downloadResult["cacheName"]),
             modelName=modelName,
         )
 
@@ -168,23 +244,22 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "upload-failed",
-            "modelListName": downloadResult.get("modelListName"),
-            "cacheName": downloadResult.get("cacheName"),
-            "cachePath": downloadResult.get("cachePath"),
+            "modelListName": (downloadResult.get("modelListName")),
+            "cacheName": (downloadResult.get("cacheName")),
+            "cachePath": (downloadResult.get("cachePath")),
             "error": str(error),
         }
 
     # ----------------------------------------
-    # 6. Completed
+    # 8. Completed
     # ----------------------------------------
 
     result = {
         **downloadDecision,
         "status": "completed",
-        "modelListName": downloadResult.get("modelListName"),
-        "cacheName": downloadResult["cacheName"],
-        "cachePath": downloadResult["cachePath"],
-        "clearmlModelId": uploadResult["clearmlModelId"],
+        "modelListName": (downloadResult.get("modelListName")),
+        "cacheName": (downloadResult["cacheName"]),
+        "cachePath": (downloadResult["cachePath"]),
     }
 
     print(f"[Onboarding Workflow] Completed: " f"{modelName}")

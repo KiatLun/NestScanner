@@ -1,6 +1,23 @@
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
+# ----------------------------------------
+# NestScanner root
+# ----------------------------------------
+
+NESTSCANNER_ROOT = Path(__file__).resolve().parents[3]
+
+
+# ----------------------------------------
+# Load NestScanner .env
+# ----------------------------------------
+
+NESTSCANNER_ENV_FILE = NESTSCANNER_ROOT / ".env"
+
+load_dotenv(NESTSCANNER_ENV_FILE)
+
 
 def getRequiredPath(
     environmentVariable: str,
@@ -17,6 +34,17 @@ def getRequiredPath(
 
 
 # ----------------------------------------
+# NestScanner data paths
+# ----------------------------------------
+
+DATA_DIR = NESTSCANNER_ROOT / "data"
+
+ECHOFORGE_DATA_DIR = DATA_DIR / "echoforge"
+
+MODEL_INFO_FILE = ECHOFORGE_DATA_DIR / "model_info.json"
+
+
+# ----------------------------------------
 # echoforge root
 # ----------------------------------------
 
@@ -24,7 +52,7 @@ ECHOFORGE_ROOT = getRequiredPath("ECHOFORGE_ROOT")
 
 
 # ----------------------------------------
-# echoforge paths
+# echoforge deployment paths
 # ----------------------------------------
 
 DEPLOYMENT_DIR = ECHOFORGE_ROOT / "deployment"
@@ -33,21 +61,30 @@ MODEL_DOWNLOAD_DIR = DEPLOYMENT_DIR / "model_download"
 
 MODEL_UPLOAD_DIR = DEPLOYMENT_DIR / "models_upload"
 
-MODEL_INFO_FILE = MODEL_DOWNLOAD_DIR / "model_info.json"
-
 CACHE_DIR = DEPLOYMENT_DIR / ".cache"
+
+
+# ----------------------------------------
+# echoforge environment paths
+# ----------------------------------------
 
 CLEARML_ENV_FILE = ECHOFORGE_ROOT / "services" / "clearml-agent" / "clearml.env"
 
 ECHOFORGE_ENV_FILE = ECHOFORGE_ROOT / ".env"
 
 
+# ----------------------------------------
+# echoforge environment
+# ----------------------------------------
+
+
 def getEchoforgeEnvironment() -> dict[str, str]:
     """
     Build the environment passed to echoforge subprocesses.
 
-    Starts with NestScanner's current environment and supplements it
-    with values from echoforge's root .env file.
+    Starts with NestScanner's current environment
+    and supplements it with values from echoforge's
+    root .env file.
     """
 
     env = os.environ.copy()
@@ -84,7 +121,6 @@ def getEchoforgeEnvironment() -> dict[str, str]:
             if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
                 value = value[1:-1]
 
-            # NestScanner environment takes priority.
             if key not in env:
                 env[key] = value
 

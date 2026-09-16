@@ -1,4 +1,3 @@
-import re
 import subprocess
 import sys
 
@@ -6,8 +5,6 @@ from app.services.echoforge.echoforgeConfig import (
     MODEL_UPLOAD_DIR,
     CLEARML_ENV_FILE,
 )
-
-CLEARML_MODEL_ID_PATTERN = re.compile(r"CLEARML_MODEL_ID=([A-Za-z0-9_-]+)")
 
 
 def uploadModel(
@@ -37,10 +34,22 @@ def uploadModel(
         str(CLEARML_ENV_FILE),
     ]
 
+    # ----------------------------------------
+    # Logging
+    # ----------------------------------------
+
     print()
-    print("[Onboarding] Starting EchoForge upload")
-    print(f"[Onboarding] Model: {modelName}")
-    print(f"[Onboarding] Cache name: {cacheName}")
+    print("[Onboarding] Starting " "EchoForge upload")
+
+    print(f"[Onboarding] Model: " f"{modelName}")
+
+    print(f"[Onboarding] Cache name: " f"{cacheName}")
+
+    print("[Onboarding] Command: " + " ".join(command))
+
+    # ----------------------------------------
+    # Run echoforge upload
+    # ----------------------------------------
 
     process = subprocess.Popen(
         command,
@@ -52,7 +61,6 @@ def uploadModel(
     )
 
     outputLines = []
-    clearmlModelId = None
 
     if process.stdout:
 
@@ -64,50 +72,25 @@ def uploadModel(
 
             print(f"[EchoForge] {line}")
 
-            match = CLEARML_MODEL_ID_PATTERN.search(line)
-
-            if match:
-                clearmlModelId = match.group(1)
-
     returnCode = process.wait()
 
+    # ----------------------------------------
+    # Handle upload failure
+    # ----------------------------------------
+
     if returnCode != 0:
+
         raise RuntimeError(
             "EchoForge model upload failed." "\n\n" + "\n".join(outputLines)
         )
 
-    if not clearmlModelId:
-        raise RuntimeError(
-            "EchoForge upload completed, "
-            "but no CLEARML_MODEL_ID "
-            "was found in the output."
-        )
+    # ----------------------------------------
+    # Completed
+    # ----------------------------------------
 
     return {
         "modelName": modelName,
         "cacheName": cacheName,
         "project": project,
-        "clearmlModelId": clearmlModelId,
         "status": "completed",
     }
-
-
-from app.services.echoforge.modelUploader import (
-    uploadModel,
-)
-
-
-def main():
-
-    result = uploadModel(
-        cacheName="silero",
-        modelName="silero",
-    )
-
-    print()
-    print("UPLOAD RESULT:")
-    print(result)
-
-
-if __name__ == "__main__":
-    main()
