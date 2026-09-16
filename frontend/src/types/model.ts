@@ -3,7 +3,7 @@ export interface ASRCandidate {
   organisation: string | null
   sourceUrl: string
   reason?: string
-  candidateType: string
+  repositoryId: number
 }
 
 export interface DiscoveryEvidence {
@@ -47,7 +47,7 @@ export interface StoredModel {
   name: string
   organisation: string
   sourceUrl: string
-  candidateType: string
+  repositoryId: string | null
 }
 
 export interface startScanResponse {
@@ -86,7 +86,6 @@ export interface ResearchEvidenceItem {
 }
 
 export interface ResearchEvidence {
-  recencyEvidence: ResearchEvidenceItem[]
   deployabilityEvidence: ResearchEvidenceItem[]
   technicalEvidence: ResearchEvidenceItem[]
 }
@@ -105,4 +104,23 @@ export interface ModelResearch {
 
 export interface ModelDetails extends StoredModel {
   research: ModelResearch | null
+}
+
+export type DeploymentStatus = "deployed" | "not_deployed"
+
+export interface ModelWithDeploymentStatus extends StoredModel {
+  deploymentStatus: DeploymentStatus
+}
+
+export interface EchoforgeModel {
+  source: string
+  cacheName: string
+  downloader: string
+  scope: string
+  sourceType: string
+}
+
+export interface EchoforgeModelsResponse {
+  models: EchoforgeModel[]
+  count: number
 }

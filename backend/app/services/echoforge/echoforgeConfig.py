@@ -4,7 +4,7 @@ import os
 ECHOFORGE_ROOT = Path(
     os.getenv(
         "ECHOFORGE_ROOT",
-        "/mnt/c/Users/AJ/Desktop/echoforge",
+        "/mnt/c/Users/kiatlun/Documents/GitHub/EchoForge",
     )
 )
 

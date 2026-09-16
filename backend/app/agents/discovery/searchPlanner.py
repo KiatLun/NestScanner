@@ -40,19 +40,19 @@ def buildDiscoveryQueries(
 def buildHardcodedQueries() -> DiscoverySearchPlan:
     """
     Deterministic ASR discovery queries.
+    Hugging Face is the primary discovery source.
     """
 
     return DiscoverySearchPlan(
         webQueries=[
-            "new automatic speech recognition model 2026",
-            "new ASR model release 2026",
-            "open source ASR model 2026",
-            "new speech-to-text model 2026",
-            "new transcription model announcement 2026",
-            "multilingual ASR model release 2026",
-            "streaming ASR model release 2026",
-            "new open source speech recognition model 2026",
+            "automatic speech recognition model",
+            "open source ASR model",
+            "speech-to-text model",
+            "transcription model",
+            "multilingual ASR model",
+            "streaming ASR model",
         ],
+
         huggingFaceQueries=[
             "ASR",
             "automatic speech recognition",
@@ -63,12 +63,16 @@ def buildHardcodedQueries() -> DiscoverySearchPlan:
             "streaming ASR",
             "pretrained ASR",
         ],
+
         githubQueries=[
-            "ASR",
-            "automatic speech recognition",
-            "speech-to-text",
-            "stt",
+            "ASR model",
+            "automatic speech recognition model",
+            "speech-to-text model",
+            "transcription model",
+            "multilingual ASR model",
+            "streaming ASR model",
         ],
+
         arxivQueries=[
             "automatic speech recognition",
             "end-to-end speech recognition",
@@ -76,8 +80,6 @@ def buildHardcodedQueries() -> DiscoverySearchPlan:
             "streaming automatic speech recognition",
             "speech recognition model",
             "speech-to-text model",
-            "ASR foundation model",
-            "large speech recognition model",
         ],
     )
 
@@ -98,16 +100,34 @@ Objective:
 
 {objective}
 
-Your goal is to discover identifiable ASR models or
-model families from recent sources.
+Your goal is to discover identifiable automatic speech
+recognition models.
 
-Discovery is only responsible for scouting candidate
+Hugging Face is the PRIMARY discovery source.
+
+The agent should discover specific published models or
+checkpoints, not model families.
+
+Different model variants must be treated as different
+models.
+
+Examples:
+
+Qwen3-ASR-0.6B
+
+and:
+
+Qwen3-ASR-1.7B
+
+are two different models.
+
+Do not collapse them into a shared model family.
+
+Discovery is only responsible for identifying candidate
 models.
 
 Discovery does NOT verify:
 
-- exact release date
-- whether the model is truly recent
 - license
 - local deployability
 - hardware requirements
@@ -158,11 +178,14 @@ Generate approximately 5 to 8 queries.
 
 HUGGING FACE SEARCH
 
-Use short keyword-oriented queries.
+Hugging Face is the primary model discovery source.
+
+Use short keyword-oriented queries that are likely to
+surface actual model repositories.
 
 Prefer approximately 1 to 4 words.
 
-Good styles:
+Examples:
 
 "ASR"
 "speech recognition"
@@ -175,7 +198,7 @@ Good styles:
 
 Avoid long natural-language queries.
 
-Generate approximately 5 to 8 queries.
+Generate approximately 6 to 10 queries.
 
 
 GITHUB SEARCH
@@ -195,7 +218,7 @@ Good styles:
 
 Avoid conversational sentences.
 
-Generate approximately 5 to 8 queries.
+Generate approximately 4 to 5 queries.
 
 
 ARXIV SEARCH
@@ -213,7 +236,7 @@ Good styles:
 "ASR foundation model"
 "large speech recognition model"
 
-Generate approximately 5 to 8 queries.
+Generate approximately 2 to 5 queries.
 
 
 QUERY DIVERSITY

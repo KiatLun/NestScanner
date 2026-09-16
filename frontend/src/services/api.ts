@@ -1,4 +1,4 @@
-import type { ModelDetails, scanStatusResponse, startScanResponse, StoredModel } from "../types/model";
+import type { EchoforgeModelsResponse, ModelDetails, scanStatusResponse, startScanResponse, StoredModel } from "../types/model";
 import type { Scan, AllScans} from "../types/model";
 
 const API_BASE_URL = "http://localhost:8000";
@@ -106,6 +106,20 @@ export async function getModelDetails(
   if (!response.ok) {
     throw new Error(
       `Failed to load model ${modelId}`
+    )
+  }
+
+  return response.json()
+}
+
+export async function getAllEchoforgeModels(): Promise<EchoforgeModelsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/getAllEchoforgeModels`
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load all echoforge models`
     )
   }
 

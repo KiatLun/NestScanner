@@ -9,9 +9,6 @@ from app.agents.discovery.search import (
     gatherDiscoveryEvidence,
 )
 
-from app.agents.discovery.coverage import (
-    improveDiscoveryCoverage,
-)
 
 from app.agents.discovery.evidenceMatcher import (
     groupModelEvidence,
@@ -57,12 +54,6 @@ def discoveryAgent(
         discoveryConfig,
     )
 
-    if discoveryConfig.enableCoverageImprovement:
-        discoveryEvidence = improveDiscoveryCoverage(
-            objective,
-            discoveryEvidence,
-            discoveryConfig,
-        )
 
     # =================================================
     # CREATE CANDIDATES
@@ -79,16 +70,27 @@ def discoveryAgent(
     # SAVE CANDIDATES
     # =================================================
 
+    print("\n=== CANDIDATES BEFORE DATABASE SAVE ===")
+
+    for candidatePackage in candidates:
+        candidate = candidatePackage["candidate"]
+
+        print(
+            candidate.get("name"),
+            "|",
+            candidate.get("repositoryId"),
+        )
+
     if scanId is not None:
 
         for candidatePackage in candidates:
 
-            candidateId = saveDiscoveryCandidate(
+            modelId = saveDiscoveryCandidate(
                 scanId,
                 candidatePackage,
             )
 
-            candidatePackage["candidateId"] = candidateId
+            candidatePackage["modelId"] = modelId
 
     return {
         "candidates": candidates,
