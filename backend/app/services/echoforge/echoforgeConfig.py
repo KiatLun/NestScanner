@@ -27,7 +27,7 @@ def getRequiredPath(
 
     if not value:
         raise RuntimeError(
-            f"Missing required environment variable: " f"{environmentVariable}"
+            "Missing required environment " f"variable: {environmentVariable}"
         )
 
     return Path(value).expanduser().resolve()
@@ -45,14 +45,14 @@ MODEL_INFO_FILE = ECHOFORGE_DATA_DIR / "model_info.json"
 
 
 # ----------------------------------------
-# echoforge root
+# EchoForge root
 # ----------------------------------------
 
 ECHOFORGE_ROOT = getRequiredPath("ECHOFORGE_ROOT")
 
 
 # ----------------------------------------
-# echoforge deployment paths
+# EchoForge deployment paths
 # ----------------------------------------
 
 DEPLOYMENT_DIR = ECHOFORGE_ROOT / "deployment"
@@ -65,7 +65,7 @@ CACHE_DIR = DEPLOYMENT_DIR / ".cache"
 
 
 # ----------------------------------------
-# echoforge component paths
+# EchoForge component paths
 # ----------------------------------------
 
 COMPONENTS_DIR = ECHOFORGE_ROOT / "components"
@@ -82,39 +82,68 @@ STT_EVALUATION_FILE = STT_EVALUATION_DIR / "main.py"
 
 
 # ----------------------------------------
-# echoforge pipeline paths
+# EchoForge pipeline paths
 # ----------------------------------------
 
-PIPELINE_DIR = COMPONENTS_DIR / "pipeline"
+PIPELINE_DIR = ECHOFORGE_ROOT / "pipeline"
 
 PIPELINE_SRC_DIR = PIPELINE_DIR / "src"
 
 PIPELINE_CONF_DIR = PIPELINE_SRC_DIR / "conf"
 
-PIPELINE_MAIN_FILE = PIPELINE_SRC_DIR / "main.py"
-
 NESTSCANNER_PIPELINE_CONF_DIR = PIPELINE_CONF_DIR / "nestscanner"
 
+PIPELINE_MAIN_FILE = PIPELINE_SRC_DIR / "main.py"
+
+
 # ----------------------------------------
-# echoforge environment paths
+# NestScanner EchoForge runtime
 # ----------------------------------------
 
-CLEARML_ENV_FILE = ECHOFORGE_ROOT / "services" / "clearml-agent" / "clearml.env"
+NESTSCANNER_EVALUATION_IMAGE = "nestscanner_evaluation:latest"
+
+
+# ----------------------------------------
+# EchoForge ClearML paths
+# ----------------------------------------
+
+CLEARML_AGENT_DIR = ECHOFORGE_ROOT / "services" / "clearml-agent"
+
+CLEARML_ENV_FILE = CLEARML_AGENT_DIR / "clearml.env"
+
+CLEARML_CONFIG_FILE = CLEARML_AGENT_DIR / "clearml.conf"
+
+
+# ----------------------------------------
+# EchoForge environment paths
+# ----------------------------------------
 
 ECHOFORGE_ENV_FILE = ECHOFORGE_ROOT / ".env"
 
 
 # ----------------------------------------
-# echoforge environment
+# EchoForge Docker deployment paths
+# ----------------------------------------
+
+DOCKER_DEPLOYMENT_DIR = DEPLOYMENT_DIR / "docker"
+
+IMAGE_DOWNLOADER_DIR = DOCKER_DEPLOYMENT_DIR / "image_downloader"
+
+IMAGE_BUILDER_FILE = IMAGE_DOWNLOADER_DIR / "image_builder_and_downloader.py"
+
+
+# ----------------------------------------
+# EchoForge environment
 # ----------------------------------------
 
 
 def getEchoforgeEnvironment() -> dict[str, str]:
     """
-    Build the environment passed to echoforge subprocesses.
+    Build the environment passed to EchoForge
+    subprocesses.
 
     Starts with NestScanner's current environment
-    and supplements it with values from echoforge's
+    and supplements it with values from EchoForge's
     root .env file.
     """
 

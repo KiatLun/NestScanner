@@ -12,40 +12,40 @@ Expected behaviours:
 2. model_info.json in nestscanner should reflect the new whisper-small model entry under whisper_download
 3. Model should be saved under deployment/.cache/whisper
 """
-# researchResult = {
-#     "candidate": {
-#         "name": "Whisper Small",
-#         "organisation": "OpenAI",
-#         "sourceUrl": "https://github.com/openai/whisper",
-#         "candidateType": "model",
-#     },
-#     "isLocallyDeployable": True,
-#     "researchEvidence": {
-#         "deployabilityEvidence": [
-#             {
-#                 "source": "huggingface",
-#                 "title": "openai/whisper-small",
-#                 "url": "https://huggingface.co/openai/whisper-small",
-#                 "description": (
-#                     "Official Whisper Small "
-#                     "Hugging Face repository "
-#                     "containing downloadable "
-#                     "model weights and "
-#                     "configuration files."
-#                 ),
-#             },
-#             {
-#                 "source": "github",
-#                 "title": "OpenAI Whisper",
-#                 "url": "https://github.com/openai/whisper",
-#                 "description": (
-#                     "Official source code " "repository for OpenAI Whisper."
-#                 ),
-#             },
-#         ],
-#         "technicalEvidence": [],
-#     },
-# }
+researchResult = {
+    "candidate": {
+        "name": "Whisper Small",
+        "organisation": "OpenAI",
+        "sourceUrl": "https://github.com/openai/whisper",
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": "openai/whisper-small",
+                "url": "https://huggingface.co/openai/whisper-small",
+                "description": (
+                    "Official Whisper Small "
+                    "Hugging Face repository "
+                    "containing downloadable "
+                    "model weights and "
+                    "configuration files."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "OpenAI Whisper",
+                "url": "https://github.com/openai/whisper",
+                "description": (
+                    "Official source code " "repository for OpenAI Whisper."
+                ),
+            },
+        ],
+        "technicalEvidence": [],
+    },
+}
 
 
 """
@@ -56,37 +56,37 @@ Expected behaviours:
 2. model_info.json in nestscanner should reflect the new fun-asr model entry under voxtral_download
 3. Model should be saved under deployment/.cache/voxtral
 """
-researchResult = {
-    "candidate": {
-        "name": "Voxtral Mini 4B Realtime 2602",
-        "organisation": "Mistral AI",
-        "sourceUrl": (
-            "https://huggingface.co/" "mistralai/Voxtral-Mini-4B-Realtime-2602"
-        ),
-        "candidateType": "model",
-    },
-    "isLocallyDeployable": True,
-    "researchEvidence": {
-        "deployabilityEvidence": [
-            {
-                "source": "huggingface",
-                "title": ("mistralai/" "Voxtral-Mini-4B-Realtime-2602"),
-                "url": (
-                    "https://huggingface.co/"
-                    "mistralai/"
-                    "Voxtral-Mini-4B-Realtime-2602"
-                ),
-                "description": (
-                    "Official Mistral AI Hugging Face "
-                    "repository containing downloadable "
-                    "Voxtral Mini 4B Realtime model "
-                    "weights and configuration files."
-                ),
-            },
-        ],
-        "technicalEvidence": [],
-    },
-}
+# researchResult = {
+#     "candidate": {
+#         "name": "Voxtral Mini 4B Realtime 2602",
+#         "organisation": "Mistral AI",
+#         "sourceUrl": (
+#             "https://huggingface.co/" "mistralai/Voxtral-Mini-4B-Realtime-2602"
+#         ),
+#         "candidateType": "model",
+#     },
+#     "isLocallyDeployable": True,
+#     "researchEvidence": {
+#         "deployabilityEvidence": [
+#             {
+#                 "source": "huggingface",
+#                 "title": ("mistralai/" "Voxtral-Mini-4B-Realtime-2602"),
+#                 "url": (
+#                     "https://huggingface.co/"
+#                     "mistralai/"
+#                     "Voxtral-Mini-4B-Realtime-2602"
+#                 ),
+#                 "description": (
+#                     "Official Mistral AI Hugging Face "
+#                     "repository containing downloadable "
+#                     "Voxtral Mini 4B Realtime model "
+#                     "weights and configuration files."
+#                 ),
+#             },
+#         ],
+#         "technicalEvidence": [],
+#     },
+# }
 
 
 """

@@ -2,6 +2,10 @@ from app.graph.onboarding.onboardingDownloadResolver import (
     resolveOnboardingDownload,
 )
 
+from app.graph.componentBuilding.inferenceComponentResolver import (
+    resolveInferenceComponent,
+)
+
 from app.services.echoforge.modelListManager import (
     addModelListEntry,
     removeModelListEntry,
@@ -178,8 +182,8 @@ def runOnboardingWorkflow(
             try:
 
                 removed = removeModelListEntry(
-                    downloaderName=(downloaderName),
-                    source=(downloadDecision["source"]),
+                    downloaderName=downloaderName,
+                    source=downloadDecision["source"],
                 )
 
                 if removed:
@@ -250,8 +254,73 @@ def runOnboardingWorkflow(
             "error": str(error),
         }
 
+    clearmlModelId = uploadResult["clearmlModelId"]
+
+    print("[Onboarding Workflow] " f"ClearML model ID: " f"{clearmlModelId}")
+
     # ----------------------------------------
-    # 8. Completed
+    # 8. Resolve inference component
+    # ----------------------------------------
+
+    try:
+
+        inferenceComponent = resolveInferenceComponent(
+            modelName=modelName,
+            source=downloadDecision["source"],
+        )
+
+    except Exception as error:
+
+        print(
+            "[Onboarding Workflow] "
+            f"Inference component resolution "
+            f"failed: {error}"
+        )
+
+        return {
+            **downloadDecision,
+            "status": ("inference-component-resolution-failed"),
+            "modelListName": (downloadResult.get("modelListName")),
+            "cacheName": (downloadResult["cacheName"]),
+            "cachePath": (downloadResult["cachePath"]),
+            "clearmlModelId": clearmlModelId,
+            "error": str(error),
+        }
+
+    # ----------------------------------------
+    # 9. No compatible inference component
+    # ----------------------------------------
+
+    if inferenceComponent is None:
+
+        print("[Onboarding Workflow] " "No compatible inference " "component found.")
+
+        return {
+            **downloadDecision,
+            "status": "inference-component-required",
+            "modelListName": (downloadResult.get("modelListName")),
+            "cacheName": (downloadResult["cacheName"]),
+            "cachePath": (downloadResult["cachePath"]),
+            "clearmlModelId": clearmlModelId,
+            "inferenceComponent": None,
+        }
+
+    print(
+        "[Onboarding Workflow] "
+        f"Inference component: "
+        f"{inferenceComponent['component']}"
+    )
+
+    print(
+        "[Onboarding Workflow] " f"Runtime image: " f"{inferenceComponent['imageName']}"
+    )
+
+    print(
+        "[Onboarding Workflow] " f"Entry point: " f"{inferenceComponent['entryPoint']}"
+    )
+
+    # ----------------------------------------
+    # 10. Completed
     # ----------------------------------------
 
     result = {
@@ -260,6 +329,8 @@ def runOnboardingWorkflow(
         "modelListName": (downloadResult.get("modelListName")),
         "cacheName": (downloadResult["cacheName"]),
         "cachePath": (downloadResult["cachePath"]),
+        "clearmlModelId": clearmlModelId,
+        "inferenceComponent": (inferenceComponent),
     }
 
     print(f"[Onboarding Workflow] Completed: " f"{modelName}")
