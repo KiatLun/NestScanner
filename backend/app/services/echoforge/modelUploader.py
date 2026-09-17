@@ -1,9 +1,15 @@
+import re
 import subprocess
 import sys
 
 from app.services.echoforge.echoforgeConfig import (
     MODEL_UPLOAD_DIR,
     CLEARML_ENV_FILE,
+)
+
+
+MODEL_ID_PATTERN = re.compile(
+    r"CLEARML_MODEL_ID=([A-Za-z0-9_-]+)"
 )
 
 
@@ -16,10 +22,14 @@ def uploadModel(
     scriptPath = MODEL_UPLOAD_DIR / "models_upload.py"
 
     if not scriptPath.exists():
-        raise RuntimeError(f"EchoForge upload script not found: " f"{scriptPath}")
+        raise RuntimeError(
+            f"EchoForge upload script not found: {scriptPath}"
+        )
 
     if not CLEARML_ENV_FILE.exists():
-        raise RuntimeError(f"ClearML env file not found: " f"{CLEARML_ENV_FILE}")
+        raise RuntimeError(
+            f"ClearML env file not found: {CLEARML_ENV_FILE}"
+        )
 
     command = [
         sys.executable,
@@ -39,16 +49,23 @@ def uploadModel(
     # ----------------------------------------
 
     print()
-    print("[Onboarding] Starting " "EchoForge upload")
+    print("[Onboarding] Starting EchoForge upload")
 
-    print(f"[Onboarding] Model: " f"{modelName}")
+    print(
+        f"[Onboarding] Model: {modelName}"
+    )
 
-    print(f"[Onboarding] Cache name: " f"{cacheName}")
+    print(
+        f"[Onboarding] Cache name: {cacheName}"
+    )
 
-    print("[Onboarding] Command: " + " ".join(command))
+    print(
+        "[Onboarding] Command: "
+        + " ".join(command)
+    )
 
     # ----------------------------------------
-    # Run echoforge upload
+    # Run EchoForge upload
     # ----------------------------------------
 
     process = subprocess.Popen(
@@ -61,6 +78,7 @@ def uploadModel(
     )
 
     outputLines = []
+    clearmlModelId = None
 
     if process.stdout:
 
@@ -70,7 +88,18 @@ def uploadModel(
 
             outputLines.append(line)
 
-            print(f"[EchoForge] {line}")
+            print(
+                f"[EchoForge] {line}"
+            )
+
+            match = MODEL_ID_PATTERN.search(
+                line
+            )
+
+            if match:
+                clearmlModelId = (
+                    match.group(1)
+                )
 
     returnCode = process.wait()
 
@@ -81,8 +110,26 @@ def uploadModel(
     if returnCode != 0:
 
         raise RuntimeError(
-            "EchoForge model upload failed." "\n\n" + "\n".join(outputLines)
+            "EchoForge model upload failed."
+            "\n\n"
+            + "\n".join(outputLines)
         )
+
+    # ----------------------------------------
+    # Validate ClearML model ID
+    # ----------------------------------------
+
+    if not clearmlModelId:
+
+        raise RuntimeError(
+            "EchoForge upload completed, "
+            "but no ClearML model ID was returned."
+        )
+
+    print(
+        f"[Onboarding] ClearML model ID: "
+        f"{clearmlModelId}"
+    )
 
     # ----------------------------------------
     # Completed
@@ -92,5 +139,6 @@ def uploadModel(
         "modelName": modelName,
         "cacheName": cacheName,
         "project": project,
+        "clearmlModelId": clearmlModelId,
         "status": "completed",
     }
