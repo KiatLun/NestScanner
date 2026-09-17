@@ -131,30 +131,30 @@ Expected behaviours:
 2. model_info.json in nestscanner should reflect the new SenseVoiceSmall model entry under hugging_face_download
 3. Model should be saved under deployment/.cache/SenseVoiceSmall
 """
-researchResult = {
-    "candidate": {
-        "name": "SenseVoiceSmall",
-        "organisation": "FunAudioLLM",
-        "sourceUrl": ("https://huggingface.co/" "FunAudioLLM/SenseVoiceSmall"),
-        "candidateType": "model",
-    },
-    "isLocallyDeployable": True,
-    "researchEvidence": {
-        "deployabilityEvidence": [
-            {
-                "source": "huggingface",
-                "title": "FunAudioLLM/SenseVoiceSmall",
-                "url": ("https://huggingface.co/" "FunAudioLLM/SenseVoiceSmall"),
-                "description": (
-                    "Official Hugging Face repository "
-                    "for the SenseVoiceSmall speech "
-                    "recognition model."
-                ),
-            },
-        ],
-        "technicalEvidence": [],
-    },
-}
+# researchResult = {
+#     "candidate": {
+#         "name": "SenseVoiceSmall",
+#         "organisation": "FunAudioLLM",
+#         "sourceUrl": ("https://huggingface.co/" "FunAudioLLM/SenseVoiceSmall"),
+#         "candidateType": "model",
+#     },
+#     "isLocallyDeployable": True,
+#     "researchEvidence": {
+#         "deployabilityEvidence": [
+#             {
+#                 "source": "huggingface",
+#                 "title": "FunAudioLLM/SenseVoiceSmall",
+#                 "url": ("https://huggingface.co/" "FunAudioLLM/SenseVoiceSmall"),
+#                 "description": (
+#                     "Official Hugging Face repository "
+#                     "for the SenseVoiceSmall speech "
+#                     "recognition model."
+#                 ),
+#             },
+#         ],
+#         "technicalEvidence": [],
+#     },
+# }
 
 
 """

@@ -50,16 +50,6 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
-      },
-      {
-        "source": "FunAudioLLM/Fun-ASR-Nano-2512",
-        "modelListName": "Fun-ASR-Nano-2512",
-        "cacheName": "Fun-ASR-Nano-2512"
-      },
-      {
-        "source": "FunAudioLLM/SenseVoiceSmall",
-        "modelListName": "SenseVoiceSmall",
-        "cacheName": "SenseVoiceSmall"
       }
     ]
   },
@@ -154,11 +144,6 @@
       {
         "source": "mistralai/Voxtral-Mini-3B-2507",
         "modelListName": "voxtral-3b",
-        "cacheName": "voxtral"
-      },
-      {
-        "source": "mistralai/Voxtral-Mini-4B-Realtime-2602",
-        "modelListName": "Voxtral-Mini-4B-Realtime-2602",
         "cacheName": "voxtral"
       }
     ]
