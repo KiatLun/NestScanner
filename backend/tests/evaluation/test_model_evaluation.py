@@ -4,6 +4,16 @@ from app.graph.onboarding.workflow import (
     runOnboardingWorkflow,
 )
 
+from app.services.echoforge.dockerImageBuilder import (
+    ensureDockerImage,
+)
+
+from app.services.echoforge.echoforgeConfig import (
+    COMPONENTS_DIR,
+    STT_EVALUATION_DOCKERFILE,
+    STT_EVALUATION_IMAGE,
+)
+
 from app.services.echoforge.pipelineBuilder import (
     buildEvaluationPipeline,
     writeEvaluationPipeline,
@@ -16,6 +26,8 @@ from app.services.echoforge.pipelineRunner import (
 MODEL_NAME = "Whisper Small"
 MODEL_SOURCE = "openai/whisper-small"
 
+# for macs
+# DATASET_ID = "30ab6615fd76498ab8642e104575d205"
 DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
 
 
@@ -61,8 +73,10 @@ def main():
 
     if onboardingResult.get("status") != "completed":
         raise RuntimeError(
-            "Onboarding did not complete successfully. "
-            f"Status: {onboardingResult.get('status')}"
+            "Onboarding did not complete "
+            "successfully. "
+            f"Status: "
+            f"{onboardingResult.get('status')}"
         )
 
     # ----------------------------------------
@@ -72,12 +86,12 @@ def main():
     modelId = onboardingResult.get("clearmlModelId")
 
     if not modelId:
-        raise RuntimeError("Onboarding result does not contain " "clearmlModelId.")
+        raise RuntimeError("Onboarding result does not " "contain clearmlModelId.")
 
     component = onboardingResult.get("inferenceComponent")
 
     if not component:
-        raise RuntimeError("Onboarding result does not contain " "inferenceComponent.")
+        raise RuntimeError("Onboarding result does not " "contain inferenceComponent.")
 
     print()
     print("=" * 60)
@@ -91,7 +105,7 @@ def main():
     print(f"Dataset ID: {DATASET_ID}")
 
     # ----------------------------------------
-    # 3. Show resolved inference component
+    # 3. Validate resolved component
     # ----------------------------------------
 
     print()
@@ -108,6 +122,10 @@ def main():
 
     entryPoint = component.get("entryPoint")
 
+    dockerfile = component.get("dockerfile")
+
+    buildContext = component.get("buildContext")
+
     if not imageName:
         raise RuntimeError(
             "Resolved inference component " "does not contain imageName."
@@ -118,12 +136,63 @@ def main():
             "Resolved inference component " "does not contain entryPoint."
         )
 
-    print(f"Runtime image: {imageName}")
+    if not dockerfile:
+        raise RuntimeError(
+            "Resolved inference component " "does not contain dockerfile."
+        )
 
-    print(f"Entry point: {entryPoint}")
+    if not buildContext:
+        raise RuntimeError(
+            "Resolved inference component " "does not contain buildContext."
+        )
+
+    print(f"Inference image: " f"{imageName}")
+
+    print(f"Inference entry point: " f"{entryPoint}")
 
     # ----------------------------------------
-    # 4. Build evaluation pipeline
+    # 4. Prepare inference image
+    # ----------------------------------------
+
+    print()
+    print("=" * 60)
+    print("PREPARING INFERENCE IMAGE")
+    print("=" * 60)
+
+    inferenceImageResult = ensureDockerImage(
+        imageName=imageName,
+        dockerfile=dockerfile,
+        buildContext=buildContext,
+        forceBuild=True,
+    )
+
+    pprint(
+        inferenceImageResult,
+        sort_dicts=False,
+    )
+
+    # ----------------------------------------
+    # 5. Prepare evaluation image
+    # ----------------------------------------
+
+    print()
+    print("=" * 60)
+    print("PREPARING EVALUATION IMAGE")
+    print("=" * 60)
+
+    evaluationImageResult = ensureDockerImage(
+        imageName=(STT_EVALUATION_IMAGE),
+        dockerfile=(STT_EVALUATION_DOCKERFILE),
+        buildContext=(COMPONENTS_DIR),
+    )
+
+    pprint(
+        evaluationImageResult,
+        sort_dicts=False,
+    )
+
+    # ----------------------------------------
+    # 6. Build evaluation pipeline
     # ----------------------------------------
 
     pipeline = buildEvaluationPipeline(
@@ -144,7 +213,7 @@ def main():
     )
 
     # ----------------------------------------
-    # 5. Write pipeline YAML
+    # 7. Write pipeline YAML
     # ----------------------------------------
 
     pipelineResult = writeEvaluationPipeline(
@@ -163,7 +232,7 @@ def main():
     )
 
     # ----------------------------------------
-    # 6. Run pipeline
+    # 8. Run pipeline
     # ----------------------------------------
 
     runResult = runPipeline(pipelineResult["pipelinePath"])

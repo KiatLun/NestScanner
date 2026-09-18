@@ -2,7 +2,7 @@ import yaml
 
 from app.services.echoforge.echoforgeConfig import (
     NESTSCANNER_PIPELINE_CONF_DIR,
-    NESTSCANNER_EVALUATION_IMAGE,
+    STT_EVALUATION_IMAGE,
 )
 
 QUEUE_NAME = "echoforge_queue"
@@ -11,11 +11,13 @@ QUEUE_NAME = "echoforge_queue"
 def normalizeName(
     value: str,
 ) -> str:
+
     return value.strip().lower().replace("-", "_").replace(" ", "_")
 
 
 def getEvaluationEntryPoint() -> str:
-    return "/app/evaluation_component/stt_evaluation/main.py"
+
+    return "/app/main.py"
 
 
 def buildEvaluationPipeline(
@@ -26,7 +28,9 @@ def buildEvaluationPipeline(
 ) -> dict:
 
     componentName = component.get("component")
+
     imageName = component.get("imageName")
+
     entryPoint = component.get("entryPoint")
 
     if not componentName:
@@ -34,12 +38,16 @@ def buildEvaluationPipeline(
 
     if not imageName:
         raise RuntimeError(
-            f"Inference component imageName is missing for component: {componentName}"
+            "Inference component imageName "
+            f"is missing for component: "
+            f"{componentName}"
         )
 
     if not entryPoint:
         raise RuntimeError(
-            f"Inference component entryPoint is missing for component: {componentName}"
+            "Inference component entryPoint "
+            f"is missing for component: "
+            f"{componentName}"
         )
 
     if not modelId:
@@ -49,10 +57,11 @@ def buildEvaluationPipeline(
         raise RuntimeError("Dataset ID is required.")
 
     inferenceStageName = "stt_inference"
+
     evaluationStageName = "stt_evaluation"
 
     return {
-        "project_name": f"nestscanner_{normalizeName(modelName)}",
+        "project_name": (f"nestscanner_" f"{normalizeName(modelName)}"),
         "datasets": {
             "dataset_ids": [
                 datasetId,
@@ -68,22 +77,24 @@ def buildEvaluationPipeline(
                 "entry_point": entryPoint,
                 "cache_executed_step": False,
                 "parameter_override": {
-                    "Args/dataset_id": "${datasets}",
-                    "Args/model_id": modelId,
+                    "Args/dataset_id": ("${datasets}"),
+                    "Args/model_id": (modelId),
                 },
             },
             evaluationStageName: {
                 "queue": QUEUE_NAME,
-                "image_name": NESTSCANNER_EVALUATION_IMAGE,
+                "image_name": (STT_EVALUATION_IMAGE),
                 "task_type": "testing",
-                "entry_point": getEvaluationEntryPoint(),
+                "entry_point": (getEvaluationEntryPoint()),
                 "cache_executed_step": False,
                 "parents": [
                     inferenceStageName,
                 ],
                 "parameter_override": {
-                    "Args/hyp_dataset_id": (f"${{{inferenceStageName}.id}}:dataset_id"),
-                    "Args/ref_dataset_id": "${datasets}",
+                    "Args/hyp_dataset_id": (
+                        f"${{{inferenceStageName}.id}}:" "dataset_id"
+                    ),
+                    "Args/ref_dataset_id": ("${datasets}"),
                 },
             },
         },
@@ -100,7 +111,7 @@ def writeEvaluationPipeline(
         exist_ok=True,
     )
 
-    pipelineName = f"{normalizeName(modelName)}_evaluation.yaml"
+    pipelineName = f"{normalizeName(modelName)}" "_evaluation.yaml"
 
     pipelinePath = NESTSCANNER_PIPELINE_CONF_DIR / pipelineName
 

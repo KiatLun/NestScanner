@@ -1,15 +1,19 @@
 import subprocess
 from pathlib import Path
 
-from app.services.echoforge.echoforgeConfig import (
-    ECHOFORGE_ROOT,
-    PIPELINE_SRC_DIR,
-    CLEARML_ENV_FILE,
-    CLEARML_CONFIG_FILE,
-    NESTSCANNER_EVALUATION_IMAGE,
+from app.services.echoforge.dockerImageBuilder import (
+    ensureDockerImage,
 )
 
-PIPELINE_CONTROLLER_IMAGE = NESTSCANNER_EVALUATION_IMAGE
+from app.services.echoforge.echoforgeConfig import (
+    PIPELINE_SRC_DIR,
+    PIPELINE_DOCKERFILE,
+    CLEARML_ENV_FILE,
+    CLEARML_CONFIG_FILE,
+    NESTSCANNER_PIPELINE_IMAGE,
+)
+
+PIPELINE_CONTROLLER_IMAGE = NESTSCANNER_PIPELINE_IMAGE
 
 
 def runPipeline(
@@ -41,7 +45,26 @@ def runPipeline(
         raise RuntimeError(f"ClearML env file not found: " f"{CLEARML_ENV_FILE}")
 
     # ----------------------------------------
-    # 3. Resolve pipeline config path
+    # 3. Ensure pipeline controller image
+    # ----------------------------------------
+
+    print()
+    print("=" * 60)
+    print("PREPARING PIPELINE CONTROLLER")
+    print("=" * 60)
+
+    controllerImageResult = ensureDockerImage(
+        imageName=(PIPELINE_CONTROLLER_IMAGE),
+        dockerfile=(PIPELINE_DOCKERFILE),
+        buildContext=(PIPELINE_SRC_DIR),
+    )
+
+    print("[Pipeline] Controller image: " f"{PIPELINE_CONTROLLER_IMAGE}")
+
+    print("[Pipeline] Controller image status: " f"{controllerImageResult['status']}")
+
+    # ----------------------------------------
+    # 4. Resolve pipeline config path
     # ----------------------------------------
 
     try:
@@ -61,7 +84,7 @@ def runPipeline(
     containerPipelinePath = Path("/app/pipeline_src") / relativePipelinePath
 
     # ----------------------------------------
-    # 4. Build controller command
+    # 5. Build controller command
     # ----------------------------------------
 
     command = [
@@ -84,7 +107,7 @@ def runPipeline(
     ]
 
     # ----------------------------------------
-    # 5. Run EchoForge controller
+    # 6. Run EchoForge controller
     # ----------------------------------------
 
     print()
@@ -125,7 +148,7 @@ def runPipeline(
     returnCode = process.wait()
 
     # ----------------------------------------
-    # 6. Handle controller failure
+    # 7. Handle controller failure
     # ----------------------------------------
 
     if returnCode != 0:
@@ -133,7 +156,7 @@ def runPipeline(
         raise RuntimeError("EchoForge pipeline failed.\n\n" + "\n".join(outputLines))
 
     # ----------------------------------------
-    # 7. Submitted
+    # 8. Submitted
     # ----------------------------------------
 
     print()
@@ -143,6 +166,7 @@ def runPipeline(
         "pipelinePath": str(pipelinePathObject),
         "pipelineConfig": str(containerPipelinePath),
         "controllerImage": (PIPELINE_CONTROLLER_IMAGE),
+        "controllerImageStatus": (controllerImageResult["status"]),
         "status": "submitted",
         "output": outputLines,
     }

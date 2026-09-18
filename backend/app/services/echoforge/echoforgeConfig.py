@@ -80,6 +80,10 @@ STT_EVALUATION_DIR = EVALUATION_COMPONENT_DIR / "stt_evaluation"
 
 STT_EVALUATION_FILE = STT_EVALUATION_DIR / "main.py"
 
+STT_EVALUATION_DOCKERFILE = STT_EVALUATION_DIR / "Dockerfile"
+
+STT_EVALUATION_IMAGE = "stt_evaluation:latest"
+
 
 # ----------------------------------------
 # EchoForge pipeline paths
@@ -95,12 +99,14 @@ NESTSCANNER_PIPELINE_CONF_DIR = PIPELINE_CONF_DIR / "nestscanner"
 
 PIPELINE_MAIN_FILE = PIPELINE_SRC_DIR / "main.py"
 
+PIPELINE_DOCKERFILE = PIPELINE_SRC_DIR / "Dockerfile"
+
 
 # ----------------------------------------
-# NestScanner EchoForge runtime
+# NestScanner EchoForge runtime images
 # ----------------------------------------
 
-NESTSCANNER_EVALUATION_IMAGE = "nestscanner_evaluation:latest"
+NESTSCANNER_PIPELINE_IMAGE = "nestscanner_pipeline:latest"
 
 
 # ----------------------------------------

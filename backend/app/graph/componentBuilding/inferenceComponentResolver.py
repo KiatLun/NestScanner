@@ -1,6 +1,6 @@
 from app.services.echoforge.echoforgeConfig import (
+    COMPONENTS_DIR,
     STT_INFERENCE_DIR,
-    NESTSCANNER_EVALUATION_IMAGE,
 )
 
 COMPONENT_PREFIX = "stt_inference_"
@@ -31,6 +31,7 @@ def getComponentFamily(
 def getAvailableInferenceComponents() -> list[dict]:
 
     if not STT_INFERENCE_DIR.exists():
+
         raise RuntimeError(
             "EchoForge STT inference directory " f"not found: {STT_INFERENCE_DIR}"
         )
@@ -55,16 +56,11 @@ def getAvailableInferenceComponents() -> list[dict]:
 
         requirementsFile = folder / "requirements.txt"
 
-        # Component must contain an executable main.py
         if not mainFile.exists():
             continue
 
-        entryPoint = (
-            f"/app/inference_component/"
-            f"stt_inference/"
-            f"{componentName}/"
-            f"main.py"
-        )
+        if not dockerfile.exists():
+            continue
 
         components.append(
             {
@@ -72,13 +68,22 @@ def getAvailableInferenceComponents() -> list[dict]:
                 "family": familyName,
                 "componentDir": str(folder),
                 "mainFile": str(mainFile),
-                "dockerfile": (str(dockerfile) if dockerfile.exists() else None),
+                "dockerfile": str(dockerfile),
                 "requirementsFile": (
                     str(requirementsFile) if requirementsFile.exists() else None
                 ),
-                # Runtime information used by EchoForge pipeline
-                "imageName": NESTSCANNER_EVALUATION_IMAGE,
-                "entryPoint": entryPoint,
+                # Docker build context must be
+                # the EchoForge components folder
+                # because component Dockerfiles
+                # COPY base_classes/... and
+                # inference_component/...
+                "buildContext": str(COMPONENTS_DIR),
+                # Each model-family component
+                # owns its own image.
+                "imageName": (f"{componentName}:latest"),
+                # Component Dockerfiles flatten
+                # their code directly into /app.
+                "entryPoint": ("/app/main.py"),
             }
         )
 

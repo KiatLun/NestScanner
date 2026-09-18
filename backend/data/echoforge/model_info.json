@@ -50,11 +50,6 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
-      },
-      {
-        "source": "Qwen/Qwen2.5-0.5B-Instruct",
-        "modelListName": "qwen2.5-0.5b-instruct",
-        "cacheName": "qwen2.5-0.5b-instruct"
       }
     ]
   },
