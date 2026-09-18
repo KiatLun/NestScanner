@@ -2,7 +2,6 @@ import yaml
 
 from app.services.echoforge.echoforgeConfig import (
     NESTSCANNER_PIPELINE_CONF_DIR,
-    STT_EVALUATION_IMAGE,
 )
 
 QUEUE_NAME = "echoforge_queue"
@@ -15,17 +14,10 @@ def normalizeName(
     return value.strip().lower().replace("-", "_").replace(" ", "_")
 
 
-def getEvaluationEntryPoint() -> str:
-
-    return "/app/main.py"
-
-
-def buildEvaluationPipeline(
-    modelName: str,
-    modelId: str,
-    datasetId: str,
+def validateComponent(
     component: dict,
-) -> dict:
+    componentType: str,
+) -> None:
 
     componentName = component.get("component")
 
@@ -34,27 +26,46 @@ def buildEvaluationPipeline(
     entryPoint = component.get("entryPoint")
 
     if not componentName:
-        raise RuntimeError("Inference component name is missing.")
+        raise RuntimeError(f"{componentType} component " "name is missing.")
 
     if not imageName:
         raise RuntimeError(
-            "Inference component imageName "
-            f"is missing for component: "
-            f"{componentName}"
+            f"{componentType} component "
+            "imageName is missing for "
+            f"component: {componentName}"
         )
 
     if not entryPoint:
         raise RuntimeError(
-            "Inference component entryPoint "
-            f"is missing for component: "
-            f"{componentName}"
+            f"{componentType} component "
+            "entryPoint is missing for "
+            f"component: {componentName}"
         )
+
+
+def buildEvaluationPipeline(
+    modelName: str,
+    modelId: str,
+    datasetId: str,
+    inferenceComponent: dict,
+    evaluationComponent: dict,
+) -> dict:
 
     if not modelId:
         raise RuntimeError("Model ID is required.")
 
     if not datasetId:
         raise RuntimeError("Dataset ID is required.")
+
+    validateComponent(
+        inferenceComponent,
+        "Inference",
+    )
+
+    validateComponent(
+        evaluationComponent,
+        "Evaluation",
+    )
 
     inferenceStageName = "stt_inference"
 
@@ -72,9 +83,9 @@ def buildEvaluationPipeline(
         "stages": {
             inferenceStageName: {
                 "queue": QUEUE_NAME,
-                "image_name": imageName,
+                "image_name": (inferenceComponent["imageName"]),
                 "task_type": "inference",
-                "entry_point": entryPoint,
+                "entry_point": (inferenceComponent["entryPoint"]),
                 "cache_executed_step": False,
                 "parameter_override": {
                     "Args/dataset_id": ("${datasets}"),
@@ -83,9 +94,9 @@ def buildEvaluationPipeline(
             },
             evaluationStageName: {
                 "queue": QUEUE_NAME,
-                "image_name": (STT_EVALUATION_IMAGE),
+                "image_name": (evaluationComponent["imageName"]),
                 "task_type": "testing",
-                "entry_point": (getEvaluationEntryPoint()),
+                "entry_point": (evaluationComponent["entryPoint"]),
                 "cache_executed_step": False,
                 "parents": [
                     inferenceStageName,

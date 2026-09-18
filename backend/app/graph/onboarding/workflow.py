@@ -2,10 +2,6 @@ from app.graph.onboarding.onboardingDownloadResolver import (
     resolveOnboardingDownload,
 )
 
-from app.graph.componentBuilding.inferenceComponentResolver import (
-    resolveInferenceComponent,
-)
-
 from app.services.echoforge.modelListManager import (
     addModelListEntry,
     removeModelListEntry,
@@ -54,9 +50,9 @@ def runOnboardingWorkflow(
     print(f"[Onboarding Workflow] Starting: " f"{modelName}")
     print("=" * 60)
 
-    print(f"[Onboarding Workflow] Source type: " f"{downloadDecision['sourceType']}")
+    print("[Onboarding Workflow] Source type: " f"{downloadDecision['sourceType']}")
 
-    print(f"[Onboarding Workflow] Source: " f"{downloadDecision['source']}")
+    print("[Onboarding Workflow] Source: " f"{downloadDecision['source']}")
 
     # ----------------------------------------
     # 2. No usable downloader
@@ -73,7 +69,7 @@ def runOnboardingWorkflow(
 
     downloaderName = downloadDecision["downloader"]
 
-    print(f"[Onboarding Workflow] Downloader: " f"{downloaderName}")
+    print("[Onboarding Workflow] Downloader: " f"{downloaderName}")
 
     # ----------------------------------------
     # 3. Ensure model_list entry exists
@@ -90,7 +86,7 @@ def runOnboardingWorkflow(
 
         if existingModelListEntryBeforeDownload:
 
-            print("[Onboarding Workflow] " "Model already exists in model_list.")
+            print("[Onboarding Workflow] " "Model already exists in " "model_list.")
 
         else:
 
@@ -113,11 +109,11 @@ def runOnboardingWorkflow(
 
             else:
 
-                print("[Onboarding Workflow] " "Model already exists in model_list.")
+                print("[Onboarding Workflow] " "Model already exists in " "model_list.")
 
     except Exception as error:
 
-        print("[Onboarding Workflow] " f"Could not prepare model_list: " f"{error}")
+        print("[Onboarding Workflow] " "Could not prepare model_list: " f"{error}")
 
         return {
             **downloadDecision,
@@ -136,7 +132,7 @@ def runOnboardingWorkflow(
 
         try:
 
-            print(f"[Onboarding Workflow] " f"Download attempt " f"{attempt + 1}/2")
+            print("[Onboarding Workflow] " f"Download attempt " f"{attempt + 1}/2")
 
             downloadResult = downloadModel(
                 downloader={
@@ -161,7 +157,7 @@ def runOnboardingWorkflow(
             downloadError = error
 
             print(
-                f"[Onboarding Workflow] "
+                "[Onboarding Workflow] "
                 f"Download attempt "
                 f"{attempt + 1}/2 failed: "
                 f"{error}"
@@ -175,8 +171,6 @@ def runOnboardingWorkflow(
 
         print("[Onboarding Workflow] " "Downloader failed after retry.")
 
-        # Only remove the entry if
-        # NestScanner added it.
         if modelListEntryAdded:
 
             try:
@@ -225,9 +219,7 @@ def runOnboardingWorkflow(
         except Exception as error:
 
             print(
-                "[Onboarding Workflow] "
-                f"Could not update "
-                f"model_info.json: {error}"
+                "[Onboarding Workflow] " "Could not update " f"model_info.json: {error}"
             )
 
     # ----------------------------------------
@@ -259,68 +251,7 @@ def runOnboardingWorkflow(
     print("[Onboarding Workflow] " f"ClearML model ID: " f"{clearmlModelId}")
 
     # ----------------------------------------
-    # 8. Resolve inference component
-    # ----------------------------------------
-
-    try:
-
-        inferenceComponent = resolveInferenceComponent(
-            modelName=modelName,
-            source=downloadDecision["source"],
-        )
-
-    except Exception as error:
-
-        print(
-            "[Onboarding Workflow] "
-            f"Inference component resolution "
-            f"failed: {error}"
-        )
-
-        return {
-            **downloadDecision,
-            "status": ("inference-component-resolution-failed"),
-            "modelListName": (downloadResult.get("modelListName")),
-            "cacheName": (downloadResult["cacheName"]),
-            "cachePath": (downloadResult["cachePath"]),
-            "clearmlModelId": clearmlModelId,
-            "error": str(error),
-        }
-
-    # ----------------------------------------
-    # 9. No compatible inference component
-    # ----------------------------------------
-
-    if inferenceComponent is None:
-
-        print("[Onboarding Workflow] " "No compatible inference " "component found.")
-
-        return {
-            **downloadDecision,
-            "status": "inference-component-required",
-            "modelListName": (downloadResult.get("modelListName")),
-            "cacheName": (downloadResult["cacheName"]),
-            "cachePath": (downloadResult["cachePath"]),
-            "clearmlModelId": clearmlModelId,
-            "inferenceComponent": None,
-        }
-
-    print(
-        "[Onboarding Workflow] "
-        f"Inference component: "
-        f"{inferenceComponent['component']}"
-    )
-
-    print(
-        "[Onboarding Workflow] " f"Runtime image: " f"{inferenceComponent['imageName']}"
-    )
-
-    print(
-        "[Onboarding Workflow] " f"Entry point: " f"{inferenceComponent['entryPoint']}"
-    )
-
-    # ----------------------------------------
-    # 10. Completed
+    # 8. Completed
     # ----------------------------------------
 
     result = {
@@ -329,10 +260,9 @@ def runOnboardingWorkflow(
         "modelListName": (downloadResult.get("modelListName")),
         "cacheName": (downloadResult["cacheName"]),
         "cachePath": (downloadResult["cachePath"]),
-        "clearmlModelId": clearmlModelId,
-        "inferenceComponent": (inferenceComponent),
+        "clearmlModelId": (clearmlModelId),
     }
 
-    print(f"[Onboarding Workflow] Completed: " f"{modelName}")
+    print("[Onboarding Workflow] " f"Completed: {modelName}")
 
     return result
