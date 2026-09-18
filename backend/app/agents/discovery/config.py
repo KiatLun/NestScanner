@@ -14,10 +14,11 @@ class DiscoveryConfig:
     enableArxivSearch: bool = True
 
     # Results per query
-    webResultsPerQuery: int = 5
-    huggingFaceResultsPerQuery: int = 20
-    githubResultsPerQuery: int = 10
-    arxivResultsPerQuery: int = 5
+    webResultsPerQuery: int = 2
+    huggingFaceResultsPerQuery: int = 10
+    huggingFaceCategoryResults: int = 100
+    githubResultsPerQuery: int = 6
+    arxivResultsPerQuery: int = 2
 
 
     # Candidate generation
