@@ -20,10 +20,10 @@ MODEL_NAME = "Whisper Small"
 MODEL_SOURCE = "openai/whisper-small"
 
 # Mac
-# DATASET_ID = "30ab6615fd76498ab8642e104575d205"
+DATASET_ID = "30ab6615fd76498ab8642e104575d205"
 
 # Windows / WSL
-DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
+# DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
 
 
 researchResult = {
