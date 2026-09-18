@@ -14,6 +14,7 @@ from app.tools.webSearch import (
 from app.tools.huggingFace import (
     searchHuggingFaceModels,
     filterASRModels,
+    getASRModels,
 )
 
 from app.tools.github import (
@@ -64,20 +65,63 @@ def searchHuggingFace(
     config: DiscoveryConfig,
 ) -> list[dict]:
     """
-    Search Hugging Face and retain ASR models.
+    Discover ASR models from Hugging Face.
+
+    Primary strategy:
+    - retrieve models directly from the
+      automatic-speech-recognition pipeline category
+
+    Secondary strategy:
+    - supplement with keyword-based searches
     """
 
     results = []
 
+    # =================================================
+    # PRIMARY: DIRECT ASR CATEGORY SEARCH
+    # =================================================
+
+    if config.verbose:
+        print(
+            "\nSearching Hugging Face "
+            "automatic-speech-recognition category..."
+        )
+
+    try:
+        categoryResults = getASRModels(
+            limit=config.huggingFaceCategoryResults,
+        )
+
+        if config.verbose:
+            print(
+                f"Found {len(categoryResults)} "
+                "ASR category models."
+            )
+
+        results.extend(categoryResults)
+
+    except Exception as error:
+        print(
+            "Hugging Face ASR category search failed."
+        )
+
+        print(error)
+
+    # =================================================
+    # SECONDARY: KEYWORD SEARCH
+    # =================================================
+
     for query in queries:
 
         if config.verbose:
-            print(f"\nSearching Hugging Face: " f"{query}")
+            print(
+                f"\nSearching Hugging Face: {query}"
+            )
 
         try:
             queryResults = searchHuggingFaceModels(
                 query,
-                limit=(config.huggingFaceResultsPerQuery),
+                limit=config.huggingFaceResultsPerQuery,
             )
 
             if config.verbose:
@@ -87,15 +131,22 @@ def searchHuggingFace(
                     "before filtering."
                 )
 
-            queryResults = filterASRModels(queryResults)
+            queryResults = filterASRModels(
+                queryResults
+            )
 
             if config.verbose:
-                print(f"Found {len(queryResults)} " "ASR models after filtering.")
+                print(
+                    f"Found {len(queryResults)} "
+                    "ASR models after filtering."
+                )
 
             results.extend(queryResults)
 
         except Exception as error:
-            print(f"Hugging Face search failed: " f"{query}")
+            print(
+                f"Hugging Face search failed: {query}"
+            )
 
             print(error)
 
