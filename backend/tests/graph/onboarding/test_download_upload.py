@@ -15,16 +15,16 @@ from tests.fixtures.researchAgentOutput import (
 # Refer to the onboardingFixtures to view expected behaviours
 modelsToTest = [
     # "qwen3-asr-1.7b",  # Generic Hugging Face
-    "mega-asr",  # Generic Hugging Face
-    "fun-asr-nano-2512",  # Generic Hugging Face
-    # "sensevoice-small",  # Generic Hugging Face
+    # "mega-asr",  # Generic Hugging Face
+    # "fun-asr-nano-2512",  # Generic Hugging Face
+    "sensevoice-small",  # Generic Hugging Face
     # "voxtral-mini-3b-2507",  # Model-specific
     # "whisper-medium",  # Model-specific
-    # "whisper-small",  # Model-specific
-    "voxtral-mini-4b-realtime-2602",  # Model-specific
-    "silero-vad",  # Repository-based model
-    "deepspeech-0.9.3",  # Cant for both model-specific and generic HF
-    # "example-direct-asr",  # Cant for both model-specific and generic HF
+    "whisper-small",  # Model-specific
+    # "voxtral-mini-4b-realtime-2602",  # Model-specific
+    # "silero-vad",  # Repository-based model
+    # "deepspeech-0.9.3",  # Cant for both model-specific and generic HF
+    "example-direct-asr",  # Cant for both model-specific and generic HF
 ]
 
 

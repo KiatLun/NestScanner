@@ -2,6 +2,18 @@ from app.graph.componentBuilding.inferenceComponentResolver import (
     resolveInferenceComponent,
 )
 
+from app.agents.componentCreation.agent import (
+    componentCreationAgent,
+)
+
+from app.agents.componentCreation.schemas import (
+    ComponentCreationInput,
+)
+
+from app.services.echoforge.componentWriter import (
+    writeGeneratedComponent,
+)
+
 from app.services.echoforge.dockerImageBuilder import (
     ensureDockerImage,
 )
@@ -21,16 +33,62 @@ def buildEvaluationComponent() -> dict:
         "componentDir": str(STT_EVALUATION_DIR),
         "dockerfile": str(STT_EVALUATION_DOCKERFILE),
         "buildContext": str(COMPONENTS_DIR),
-        "imageName": (STT_EVALUATION_IMAGE),
+        "imageName": STT_EVALUATION_IMAGE,
         "entryPoint": "/app/main.py",
+    }
+
+
+def createInferenceComponent(
+    modelName: str,
+    source: str,
+    modelFamily: str,
+    technicalProfile: dict,
+) -> dict:
+
+    print("[Component Building Workflow] " "Calling Component Creation Agent.")
+
+    creationInput = ComponentCreationInput(
+        modelName=modelName,
+        modelFamily=modelFamily,
+        source=source,
+        technicalProfile=technicalProfile,
+    )
+
+    generatedComponent = componentCreationAgent(creationInput)
+
+    print(
+        "[Component Building Workflow] "
+        "Component generated: "
+        f"{generatedComponent.componentName}"
+    )
+
+    componentFiles = writeGeneratedComponent(
+        componentName=(generatedComponent.componentName),
+        mainFileContent=(generatedComponent.mainFileContent),
+        requirementsContent=(generatedComponent.requirementsContent),
+        dockerfileContent=(generatedComponent.dockerfileContent),
+    )
+
+    return {
+        **componentFiles,
+        "family": modelFamily,
+        "imageName": (generatedComponent.imageName),
+        "entryPoint": (generatedComponent.entryPoint),
+        "modelName": modelName,
+        "source": source,
+        "matchedBy": "generated",
     }
 
 
 def runComponentBuildingWorkflow(
     modelName: str,
     source: str,
+    modelFamily: str,
+    technicalProfile: dict | None = None,
     forceBuild: bool = False,
 ) -> dict:
+
+    technicalProfile = technicalProfile or {}
 
     print()
     print("=" * 60)
@@ -64,7 +122,7 @@ def runComponentBuildingWorkflow(
         }
 
     # ----------------------------------------
-    # 2. No inference component
+    # 2. Create component if none exists
     # ----------------------------------------
 
     if inferenceComponent is None:
@@ -75,17 +133,44 @@ def runComponentBuildingWorkflow(
             "component found."
         )
 
-        return {
-            "modelName": modelName,
-            "source": source,
-            "status": ("inference-component-required"),
-            "inferenceComponent": None,
-        }
+        try:
+
+            inferenceComponent = createInferenceComponent(
+                modelName=modelName,
+                source=source,
+                modelFamily=modelFamily,
+                technicalProfile=(technicalProfile),
+            )
+
+        except Exception as error:
+
+            print(
+                "[Component Building Workflow] "
+                "Component creation failed: "
+                f"{error}"
+            )
+
+            return {
+                "modelName": modelName,
+                "source": source,
+                "status": ("inference-component-creation-failed"),
+                "error": str(error),
+            }
+
+    else:
+
+        print("[Component Building Workflow] " "Using existing inference component.")
 
     print(
         "[Component Building Workflow] "
         "Inference component: "
         f"{inferenceComponent['component']}"
+    )
+
+    print(
+        "[Component Building Workflow] "
+        "Component source: "
+        f"{inferenceComponent['matchedBy']}"
     )
 
     # ----------------------------------------

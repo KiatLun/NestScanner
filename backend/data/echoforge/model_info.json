@@ -60,6 +60,11 @@
         "source": "FunAudioLLM/Fun-ASR-Nano-2512",
         "modelListName": "Fun-ASR-Nano-2512",
         "cacheName": "Fun-ASR-Nano-2512"
+      },
+      {
+        "source": "FunAudioLLM/SenseVoiceSmall",
+        "modelListName": "SenseVoiceSmall",
+        "cacheName": "SenseVoiceSmall"
       }
     ]
   },
@@ -181,6 +186,11 @@
       {
         "source": "openai/whisper-large-v2",
         "modelListName": "whisper-large-v2",
+        "cacheName": "whisper"
+      },
+      {
+        "source": "openai/whisper-small",
+        "modelListName": "whisper-small",
         "cacheName": "whisper"
       }
     ]
