@@ -50,6 +50,16 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
+      },
+      {
+        "source": "zhifeixie/Mega-ASR",
+        "modelListName": "Mega-ASR",
+        "cacheName": "Mega-ASR"
+      },
+      {
+        "source": "FunAudioLLM/Fun-ASR-Nano-2512",
+        "modelListName": "Fun-ASR-Nano-2512",
+        "cacheName": "Fun-ASR-Nano-2512"
       }
     ]
   },
@@ -118,8 +128,8 @@
     "sourceType": "github",
     "supportedModels": [
       {
-        "source": "silero",
-        "modelListName": null,
+        "source": "https://github.com/snakers4/silero-vad",
+        "modelListName": "silero-vad",
         "cacheName": "silero"
       }
     ]
@@ -145,6 +155,11 @@
         "source": "mistralai/Voxtral-Mini-3B-2507",
         "modelListName": "voxtral-3b",
         "cacheName": "voxtral"
+      },
+      {
+        "source": "mistralai/Voxtral-Mini-4B-Realtime-2602",
+        "modelListName": "Voxtral-Mini-4B-Realtime-2602",
+        "cacheName": "voxtral"
       }
     ]
   },
@@ -166,11 +181,6 @@
       {
         "source": "openai/whisper-large-v2",
         "modelListName": "whisper-large-v2",
-        "cacheName": "whisper"
-      },
-      {
-        "source": "openai/whisper-small",
-        "modelListName": "whisper-small",
         "cacheName": "whisper"
       }
     ]

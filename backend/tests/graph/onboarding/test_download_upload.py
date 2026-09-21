@@ -1,117 +1,60 @@
-import json
+from pprint import pprint
 
 from app.graph.onboarding.workflow import (
     runOnboardingWorkflow,
 )
 
+from tests.fixtures.researchAgentOutput import (
+    researchAgentOutput,
+)
+
+# ============================================================
+# Choose which models to test
+# ============================================================
+
+# Refer to the onboardingFixtures to view expected behaviours
+modelsToTest = [
+    # "qwen3-asr-1.7b",  # Generic Hugging Face
+    "mega-asr",  # Generic Hugging Face
+    "fun-asr-nano-2512",  # Generic Hugging Face
+    # "sensevoice-small",  # Generic Hugging Face
+    # "voxtral-mini-3b-2507",  # Model-specific
+    # "whisper-medium",  # Model-specific
+    # "whisper-small",  # Model-specific
+    "voxtral-mini-4b-realtime-2602",  # Model-specific
+    "silero-vad",  # Repository-based model
+    "deepspeech-0.9.3",  # Cant for both model-specific and generic HF
+    # "example-direct-asr",  # Cant for both model-specific and generic HF
+]
+
 
 def main():
 
-    with open(
-        "tests/onboarding/sampleOutput_15_09.json",
-        "r",
-        encoding="utf-8",
-    ) as file:
-        data = json.load(file)
-
-    researchResults = data["research"]["results"]
-
-    passed = 0
-    failed = 0
-    skipped = 0
-
     print()
-    print("=" * 80)
+    print("=" * 60)
     print("ONBOARDING WORKFLOW TEST")
-    print("=" * 80)
+    print("=" * 60)
 
-    for researchResult in researchResults:
-
-        modelName = researchResult.get("candidate", {}).get("name", "Unknown Model")
+    for modelKey in modelsToTest:
 
         print()
-        print("-" * 80)
-        print(f"Testing: {modelName}")
-        print("-" * 80)
+        print("-" * 60)
+        print(f"Testing: {modelKey}")
+        print("-" * 60)
 
-        try:
+        researchResult = researchAgentOutput[modelKey]
 
-            result = runOnboardingWorkflow(researchResult)
-
-        except Exception as error:
-
-            failed += 1
-
-            print()
-            print(f"[FAIL] {modelName}")
-            print(f"       Exception: {error}")
-
-            continue
+        result = runOnboardingWorkflow(researchResult)
 
         print()
-        print(
-            json.dumps(
-                result,
-                indent=2,
-            )
+        print("=" * 60)
+        print("ONBOARDING RESULT")
+        print("=" * 60)
+
+        pprint(
+            result,
+            sort_dicts=False,
         )
-
-        status = result.get("status")
-
-        # ----------------------------------------
-        # Completed
-        # ----------------------------------------
-
-        if status == "completed":
-
-            passed += 1
-
-            print()
-            print(f"[PASS] {modelName}")
-
-            print(f"       ClearML Model ID: " f"{result.get('clearmlModelId')}")
-
-            print(f"       Cache: " f"{result.get('cachePath')}")
-
-        # ----------------------------------------
-        # Downloader required
-        # ----------------------------------------
-
-        elif status == "downloader-required":
-
-            skipped += 1
-
-            print()
-            print(f"[SKIP] {modelName}")
-            print("       No usable existing " "downloader.")
-
-        # ----------------------------------------
-        # Failed
-        # ----------------------------------------
-
-        else:
-
-            failed += 1
-
-            print()
-            print(f"[FAIL] {modelName}")
-            print(f"       Status: {status}")
-
-            error = result.get("error")
-
-            if error:
-
-                print(f"       Error: {error}")
-
-    print()
-    print("=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-
-    print(f"Completed: {passed}")
-    print(f"Skipped:   {skipped}")
-    print(f"Failed:    {failed}")
-    print(f"Total:     {len(researchResults)}")
 
 
 if __name__ == "__main__":
