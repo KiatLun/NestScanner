@@ -13,18 +13,18 @@ from app.services.echoforge.pipelineRunner import (
 # TEST INPUT
 # ============================================================
 
-MODEL_NAME = "Mega-ASR"
+MODEL_NAME = "sensevoice-small"
 
 # ClearML Model ID returned by onboarding
-CLEARML_MODEL_ID = "f2f74e2114554e3e8d38e60a8910f221"
+CLEARML_MODEL_ID = "a8ae573645524df8b4f39f664bce75ef"
 
 # Current ClearML dataset
 
 # Windows / WSL
-DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
+# DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
 
 # Mac
-# DATASET_ID = "30ab6615fd76498ab8642e104575d205"
+DATASET_ID = "30ab6615fd76498ab8642e104575d205"
 
 
 # ============================================================
@@ -35,31 +35,29 @@ componentResult = {
     "modelName": MODEL_NAME,
     "status": "completed",
     "inferenceComponent": {
-        "component": "stt_inference_mega_asr",
-        "family": "mega_asr",
+        "component": "stt_inference_sensevoice",
+        "family": "sensevoice",
         "componentDir": (
-            "/mnt/c/Users/AJ/Desktop/echoforge/components/"
+            "/Users/aaronjt/Documents/echoforge/components/"
             "inference_component/stt_inference/"
-            "stt_inference_mega_asr"
+            "stt_inference_sensevoice"
         ),
         "mainFile": (
-            "/mnt/c/Users/AJ/Desktop/echoforge/components/"
+            "/Users/aaronjt/Documents/echoforge/components/"
             "inference_component/stt_inference/"
-            "stt_inference_mega_asr/main.py"
+            "stt_inference_sensevoice/main.py"
         ),
         "dockerfile": (
-            "/mnt/c/Users/AJ/Desktop/echoforge/components/"
+            "/Users/aaronjt/Documents/echoforge/components/"
             "inference_component/stt_inference/"
-            "stt_inference_mega_asr/Dockerfile"
+            "stt_inference_sensevoice/Dockerfile"
         ),
         "requirementsFile": (
-            "/mnt/c/Users/AJ/Desktop/echoforge/components/"
+            "/Users/aaronjt/Documents/echoforge/components/"
             "inference_component/stt_inference/"
-            "stt_inference_mega_asr/requirements.txt"
+            "stt_inference_sensevoice/requirements.txt"
         ),
-        "imageName": "stt_inference_mega_asr:latest",
-        # Dockerfile copies the inference component
-        # contents directly into /app
+        "imageName": "stt_inference_sensevoice:latest",
         "entryPoint": "/app/main.py",
         "matchedBy": "generated",
     },
@@ -69,7 +67,6 @@ componentResult = {
         "entryPoint": "/app/main.py",
     },
 }
-
 
 def main():
 
