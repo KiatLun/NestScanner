@@ -23,8 +23,8 @@ modelsToTest = [
     "whisper-small",  # Model-specific
     # "voxtral-mini-4b-realtime-2602",  # Model-specific
     # "silero-vad",  # Repository-based model
-    # "deepspeech-0.9.3",  # Cant for both model-specific and generic HF
-    "example-direct-asr",  # Cant for both model-specific and generic HF
+    "deepspeech-0.9.3",  # Cant for both model-specific and generic HF
+    # "example-direct-asr",  # Cant for both model-specific and generic HF
 ]
 
 
