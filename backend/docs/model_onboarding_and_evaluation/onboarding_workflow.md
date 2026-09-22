@@ -9,11 +9,8 @@
                      Yes                No
                       │                  │
                       ▼                  ▼
-          [Use Model-Specific      [Research Evidence
-              Downloader]          + LLM Reasoning]
-                      │                  │
-                      │                  ▼
-                      │       [Determine Download Source]
+          [Use Model-Specific  [Research Evidence + LLM Reasoning
+               Downloader]           to determine Download Source]
                       │                  │
                       │                  ▼
                       │      Existing downloader can handle it?
