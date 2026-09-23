@@ -14,6 +14,7 @@ from tests.fixtures.researchAgentOutput import (
 
 # Refer to the onboardingFixtures to view expected behaviours
 modelsToTest = [
+    "paraformer-en",
     # "qwen3-asr-1.7b",  # Generic Hugging Face
     # "mega-asr",  # Generic Hugging Face
     # "fun-asr-nano-2512",  # Generic Hugging Face

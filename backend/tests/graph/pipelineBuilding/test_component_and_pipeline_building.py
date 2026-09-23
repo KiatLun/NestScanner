@@ -16,14 +16,13 @@ from tests.fixtures.researchAgentOutput import (
     researchAgentOutput,
 )
 
-
 # ============================================================
 # Models to test
 # ============================================================
 
 modelsToTest = [
-    # "qwen3-asr-1.7b",
-    "sensevoice-small",
+    "paraformer-en",
+    # "sensevoice-small",
     # "whisper-small",
 ]
 
@@ -33,20 +32,17 @@ modelsToTest = [
 # ============================================================
 
 modelTestConfig = {
-
-    "qwen3-asr-1.7b": {
-        "modelFamily": "qwen",
-        "modelId": "YOUR_QWEN_MODEL_ID",
+    "paraformer-en": {
+        "modelFamily": "paraformer",
+        "modelId": "5efe54eea0064f5b97ce5125e5c40c57",
     },
-
     "sensevoice-small": {
         "modelFamily": "sensevoice",
-        "modelId": "eb2929f468464fe387333e0bb379dbd6",
+        "modelId": "cea766c3d9ba44db8f373374779383f5",
     },
-
     "whisper-small": {
         "modelFamily": "whisper",
-        "modelId": "89ad20fe7b044a7e90774afae8f44ba9",
+        "modelId": "fced118ef5cf4f14baf62e7d0629b882",
     },
 }
 
@@ -56,15 +52,16 @@ modelTestConfig = {
 # ============================================================
 
 # Windows / WSL
-# DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
+DATASET_ID = "b68dd036d6514d68822f717fd52c99ee"
 
 # Mac
-DATASET_ID = "30ab6615fd76498ab8642e104575d205"
+# DATASET_ID = "30ab6615fd76498ab8642e104575d205"
 
 
 # ============================================================
 # Helpers
 # ============================================================
+
 
 def printSection(
     title: str,
@@ -80,149 +77,79 @@ def printSection(
 # Run model test
 # ============================================================
 
+
 def runModelTest(
     modelKey: str,
 ):
 
-    printSection(
-        f"PIPELINE TEST: {modelKey}"
-    )
+    printSection(f"PIPELINE TEST: {modelKey}")
 
     # --------------------------------------------------------
     # Validate fixtures
     # --------------------------------------------------------
 
-    if (
-        modelKey
-        not in researchAgentOutput
-    ):
+    if modelKey not in researchAgentOutput:
 
-        raise RuntimeError(
-            "Research fixture not found: "
-            f"{modelKey}"
-        )
+        raise RuntimeError("Research fixture not found: " f"{modelKey}")
 
-    if (
-        modelKey
-        not in modelTestConfig
-    ):
+    if modelKey not in modelTestConfig:
 
-        raise RuntimeError(
-            "Model test config not found: "
-            f"{modelKey}"
-        )
+        raise RuntimeError("Model test config not found: " f"{modelKey}")
 
     # --------------------------------------------------------
     # Get research result
     # --------------------------------------------------------
 
-    researchResult = (
-        researchAgentOutput[
-            modelKey
-        ]
-    )
+    researchResult = researchAgentOutput[modelKey]
 
-    testConfig = (
-        modelTestConfig[
-            modelKey
-        ]
-    )
+    testConfig = modelTestConfig[modelKey]
 
-    candidate = (
-        researchResult[
-            "candidate"
-        ]
-    )
+    candidate = researchResult["candidate"]
 
-    modelName = (
-        candidate[
-            "name"
-        ]
-    )
+    modelName = candidate["name"]
 
-    source = (
-        candidate[
-            "sourceUrl"
-        ]
-    )
+    source = candidate["sourceUrl"]
 
-    modelFamily = (
-        testConfig[
-            "modelFamily"
-        ]
-    )
+    modelFamily = testConfig["modelFamily"]
 
-    modelId = (
-        testConfig[
-            "modelId"
-        ]
-    )
+    modelId = testConfig["modelId"]
 
     technicalProfile = {
         "candidate": candidate,
-        "isLocallyDeployable": (
-            researchResult[
-                "isLocallyDeployable"
-            ]
-        ),
-        "researchEvidence": (
-            researchResult[
-                "researchEvidence"
-            ]
-        ),
+        "isLocallyDeployable": (researchResult["isLocallyDeployable"]),
+        "researchEvidence": (researchResult["researchEvidence"]),
     }
 
-    print(
-        f"Model: {modelName}"
-    )
+    print(f"Model: {modelName}")
 
-    print(
-        f"Family: {modelFamily}"
-    )
+    print(f"Family: {modelFamily}")
 
-    print(
-        f"Source: {source}"
-    )
+    print(f"Source: {source}")
 
-    print(
-        f"Model ID: {modelId}"
-    )
+    print(f"Model ID: {modelId}")
 
-    print(
-        f"Dataset ID: {DATASET_ID}"
-    )
+    print(f"Dataset ID: {DATASET_ID}")
 
     # --------------------------------------------------------
     # 1. Component building
     # --------------------------------------------------------
 
-    componentResult = (
-        runComponentBuildingWorkflow(
-            modelName=modelName,
-            source=source,
-            modelFamily=modelFamily,
-            technicalProfile=(
-                technicalProfile
-            ),
-            forceBuild=False,
-        )
+    componentResult = runComponentBuildingWorkflow(
+        modelName=modelName,
+        source=source,
+        modelFamily=modelFamily,
+        technicalProfile=(technicalProfile),
+        forceBuild=False,
     )
 
-    printSection(
-        "COMPONENT BUILDING RESULT"
-    )
+    printSection("COMPONENT BUILDING RESULT")
 
     pprint(
         componentResult,
         sort_dicts=False,
     )
 
-    if (
-        componentResult.get(
-            "status"
-        )
-        != "completed"
-    ):
+    if componentResult.get("status") != "completed":
 
         raise RuntimeError(
             "Component Building failed.\n"
@@ -236,32 +163,21 @@ def runModelTest(
     # 2. Pipeline building
     # --------------------------------------------------------
 
-    pipelineResult = (
-        runPipelineBuildingWorkflow(
-            modelName=modelName,
-            modelId=modelId,
-            datasetId=DATASET_ID,
-            componentResult=(
-                componentResult
-            ),
-        )
+    pipelineResult = runPipelineBuildingWorkflow(
+        modelName=modelName,
+        modelId=modelId,
+        datasetId=DATASET_ID,
+        componentResult=(componentResult),
     )
 
-    printSection(
-        "PIPELINE BUILDING RESULT"
-    )
+    printSection("PIPELINE BUILDING RESULT")
 
     pprint(
         pipelineResult,
         sort_dicts=False,
     )
 
-    if (
-        pipelineResult.get(
-            "status"
-        )
-        != "completed"
-    ):
+    if pipelineResult.get("status") != "completed":
 
         raise RuntimeError(
             "Pipeline Building failed.\n"
@@ -275,15 +191,9 @@ def runModelTest(
     # 3. Pipeline running
     # --------------------------------------------------------
 
-    runResult = runPipeline(
-        pipelineResult[
-            "pipelinePath"
-        ]
-    )
+    runResult = runPipeline(pipelineResult["pipelinePath"])
 
-    printSection(
-        "PIPELINE RUN RESULT"
-    )
+    printSection("PIPELINE RUN RESULT")
 
     pprint(
         runResult,
@@ -291,15 +201,9 @@ def runModelTest(
     )
 
     return {
-        "componentResult": (
-            componentResult
-        ),
-        "pipelineResult": (
-            pipelineResult
-        ),
-        "runResult": (
-            runResult
-        ),
+        "componentResult": (componentResult),
+        "pipelineResult": (pipelineResult),
+        "runResult": (runResult),
     }
 
 
@@ -307,99 +211,60 @@ def runModelTest(
 # Main
 # ============================================================
 
+
 def main():
 
-    printSection(
-        "END-TO-END PIPELINE TEST"
-    )
+    printSection("END-TO-END PIPELINE TEST")
 
     passedModels = []
     failedModels = []
 
-    for modelKey in (
-        modelsToTest
-    ):
+    for modelKey in modelsToTest:
 
         try:
 
-            runModelTest(
-                modelKey
-            )
+            runModelTest(modelKey)
 
-            passedModels.append(
-                modelKey
-            )
+            passedModels.append(modelKey)
 
         except Exception as error:
 
             failedModels.append(
                 {
                     "model": modelKey,
-                    "error": str(
-                        error
-                    ),
+                    "error": str(error),
                 }
             )
 
-            printSection(
-                f"TEST FAILED: "
-                f"{modelKey}"
-            )
+            printSection(f"TEST FAILED: " f"{modelKey}")
 
-            print(
-                str(
-                    error
-                )
-            )
+            print(str(error))
 
     # --------------------------------------------------------
     # Summary
     # --------------------------------------------------------
 
-    printSection(
-        "TEST SUMMARY"
-    )
+    printSection("TEST SUMMARY")
 
-    print(
-        f"Passed: "
-        f"{len(passedModels)}"
-    )
+    print(f"Passed: " f"{len(passedModels)}")
 
-    for modelKey in (
-        passedModels
-    ):
+    for modelKey in passedModels:
 
-        print(
-            f"  PASS  {modelKey}"
-        )
+        print(f"  PASS  {modelKey}")
 
     print()
 
-    print(
-        f"Failed: "
-        f"{len(failedModels)}"
-    )
+    print(f"Failed: " f"{len(failedModels)}")
 
-    for failure in (
-        failedModels
-    ):
+    for failure in failedModels:
 
-        print(
-            f"  FAIL  "
-            f"{failure['model']}"
-        )
+        print(f"  FAIL  " f"{failure['model']}")
 
-        print(
-            f"        "
-            f"{failure['error']}"
-        )
+        print(f"        " f"{failure['error']}")
 
     if failedModels:
 
-        raise RuntimeError(
-            f"{len(failedModels)} "
-            "pipeline test(s) failed."
-        )
+        raise RuntimeError(f"{len(failedModels)} " "pipeline test(s) failed.")
 
 
 if __name__ == "__main__":

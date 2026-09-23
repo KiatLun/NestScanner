@@ -49,6 +49,71 @@ researchAgentOutput["whisper-small"] = {
 **Model-specific**
 
 Expected behaviours:
+1. Should create a new modelList entry under the appropriate FunASR / Paraformer downloader in EchoForge
+2. model_info.json in NestScanner should reflect the new paraformer-en model entry
+3. Model should be saved under deployment/.cache/paraformer
+4. Component Building should not find an existing Paraformer inference component
+5. Component Creation Agent should generate stt_inference_paraformer
+"""
+
+researchAgentOutput["paraformer-en"] = {
+    "candidate": {
+        "name": "Paraformer EN",
+        "organisation": "FunASR",
+        "sourceUrl": "https://huggingface.co/funasr/paraformer-en",
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": "funasr/paraformer-en",
+                "url": "https://huggingface.co/funasr/paraformer-en",
+                "description": (
+                    "Official FunASR Paraformer EN "
+                    "Hugging Face repository "
+                    "containing downloadable "
+                    "model weights, configuration, "
+                    "tokenizer files, and other "
+                    "artifacts required for "
+                    "local inference."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "FunASR",
+                "url": "https://github.com/modelscope/FunASR",
+                "description": (
+                    "Official FunASR source code "
+                    "repository containing the "
+                    "inference framework and "
+                    "Paraformer support."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": "Paraformer EN Model Card",
+                "url": "https://huggingface.co/funasr/paraformer-en",
+                "description": (
+                    "Paraformer EN is an offline "
+                    "English automatic speech "
+                    "recognition model that can "
+                    "be loaded through the FunASR "
+                    "AutoModel interface and run "
+                    "locally using model.generate()."
+                ),
+            },
+        ],
+    },
+}
+
+"""
+**Model-specific**
+
+Expected behaviours:
 1. Should create new modelList entry under voxtral_download in echoforge
 2. model_info.json in nestscanner should reflect the new voxtral model entry under voxtral_download
 3. Model should be saved under deployment/.cache/voxtral
