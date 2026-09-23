@@ -1,0 +1,65 @@
+
+For echoforge
+1. Set up .env (refer to sample.env)
+-HF Access token with full access
+https://huggingface.co/settings/tokens
+
+
+
+2. Ensure clearml and minio are running
+(refer to https://github.com/aceaigit/echoforge/blob/main/docs/setup.md) for setup information if needed.
+
+
+
+3. Pull and use latest PR
+https://github.com/aceaigit/echoforge/pull/217
+
+
+4. build nestscanner evaluation image
+
+
+
+
+
+
+For nestscanner
+1. pull latest changes from main
+
+2. Set up .env (refer to sample.env)
+https://github.com/settings/personal-access-tokens
+-Can use fine grain token 
+
+-HF Access token with full access
+https://huggingface.co/settings/tokens
+
+
+3. Go to echoforgeConfig.py under services/echoforge, and change the ECHOFORGE_ROOT to your own path
+
+3. Run download and upload script (sampleOutput.json is sample output from Research Agent containing ONLY relevant fields)
+cd /backend
+python3 -m tests.onboarding.test_download_upload
+
+4. Check that models are downloaded into ~/echoforge/deployment/.cache
+
+5. Check that models are uploaded in ClearML PROJECTS/model-registry
+
+
+6. 
+Build the existing downloaders and models in echoforge.
+
+cd ~<check actual PATH>
+python3 build_model_info.py
+
+
+python3 build_model_info.py
+
+
+python -m app.services.echoforge.model.modelInfoBuilder
+
+python3 -m tests.graph.onboarding.test_download_upload
+
+python3 -m tests.graph.pipelineBuilding.test_component_and_pipeline_building
+
+python3 -m tests.graph.pipelineBuilding.test_pipeline_building
+
+python3 -m tests.graph.pipelineBuilding.test_combined
