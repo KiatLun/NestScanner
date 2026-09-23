@@ -1,4 +1,4 @@
-from app.services.echoforge.modelInfoReader import (
+from app.services.echoforge.model.modelInfoReader import (
     getAllSupportedModels,
 )
 

@@ -35,6 +35,7 @@ modelsToTest = [
     # "whisper-small",
     # "wav2vec2-base-960h",
     "hubert-large-ls960-ft",
+    # "speechbrain-commonvoice-en",
     # "voxtral-mini-4b-realtime-2602",
     # "silero-vad",
     # "deepspeech-0.9.3",
@@ -54,6 +55,10 @@ modelTestConfig = {
     "hubert-large-ls960-ft": {
         "modelFamily": "hubert",
         "expectGenerated": True,
+    },
+    "speechbrain-commonvoice-en": {
+        "modelFamily": "speechbrain",
+        "expectGenerated": False,
     },
     "qwen3-asr-1.7b": {
         "modelFamily": "qwen",

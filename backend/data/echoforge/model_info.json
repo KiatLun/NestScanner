@@ -52,6 +52,11 @@
         "cacheName": "qwen3-asr-1.7b"
       },
       {
+        "source": "speechbrain/asr-wav2vec2-commonvoice-en",
+        "modelListName": "asr-wav2vec2-commonvoice-en",
+        "cacheName": "asr-wav2vec2-commonvoice-en"
+      },
+      {
         "source": "facebook/hubert-large-ls960-ft",
         "modelListName": "hubert-large-ls960-ft",
         "cacheName": "hubert-large-ls960-ft"

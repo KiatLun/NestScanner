@@ -1,12 +1,12 @@
-from app.services.echoforge.modelInfoReader import (
+from app.services.echoforge.model.modelInfoReader import (
     getAllModelInfo,
 )
 
-from backend.app.services.echoforge.downloaderResolver import (
+from app.services.echoforge.downloaderResolver import (
     resolveDownloader,
 )
 
-from app.services.echoforge.modelDownloader import (
+from app.services.echoforge.model.modelDownloader import (
     downloadModel,
 )
 

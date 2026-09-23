@@ -1,4 +1,4 @@
-from app.services.echoforge.modelUploader import (
+from app.services.echoforge.model.modelUploader import (
     uploadModel,
 )
 

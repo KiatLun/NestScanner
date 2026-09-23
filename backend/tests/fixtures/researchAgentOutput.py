@@ -238,6 +238,82 @@ researchAgentOutput["hubert-large-ls960-ft"] = {
 **Model-specific**
 
 Expected behaviours:
+1. Should create a new modelList entry under the appropriate downloader in EchoForge
+2. model_info.json in NestScanner should reflect the new SpeechBrain CommonVoice EN model entry
+3. Model should be saved under the appropriate deployment/.cache model directory
+4. Component Building should not find an existing SpeechBrain inference component
+5. Component Creation Agent should generate stt_inference_speechbrain
+"""
+
+researchAgentOutput["speechbrain-commonvoice-en"] = {
+    "candidate": {
+        "name": "SpeechBrain Wav2Vec2 CommonVoice EN",
+        "organisation": "SpeechBrain",
+        "sourceUrl": (
+            "https://huggingface.co/" "speechbrain/asr-wav2vec2-commonvoice-en"
+        ),
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("speechbrain/" "asr-wav2vec2-commonvoice-en"),
+                "url": (
+                    "https://huggingface.co/"
+                    "speechbrain/"
+                    "asr-wav2vec2-commonvoice-en"
+                ),
+                "description": (
+                    "Official SpeechBrain ASR "
+                    "repository containing model "
+                    "checkpoints, tokenizer, "
+                    "hyperparameter configuration, "
+                    "and other files needed for "
+                    "local speech recognition."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "SpeechBrain",
+                "url": ("https://github.com/" "speechbrain/speechbrain"),
+                "description": (
+                    "Official SpeechBrain toolkit "
+                    "providing pretrained ASR "
+                    "interfaces and local inference "
+                    "support."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("SpeechBrain Wav2Vec2 " "CommonVoice EN Model Card"),
+                "url": (
+                    "https://huggingface.co/"
+                    "speechbrain/"
+                    "asr-wav2vec2-commonvoice-en"
+                ),
+                "description": (
+                    "The model is an English "
+                    "automatic speech recognition "
+                    "system using Wav2Vec2 with "
+                    "CTC. The documented local "
+                    "inference path loads the "
+                    "pretrained SpeechBrain ASR "
+                    "interface and transcribes "
+                    "audio locally."
+                ),
+            },
+        ],
+    },
+}
+
+"""
+**Model-specific**
+
+Expected behaviours:
 1. Should create new modelList entry under voxtral_download in echoforge
 2. model_info.json in nestscanner should reflect the new voxtral model entry under voxtral_download
 3. Model should be saved under deployment/.cache/voxtral

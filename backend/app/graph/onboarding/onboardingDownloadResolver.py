@@ -2,7 +2,7 @@ from app.graph.onboarding.downloadSourceResolver import (
     resolveDownloadSource,
 )
 
-from app.services.echoforge.modelInfoReader import (
+from app.services.echoforge.model.modelInfoReader import (
     getAllModelInfo,
 )
 

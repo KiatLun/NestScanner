@@ -2,21 +2,21 @@ from app.graph.onboarding.onboardingDownloadResolver import (
     resolveOnboardingDownload,
 )
 
-from app.services.echoforge.modelListManager import (
+from app.services.echoforge.model.modelListManager import (
     addModelListEntry,
     removeModelListEntry,
 )
 
-from app.services.echoforge.modelInfoBuilder import (
+from app.services.echoforge.model.modelInfoBuilder import (
     buildModelInfo,
     writeModelInfo,
 )
 
-from app.services.echoforge.modelDownloader import (
+from app.services.echoforge.model.modelDownloader import (
     downloadModel,
 )
 
-from app.services.echoforge.modelUploader import (
+from app.services.echoforge.model.modelUploader import (
     uploadModel,
 )
 
