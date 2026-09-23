@@ -12,7 +12,7 @@ from app.graph.pipelineBuilding.workflow import (
     runPipelineBuildingWorkflow,
 )
 
-from app.services.echoforge.pipelineRunner import (
+from app.services.echoforge.pipeline.pipelineRunner import (
     runPipeline,
 )
 
@@ -33,8 +33,8 @@ modelsToTest = [
     # "voxtral-mini-3b-2507",
     # "whisper-medium",
     # "whisper-small",
-    # "wav2vec2-base-960h",
-    "hubert-large-ls960-ft",
+    "wav2vec2-base-960h",
+    # "hubert-large-ls960-ft",
     # "speechbrain-commonvoice-en",
     # "voxtral-mini-4b-realtime-2602",
     # "silero-vad",

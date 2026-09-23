@@ -1,4 +1,4 @@
-from app.services.echoforge.pipelineBuilder import (
+from app.services.echoforge.pipeline.pipelineBuilder import (
     buildEvaluationPipeline,
     writeEvaluationPipeline,
 )

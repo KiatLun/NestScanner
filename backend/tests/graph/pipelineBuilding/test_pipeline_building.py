@@ -5,7 +5,7 @@ from app.graph.pipelineBuilding.workflow import (
     runPipelineBuildingWorkflow,
 )
 
-from app.services.echoforge.pipelineRunner import (
+from app.services.echoforge.pipeline.pipelineRunner import (
     runPipeline,
 )
 
