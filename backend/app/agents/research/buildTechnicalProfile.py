@@ -23,7 +23,7 @@ from app.tools.github import (
     searchGitHubRepositories,
 )
 
-from app.tools.arvixSearch import (
+from backend.app.tools.arxivSearch import (
     searchArxivPapers,
 )
 
