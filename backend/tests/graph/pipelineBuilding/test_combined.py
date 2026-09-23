@@ -33,7 +33,8 @@ modelsToTest = [
     # "voxtral-mini-3b-2507",
     # "whisper-medium",
     # "whisper-small",
-    "wav2vec2-base-960h",
+    # "wav2vec2-base-960h",
+    "speechbrain-crdnn-rnnlm-librispeech",
     # "hubert-large-ls960-ft",
     # "speechbrain-commonvoice-en",
     # "voxtral-mini-4b-realtime-2602",
@@ -59,6 +60,10 @@ modelTestConfig = {
     "speechbrain-commonvoice-en": {
         "modelFamily": "speechbrain",
         "expectGenerated": False,
+    },
+    "speechbrain-crdnn-rnnlm-librispeech": {
+        "modelFamily": "speechbrain",
+        "expectGenerated": True,
     },
     "qwen3-asr-1.7b": {
         "modelFamily": "qwen",

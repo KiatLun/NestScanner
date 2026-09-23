@@ -170,6 +170,83 @@ researchAgentOutput["wav2vec2-base-960h"] = {
 
 Expected behaviours:
 1. Should create a new modelList entry under the appropriate Hugging Face downloader in EchoForge
+2. model_info.json in NestScanner should reflect the new speechbrain-crdnn-rnnlm-librispeech model entry
+3. Model should be saved under the appropriate deployment/.cache model directory
+4. Component Building should not find an existing SpeechBrain inference component
+5. Component Creation Agent should generate stt_inference_speechbrain
+"""
+
+researchAgentOutput["speechbrain-crdnn-rnnlm-librispeech"] = {
+    "candidate": {
+        "name": "SpeechBrain CRDNN RNNLM LibriSpeech",
+        "organisation": "SpeechBrain",
+        "sourceUrl": (
+            "https://huggingface.co/" "speechbrain/asr-crdnn-rnnlm-librispeech"
+        ),
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("speechbrain/" "asr-crdnn-rnnlm-librispeech"),
+                "url": (
+                    "https://huggingface.co/"
+                    "speechbrain/"
+                    "asr-crdnn-rnnlm-librispeech"
+                ),
+                "description": (
+                    "Official SpeechBrain ASR "
+                    "repository containing "
+                    "downloadable acoustic model, "
+                    "language model, tokenizer, "
+                    "normalizer, and hyperparameter "
+                    "files required for local "
+                    "speech recognition."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "SpeechBrain",
+                "url": ("https://github.com/" "speechbrain/speechbrain"),
+                "description": (
+                    "Official SpeechBrain toolkit "
+                    "providing pretrained ASR "
+                    "interfaces and local inference "
+                    "support."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("SpeechBrain CRDNN RNNLM " "LibriSpeech Model Card"),
+                "url": (
+                    "https://huggingface.co/"
+                    "speechbrain/"
+                    "asr-crdnn-rnnlm-librispeech"
+                ),
+                "description": (
+                    "English automatic speech "
+                    "recognition model using a "
+                    "CRDNN acoustic model with "
+                    "CTC/attention decoding and "
+                    "an RNN language model. "
+                    "Local inference is provided "
+                    "through SpeechBrain's "
+                    "EncoderDecoderASR interface."
+                ),
+            },
+        ],
+    },
+}
+
+"""
+**Model-specific**
+
+Expected behaviours:
+1. Should create a new modelList entry under the appropriate Hugging Face downloader in EchoForge
 2. model_info.json in NestScanner should reflect the new hubert-large-ls960-ft model entry
 3. Model should be saved under the appropriate deployment/.cache model directory
 4. Component Building should not find an existing HuBERT inference component

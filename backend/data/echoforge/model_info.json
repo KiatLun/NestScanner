@@ -60,6 +60,11 @@
         "source": "facebook/wav2vec2-base-960h",
         "modelListName": "wav2vec2-base-960h",
         "cacheName": "wav2vec2-base-960h"
+      },
+      {
+        "source": "speechbrain/asr-crdnn-rnnlm-librispeech",
+        "modelListName": "asr-crdnn-rnnlm-librispeech",
+        "cacheName": "asr-crdnn-rnnlm-librispeech"
       }
     ]
   },
