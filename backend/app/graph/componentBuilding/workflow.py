@@ -14,11 +14,11 @@ from app.agents.componentCreation.schemas import (
     ComponentCreationInput,
 )
 
-from app.services.echoforge.componentWriter import (
+from app.services.echoforge.component.componentWriter import (
     writeGeneratedComponent,
 )
 
-from app.services.echoforge.dockerImageBuilder import (
+from app.services.echoforge.component.dockerImageBuilder import (
     ensureDockerImage,
 )
 
@@ -53,30 +53,18 @@ def createInferenceComponent(
     # 1. Research model implementation
     # ----------------------------------------
 
-    print(
-        "[Component Building Workflow] "
-        "Researching target-model implementation."
+    print("[Component Building Workflow] " "Researching target-model implementation.")
+
+    implementationResearchResult = researchModelImplementation(
+        modelName=modelName,
+        modelFamily=modelFamily,
+        source=source,
+        technicalProfile=technicalProfile,
     )
 
-    implementationResearchResult = (
-        researchModelImplementation(
-            modelName=modelName,
-            modelFamily=modelFamily,
-            source=source,
-            technicalProfile=technicalProfile,
-        )
-    )
+    implementationResearchStatus = implementationResearchResult.get("status")
 
-    implementationResearchStatus = (
-        implementationResearchResult.get(
-            "status"
-        )
-    )
-
-    if (
-        implementationResearchStatus
-        != "completed"
-    ):
+    if implementationResearchStatus != "completed":
 
         raise RuntimeError(
             "Model implementation research "
@@ -86,11 +74,9 @@ def createInferenceComponent(
             f"{implementationResearchStatus}"
         )
 
-    implementationContext = (
-        implementationResearchResult.get(
-            "implementationContext",
-            "",
-        )
+    implementationContext = implementationResearchResult.get(
+        "implementationContext",
+        "",
     )
 
     if not implementationContext.strip():
@@ -101,37 +87,23 @@ def createInferenceComponent(
             "implementationContext."
         )
 
-    print(
-        "[Component Building Workflow] "
-        "Implementation research completed."
-    )
+    print("[Component Building Workflow] " "Implementation research completed.")
 
     # ----------------------------------------
     # 2. Generate EchoForge component
     # ----------------------------------------
 
-    print(
-        "[Component Building Workflow] "
-        "Calling Component Creation Agent."
+    print("[Component Building Workflow] " "Calling Component Creation Agent.")
+
+    creationInput = ComponentCreationInput(
+        modelName=modelName,
+        modelFamily=modelFamily,
+        source=source,
+        technicalProfile=technicalProfile,
+        implementationContext=(implementationContext),
     )
 
-    creationInput = (
-        ComponentCreationInput(
-            modelName=modelName,
-            modelFamily=modelFamily,
-            source=source,
-            technicalProfile=technicalProfile,
-            implementationContext=(
-                implementationContext
-            ),
-        )
-    )
-
-    generatedComponent = (
-        componentCreationAgent(
-            creationInput
-        )
-    )
+    generatedComponent = componentCreationAgent(creationInput)
 
     print(
         "[Component Building Workflow] "
@@ -143,32 +115,18 @@ def createInferenceComponent(
     # 3. Write generated files
     # ----------------------------------------
 
-    componentFiles = (
-        writeGeneratedComponent(
-            componentName=(
-                generatedComponent.componentName
-            ),
-            mainFileContent=(
-                generatedComponent.mainFileContent
-            ),
-            requirementsContent=(
-                generatedComponent.requirementsContent
-            ),
-            dockerfileContent=(
-                generatedComponent.dockerfileContent
-            ),
-        )
+    componentFiles = writeGeneratedComponent(
+        componentName=(generatedComponent.componentName),
+        mainFileContent=(generatedComponent.mainFileContent),
+        requirementsContent=(generatedComponent.requirementsContent),
+        dockerfileContent=(generatedComponent.dockerfileContent),
     )
 
     inferenceComponent = {
         **componentFiles,
         "family": modelFamily,
-        "imageName": (
-            generatedComponent.imageName
-        ),
-        "entryPoint": (
-            generatedComponent.entryPoint
-        ),
+        "imageName": (generatedComponent.imageName),
+        "entryPoint": (generatedComponent.entryPoint),
         "modelName": modelName,
         "source": source,
         "matchedBy": "generated",
@@ -188,20 +146,14 @@ def runComponentBuildingWorkflow(
     forceBuild: bool = False,
 ) -> dict:
 
-    technicalProfile = (
-        technicalProfile
-        or {}
-    )
+    technicalProfile = technicalProfile or {}
 
     implementationResearchResult = None
 
     print()
     print("=" * 60)
 
-    print(
-        "[Component Building Workflow] "
-        f"Starting: {modelName}"
-    )
+    print("[Component Building Workflow] " f"Starting: {modelName}")
 
     print("=" * 60)
 
@@ -211,11 +163,9 @@ def runComponentBuildingWorkflow(
 
     try:
 
-        inferenceComponent = (
-            resolveInferenceComponent(
-                modelName=modelName,
-                source=source,
-            )
+        inferenceComponent = resolveInferenceComponent(
+            modelName=modelName,
+            source=source,
         )
 
     except Exception as error:
@@ -229,9 +179,7 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": (
-                "inference-component-resolution-failed"
-            ),
+            "status": ("inference-component-resolution-failed"),
             "error": str(error),
         }
 
@@ -256,9 +204,7 @@ def runComponentBuildingWorkflow(
                 modelName=modelName,
                 source=source,
                 modelFamily=modelFamily,
-                technicalProfile=(
-                    technicalProfile
-                ),
+                technicalProfile=(technicalProfile),
             )
 
         except Exception as error:
@@ -272,21 +218,14 @@ def runComponentBuildingWorkflow(
             return {
                 "modelName": modelName,
                 "source": source,
-                "status": (
-                    "inference-component-creation-failed"
-                ),
-                "implementationResearchResult": (
-                    implementationResearchResult
-                ),
+                "status": ("inference-component-creation-failed"),
+                "implementationResearchResult": (implementationResearchResult),
                 "error": str(error),
             }
 
     else:
 
-        print(
-            "[Component Building Workflow] "
-            "Using existing inference component."
-        )
+        print("[Component Building Workflow] " "Using existing inference component.")
 
     print(
         "[Component Building Workflow] "
@@ -306,25 +245,11 @@ def runComponentBuildingWorkflow(
 
     try:
 
-        inferenceImageResult = (
-            ensureDockerImage(
-                imageName=(
-                    inferenceComponent[
-                        "imageName"
-                    ]
-                ),
-                dockerfile=(
-                    inferenceComponent[
-                        "dockerfile"
-                    ]
-                ),
-                buildContext=(
-                    inferenceComponent[
-                        "buildContext"
-                    ]
-                ),
-                forceBuild=forceBuild,
-            )
+        inferenceImageResult = ensureDockerImage(
+            imageName=(inferenceComponent["imageName"]),
+            dockerfile=(inferenceComponent["dockerfile"]),
+            buildContext=(inferenceComponent["buildContext"]),
+            forceBuild=forceBuild,
         )
 
     except Exception as error:
@@ -338,15 +263,9 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": (
-                "inference-image-build-failed"
-            ),
-            "inferenceComponent": (
-                inferenceComponent
-            ),
-            "implementationResearchResult": (
-                implementationResearchResult
-            ),
+            "status": ("inference-image-build-failed"),
+            "inferenceComponent": (inferenceComponent),
+            "implementationResearchResult": (implementationResearchResult),
             "error": str(error),
         }
 
@@ -366,9 +285,7 @@ def runComponentBuildingWorkflow(
     # 4. Resolve evaluation component
     # ----------------------------------------
 
-    evaluationComponent = (
-        buildEvaluationComponent()
-    )
+    evaluationComponent = buildEvaluationComponent()
 
     print(
         "[Component Building Workflow] "
@@ -382,25 +299,11 @@ def runComponentBuildingWorkflow(
 
     try:
 
-        evaluationImageResult = (
-            ensureDockerImage(
-                imageName=(
-                    evaluationComponent[
-                        "imageName"
-                    ]
-                ),
-                dockerfile=(
-                    evaluationComponent[
-                        "dockerfile"
-                    ]
-                ),
-                buildContext=(
-                    evaluationComponent[
-                        "buildContext"
-                    ]
-                ),
-                forceBuild=False, # to set it back to flag
-            )
+        evaluationImageResult = ensureDockerImage(
+            imageName=(evaluationComponent["imageName"]),
+            dockerfile=(evaluationComponent["dockerfile"]),
+            buildContext=(evaluationComponent["buildContext"]),
+            forceBuild=False,  # to set it back to flag
         )
 
     except Exception as error:
@@ -414,21 +317,11 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": (
-                "evaluation-image-build-failed"
-            ),
-            "inferenceComponent": (
-                inferenceComponent
-            ),
-            "inferenceImageResult": (
-                inferenceImageResult
-            ),
-            "evaluationComponent": (
-                evaluationComponent
-            ),
-            "implementationResearchResult": (
-                implementationResearchResult
-            ),
+            "status": ("evaluation-image-build-failed"),
+            "inferenceComponent": (inferenceComponent),
+            "inferenceImageResult": (inferenceImageResult),
+            "evaluationComponent": (evaluationComponent),
+            "implementationResearchResult": (implementationResearchResult),
             "error": str(error),
         }
 
@@ -452,32 +345,16 @@ def runComponentBuildingWorkflow(
         "modelName": modelName,
         "source": source,
         "status": "completed",
-        "inferenceComponent": (
-            inferenceComponent
-        ),
-        "inferenceImageResult": (
-            inferenceImageResult
-        ),
-        "evaluationComponent": (
-            evaluationComponent
-        ),
-        "evaluationImageResult": (
-            evaluationImageResult
-        ),
+        "inferenceComponent": (inferenceComponent),
+        "inferenceImageResult": (inferenceImageResult),
+        "evaluationComponent": (evaluationComponent),
+        "evaluationImageResult": (evaluationImageResult),
     }
 
-    if (
-        implementationResearchResult
-        is not None
-    ):
+    if implementationResearchResult is not None:
 
-        result[
-            "implementationResearchResult"
-        ] = implementationResearchResult
+        result["implementationResearchResult"] = implementationResearchResult
 
-    print(
-        "[Component Building Workflow] "
-        f"Completed: {modelName}"
-    )
+    print("[Component Building Workflow] " f"Completed: {modelName}")
 
     return result

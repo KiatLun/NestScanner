@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from app.services.echoforge.dockerImageBuilder import (
+from app.services.echoforge.component.dockerImageBuilder import (
     ensureDockerImage,
 )
 
