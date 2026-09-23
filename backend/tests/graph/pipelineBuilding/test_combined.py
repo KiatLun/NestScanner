@@ -32,7 +32,9 @@ modelsToTest = [
     # "paraformer-en",
     # "voxtral-mini-3b-2507",
     # "whisper-medium",
-    "whisper-small",
+    # "whisper-small",
+    # "wav2vec2-base-960h",
+    "hubert-large-ls960-ft",
     # "voxtral-mini-4b-realtime-2602",
     # "silero-vad",
     # "deepspeech-0.9.3",
@@ -45,6 +47,14 @@ modelsToTest = [
 # ============================================================
 
 modelTestConfig = {
+    "wav2vec2-base-960h": {
+        "modelFamily": "wav2vec2",
+        "expectGenerated": True,
+    },
+    "hubert-large-ls960-ft": {
+        "modelFamily": "hubert",
+        "expectGenerated": True,
+    },
     "qwen3-asr-1.7b": {
         "modelFamily": "qwen",
         "expectGenerated": False,

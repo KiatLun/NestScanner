@@ -44,7 +44,6 @@ researchAgentOutput["whisper-small"] = {
     },
 }
 
-
 """
 **Model-specific**
 
@@ -104,6 +103,131 @@ researchAgentOutput["paraformer-en"] = {
                     "be loaded through the FunASR "
                     "AutoModel interface and run "
                     "locally using model.generate()."
+                ),
+            },
+        ],
+    },
+}
+
+"""
+**Model-specific**
+
+Expected behaviours:
+1. Should create a new modelList entry under the appropriate Hugging Face downloader in EchoForge
+2. model_info.json in NestScanner should reflect the new wav2vec2-base-960h model entry
+3. Model should be saved under the appropriate deployment/.cache model directory
+4. Component Building should not find an existing Wav2Vec2 inference component
+5. Component Creation Agent should generate stt_inference_wav2vec2
+"""
+
+researchAgentOutput["wav2vec2-base-960h"] = {
+    "candidate": {
+        "name": "Wav2Vec2 Base 960h",
+        "organisation": "Meta",
+        "sourceUrl": ("https://huggingface.co/" "facebook/wav2vec2-base-960h"),
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("facebook/" "wav2vec2-base-960h"),
+                "url": ("https://huggingface.co/" "facebook/" "wav2vec2-base-960h"),
+                "description": (
+                    "Official Hugging Face "
+                    "repository containing "
+                    "downloadable Wav2Vec2 "
+                    "model weights, processor "
+                    "configuration, tokenizer "
+                    "files, and local inference "
+                    "support."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("Wav2Vec2 Base 960h " "Model Card"),
+                "url": ("https://huggingface.co/" "facebook/" "wav2vec2-base-960h"),
+                "description": (
+                    "Wav2Vec2 Base 960h is an "
+                    "English CTC speech "
+                    "recognition model. "
+                    "Inference uses a "
+                    "Wav2Vec2 processor and "
+                    "CTC model, followed by "
+                    "argmax decoding of model "
+                    "logits into text."
+                ),
+            },
+        ],
+    },
+}
+
+"""
+**Model-specific**
+
+Expected behaviours:
+1. Should create a new modelList entry under the appropriate Hugging Face downloader in EchoForge
+2. model_info.json in NestScanner should reflect the new hubert-large-ls960-ft model entry
+3. Model should be saved under the appropriate deployment/.cache model directory
+4. Component Building should not find an existing HuBERT inference component
+5. Component Creation Agent should generate stt_inference_hubert
+"""
+
+researchAgentOutput["hubert-large-ls960-ft"] = {
+    "candidate": {
+        "name": "HuBERT Large LS960 FT",
+        "organisation": "Meta",
+        "sourceUrl": ("https://huggingface.co/" "facebook/hubert-large-ls960-ft"),
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("facebook/" "hubert-large-ls960-ft"),
+                "url": ("https://huggingface.co/" "facebook/" "hubert-large-ls960-ft"),
+                "description": (
+                    "Official HuBERT ASR model "
+                    "repository containing "
+                    "downloadable model weights, "
+                    "processor configuration, "
+                    "tokenizer files, and other "
+                    "artifacts required for "
+                    "local inference."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "Hugging Face Transformers",
+                "url": ("https://github.com/" "huggingface/transformers"),
+                "description": (
+                    "Transformers provides "
+                    "HuBERT and CTC model support "
+                    "for loading and running "
+                    "speech recognition models "
+                    "locally."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": ("HuBERT Large LS960 FT " "Model Card"),
+                "url": ("https://huggingface.co/" "facebook/" "hubert-large-ls960-ft"),
+                "description": (
+                    "HuBERT Large LS960 FT is "
+                    "an English automatic speech "
+                    "recognition model fine-tuned "
+                    "with a CTC objective. "
+                    "It can be loaded locally "
+                    "using AutoProcessor and "
+                    "AutoModelForCTC, with "
+                    "predictions decoded from "
+                    "the model logits."
                 ),
             },
         ],

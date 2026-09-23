@@ -50,6 +50,11 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
+      },
+      {
+        "source": "facebook/hubert-large-ls960-ft",
+        "modelListName": "hubert-large-ls960-ft",
+        "cacheName": "hubert-large-ls960-ft"
       }
     ]
   },
