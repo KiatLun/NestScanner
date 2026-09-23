@@ -50,11 +50,6 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
-      },
-      {
-        "source": "FunAudioLLM/SenseVoiceSmall",
-        "modelListName": "SenseVoiceSmall",
-        "cacheName": "SenseVoiceSmall"
       }
     ]
   },
@@ -171,11 +166,6 @@
       {
         "source": "openai/whisper-large-v2",
         "modelListName": "whisper-large-v2",
-        "cacheName": "whisper"
-      },
-      {
-        "source": "openai/whisper-small",
-        "modelListName": "whisper-small",
         "cacheName": "whisper"
       }
     ]
