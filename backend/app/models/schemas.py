@@ -35,7 +35,7 @@ class DiscoveryDecision(BaseModel):
 
 class TechnicalProfile(BaseModel):
     architecture: str | None = None
-    parameterCount: str | None = None
+    parameterCount: int | str | None = None
     languages: list[str] = Field(default_factory=list)
     reportedWer: str | None = None
     fineTuningSupport: str | None = None

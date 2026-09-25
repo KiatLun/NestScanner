@@ -3,8 +3,9 @@ export interface ASRCandidate {
   organisation: string | null
   sourceUrl: string
   reason?: string
-  repositoryId: number
+  repositoryId: string
 }
+
 
 export interface DiscoveryEvidence {
   source: string
@@ -14,20 +15,22 @@ export interface DiscoveryEvidence {
   metadata: Record<string, unknown>
 }
 
+
 export interface ASRModel {
   modelId: number
   candidate: ASRCandidate
   discoveryEvidence: DiscoveryEvidence[]
 }
 
+
 export interface DiscoveryResult {
   candidates: ASRModel[]
 }
 
+
 export interface DiscoverApiResponse {
   result: DiscoveryResult
 }
-
 
 
 export interface Scan {
@@ -35,12 +38,13 @@ export interface Scan {
   query: string
   started_at: string
   completed_at: string | null
-  //status?: "pending" | "in_progress" | "completed" | "failed"
 }
+
 
 export interface AllScans {
   scans: Scan[]
 }
+
 
 export interface StoredModel {
   modelId: number
@@ -48,7 +52,17 @@ export interface StoredModel {
   organisation: string
   sourceUrl: string
   repositoryId: string | null
+
+  createdAt: string | null
+  downloads: number | null
+  lastModified: string | null
+  likes: number | null
+  pipelineTag: string | null
+  revision: string | null
+  tags: string[]
+  trendingScore: number | null
 }
+
 
 export interface startScanResponse {
   scanId: number
@@ -59,8 +73,9 @@ export interface startScanResponse {
   researchConfig: Record<string, unknown>
 }
 
+
 export interface scanStatusResponse {
-  scanId: number,
+  scanId: number
   status: "running" | "completed" | "failed"
   stage: string
   error: string | null
@@ -68,14 +83,16 @@ export interface scanStatusResponse {
   completed_at: string | null
 }
 
+
 export interface TechnicalProfile {
   architecture: string | null
-  parameterCount: string | null
+  parameterCount: string | number| null
   languages: string[]
   reportedWer: string | null
   fineTuningSupport: string | null
   license: string | null
 }
+
 
 export interface ResearchEvidenceItem {
   source: string
@@ -85,32 +102,35 @@ export interface ResearchEvidenceItem {
   metadata: Record<string, unknown>
 }
 
+
 export interface ResearchEvidence {
   deployabilityEvidence: ResearchEvidenceItem[]
   technicalEvidence: ResearchEvidenceItem[]
 }
 
+
 export interface ModelResearch {
   researchResultId: number
   scanId: number
-
   releaseDate: string | null
-  isRecent: boolean | null
   isLocallyDeployable: boolean | null
-
   technicalProfile: TechnicalProfile | null
-  // researchEvidence?: ResearchEvidence  
+  // researchEvidence?: ResearchEvidence
 }
+
 
 export interface ModelDetails extends StoredModel {
   research: ModelResearch | null
 }
 
+
 export type DeploymentStatus = "deployed" | "not_deployed"
+
 
 export interface ModelWithDeploymentStatus extends StoredModel {
   deploymentStatus: DeploymentStatus
 }
+
 
 export interface EchoforgeModel {
   source: string
@@ -119,6 +139,7 @@ export interface EchoforgeModel {
   scope: string
   sourceType: string
 }
+
 
 export interface EchoforgeModelsResponse {
   models: EchoforgeModel[]

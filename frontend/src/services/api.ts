@@ -103,13 +103,17 @@ export async function getModelDetails(
     `${API_BASE_URL}/api/getModelDetails/${modelId}`
   )
 
+
   if (!response.ok) {
     throw new Error(
       `Failed to load model ${modelId}`
     )
   }
+  const data = await response.json()
 
-  return response.json()
+  console.log(data)
+
+  return data
 }
 
 export async function getAllEchoforgeModels(): Promise<EchoforgeModelsResponse> {
