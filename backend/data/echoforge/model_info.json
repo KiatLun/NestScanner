@@ -52,9 +52,24 @@
         "cacheName": "qwen3-asr-1.7b"
       },
       {
-        "source": "speechbrain/asr-crdnn-rnnlm-librispeech",
-        "modelListName": "asr-crdnn-rnnlm-librispeech",
-        "cacheName": "asr-crdnn-rnnlm-librispeech"
+        "source": "nvidia/parakeet-tdt-0.6b-v3",
+        "modelListName": "parakeet-tdt-0.6b-v3",
+        "cacheName": "parakeet-tdt-0.6b-v3"
+      },
+      {
+        "source": "facebook/data2vec-audio-base-960h",
+        "modelListName": "data2vec-audio-base-960h",
+        "cacheName": "data2vec-audio-base-960h"
+      },
+      {
+        "source": "microsoft/speecht5_asr",
+        "modelListName": "speecht5_asr",
+        "cacheName": "speecht5_asr"
+      },
+      {
+        "source": "facebook/hubert-large-ls960-ft",
+        "modelListName": "hubert-large-ls960-ft",
+        "cacheName": "hubert-large-ls960-ft"
       }
     ]
   },
