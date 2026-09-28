@@ -40,6 +40,7 @@ def runOnboardingWorkflow(
         return {
             "modelName": modelName,
             "status": "download-resolution-failed",
+            "sharedEntries": {},
             "error": str(error),
         }
 
@@ -47,7 +48,7 @@ def runOnboardingWorkflow(
 
     print()
     print("=" * 60)
-    print(f"[Onboarding Workflow] Starting: " f"{modelName}")
+    print("[Onboarding Workflow] Starting: " f"{modelName}")
     print("=" * 60)
 
     print("[Onboarding Workflow] Source type: " f"{downloadDecision['sourceType']}")
@@ -65,6 +66,7 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "downloader-required",
+            "sharedEntries": {},
         }
 
     downloaderName = downloadDecision["downloader"]
@@ -77,6 +79,12 @@ def runOnboardingWorkflow(
 
     modelListEntryAdded = False
 
+    # Records only the specific changes made by
+    # NestScanner to shared EchoForge files.
+    sharedEntries = {}
+
+    modelListPath = "deployment/model_download/" f"{downloaderName}/model_list"
+
     try:
 
         existingModelListEntryBeforeDownload = downloadDecision.get(
@@ -86,7 +94,7 @@ def runOnboardingWorkflow(
 
         if existingModelListEntryBeforeDownload:
 
-            print("[Onboarding Workflow] " "Model already exists in " "model_list.")
+            print("[Onboarding Workflow] " "Model already exists in model_list.")
 
         else:
 
@@ -107,9 +115,28 @@ def runOnboardingWorkflow(
                     f"{downloaderName}/model_list"
                 )
 
+                # The model-list manager must return
+                # the exact line it successfully wrote.
+                entryLine = modelListResult.get("entryLine")
+
+                if not entryLine:
+
+                    raise ValueError(
+                        "addModelListEntry added a model "
+                        "but did not return entryLine."
+                    )
+
+                sharedEntries[modelListPath] = [entryLine]
+
+                print(
+                    "[Onboarding Workflow] "
+                    "Recorded model_list change "
+                    "for GitHub PR."
+                )
+
             else:
 
-                print("[Onboarding Workflow] " "Model already exists in " "model_list.")
+                print("[Onboarding Workflow] " "Model already exists in model_list.")
 
     except Exception as error:
 
@@ -118,6 +145,7 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "download-resolution-failed",
+            "sharedEntries": sharedEntries,
             "error": str(error),
         }
 
@@ -132,7 +160,7 @@ def runOnboardingWorkflow(
 
         try:
 
-            print("[Onboarding Workflow] " f"Download attempt " f"{attempt + 1}/2")
+            print("[Onboarding Workflow] " f"Download attempt {attempt + 1}/2")
 
             downloadResult = downloadModel(
                 downloader={
@@ -188,6 +216,13 @@ def runOnboardingWorkflow(
                         "model_list entry."
                     )
 
+                    # The entry was rolled back, so
+                    # it is no longer a PR change.
+                    sharedEntries.pop(
+                        modelListPath,
+                        None,
+                    )
+
             except Exception as error:
 
                 print(
@@ -199,6 +234,7 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "downloader-required",
+            "sharedEntries": sharedEntries,
             "error": str(downloadError),
         }
 
@@ -229,7 +265,7 @@ def runOnboardingWorkflow(
     try:
 
         uploadResult = uploadModel(
-            cacheName=(downloadResult["cacheName"]),
+            cacheName=downloadResult["cacheName"],
             modelName=modelName,
         )
 
@@ -243,12 +279,13 @@ def runOnboardingWorkflow(
             "modelListName": (downloadResult.get("modelListName")),
             "cacheName": (downloadResult.get("cacheName")),
             "cachePath": (downloadResult.get("cachePath")),
+            "sharedEntries": sharedEntries,
             "error": str(error),
         }
 
     clearmlModelId = uploadResult["clearmlModelId"]
 
-    print("[Onboarding Workflow] " f"ClearML model ID: " f"{clearmlModelId}")
+    print("[Onboarding Workflow] " f"ClearML model ID: {clearmlModelId}")
 
     # ----------------------------------------
     # 8. Completed
@@ -260,7 +297,8 @@ def runOnboardingWorkflow(
         "modelListName": (downloadResult.get("modelListName")),
         "cacheName": (downloadResult["cacheName"]),
         "cachePath": (downloadResult["cachePath"]),
-        "clearmlModelId": (clearmlModelId),
+        "clearmlModelId": clearmlModelId,
+        "sharedEntries": sharedEntries,
     }
 
     print("[Onboarding Workflow] " f"Completed: {modelName}")

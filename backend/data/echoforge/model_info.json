@@ -27,6 +27,11 @@
         "cacheName": "faster-whisper-large-v2"
       },
       {
+        "source": "facebook/wav2vec2-base-960h",
+        "modelListName": "wav2vec2-ctc-base",
+        "cacheName": "wav2vec2-ctc-base"
+      },
+      {
         "source": "MERaLiON/MERaLiON-2-10B-ASR",
         "modelListName": "meralion-2-10b-asr",
         "cacheName": "meralion-2-10b-asr"
@@ -45,21 +50,6 @@
         "source": "Qwen/Qwen3-ASR-1.7B",
         "modelListName": "qwen3-asr-1.7b",
         "cacheName": "qwen3-asr-1.7b"
-      },
-      {
-        "source": "speechbrain/asr-wav2vec2-commonvoice-en",
-        "modelListName": "asr-wav2vec2-commonvoice-en",
-        "cacheName": "asr-wav2vec2-commonvoice-en"
-      },
-      {
-        "source": "facebook/hubert-large-ls960-ft",
-        "modelListName": "hubert-large-ls960-ft",
-        "cacheName": "hubert-large-ls960-ft"
-      },
-      {
-        "source": "facebook/wav2vec2-base-960h",
-        "modelListName": "wav2vec2-base-960h",
-        "cacheName": "wav2vec2-base-960h"
       },
       {
         "source": "speechbrain/asr-crdnn-rnnlm-librispeech",

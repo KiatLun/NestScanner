@@ -27,6 +27,10 @@ def writeGeneratedComponent(
 
     dockerfile = componentDir / "Dockerfile"
 
+    # ----------------------------------------
+    # 1. Write generated component files
+    # ----------------------------------------
+
     mainFile.write_text(
         mainFileContent,
         encoding="utf-8",
@@ -42,6 +46,29 @@ def writeGeneratedComponent(
         encoding="utf-8",
     )
 
+    # ----------------------------------------
+    # 2. Record generated files for GitHub PR
+    # ----------------------------------------
+
+    echoforgeRoot = COMPONENTS_DIR.parent
+
+    generatedFiles = [
+        filePath.relative_to(echoforgeRoot).as_posix()
+        for filePath in (
+            mainFile,
+            requirementsFile,
+            dockerfile,
+        )
+    ]
+
+    print(
+        "[Component Writer] " f"Recorded {len(generatedFiles)} files " "for GitHub PR."
+    )
+
+    # ----------------------------------------
+    # 3. Return component information
+    # ----------------------------------------
+
     return {
         "component": componentName,
         "componentDir": str(componentDir),
@@ -49,4 +76,5 @@ def writeGeneratedComponent(
         "requirementsFile": str(requirementsFile),
         "dockerfile": str(dockerfile),
         "buildContext": str(COMPONENTS_DIR),
+        "generatedFiles": generatedFiles,
     }

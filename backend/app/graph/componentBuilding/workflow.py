@@ -70,8 +70,7 @@ def createInferenceComponent(
             "Model implementation research "
             "did not produce sufficient "
             "implementation evidence. "
-            f"Status: "
-            f"{implementationResearchStatus}"
+            f"Status: {implementationResearchStatus}"
         )
 
     implementationContext = implementationResearchResult.get(
@@ -82,9 +81,7 @@ def createInferenceComponent(
     if not implementationContext.strip():
 
         raise RuntimeError(
-            "Model implementation research "
-            "returned an empty "
-            "implementationContext."
+            "Model implementation research " "returned an empty implementationContext."
         )
 
     print("[Component Building Workflow] " "Implementation research completed.")
@@ -100,7 +97,7 @@ def createInferenceComponent(
         modelFamily=modelFamily,
         source=source,
         technicalProfile=technicalProfile,
-        implementationContext=(implementationContext),
+        implementationContext=implementationContext,
     )
 
     generatedComponent = componentCreationAgent(creationInput)
@@ -116,17 +113,17 @@ def createInferenceComponent(
     # ----------------------------------------
 
     componentFiles = writeGeneratedComponent(
-        componentName=(generatedComponent.componentName),
-        mainFileContent=(generatedComponent.mainFileContent),
-        requirementsContent=(generatedComponent.requirementsContent),
-        dockerfileContent=(generatedComponent.dockerfileContent),
+        componentName=generatedComponent.componentName,
+        mainFileContent=generatedComponent.mainFileContent,
+        requirementsContent=generatedComponent.requirementsContent,
+        dockerfileContent=generatedComponent.dockerfileContent,
     )
 
     inferenceComponent = {
         **componentFiles,
         "family": modelFamily,
-        "imageName": (generatedComponent.imageName),
-        "entryPoint": (generatedComponent.entryPoint),
+        "imageName": generatedComponent.imageName,
+        "entryPoint": generatedComponent.entryPoint,
         "modelName": modelName,
         "source": source,
         "matchedBy": "generated",
@@ -150,11 +147,12 @@ def runComponentBuildingWorkflow(
 
     implementationResearchResult = None
 
+    # Track only files written by this workflow.
+    generatedFiles = []
+
     print()
     print("=" * 60)
-
     print("[Component Building Workflow] " f"Starting: {modelName}")
-
     print("=" * 60)
 
     # ----------------------------------------
@@ -179,7 +177,8 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": ("inference-component-resolution-failed"),
+            "status": "inference-component-resolution-failed",
+            "generatedFiles": generatedFiles,
             "error": str(error),
         }
 
@@ -190,9 +189,7 @@ def runComponentBuildingWorkflow(
     if inferenceComponent is None:
 
         print(
-            "[Component Building Workflow] "
-            "No compatible inference "
-            "component found."
+            "[Component Building Workflow] " "No compatible inference component found."
         )
 
         try:
@@ -204,7 +201,22 @@ def runComponentBuildingWorkflow(
                 modelName=modelName,
                 source=source,
                 modelFamily=modelFamily,
-                technicalProfile=(technicalProfile),
+                technicalProfile=technicalProfile,
+            )
+
+            # Record the files successfully written
+            # by componentWriter.py.
+            generatedFiles.extend(
+                inferenceComponent.get(
+                    "generatedFiles",
+                    [],
+                )
+            )
+
+            print(
+                "[Component Building Workflow] "
+                f"Recorded {len(generatedFiles)} "
+                "generated files for GitHub PR."
             )
 
         except Exception as error:
@@ -218,14 +230,19 @@ def runComponentBuildingWorkflow(
             return {
                 "modelName": modelName,
                 "source": source,
-                "status": ("inference-component-creation-failed"),
+                "status": "inference-component-creation-failed",
                 "implementationResearchResult": (implementationResearchResult),
+                "generatedFiles": generatedFiles,
                 "error": str(error),
             }
 
     else:
 
         print("[Component Building Workflow] " "Using existing inference component.")
+
+        # No new source files were generated.
+        # Rebuilding an image does not count
+        # as creating a new PR file.
 
     print(
         "[Component Building Workflow] "
@@ -246,9 +263,9 @@ def runComponentBuildingWorkflow(
     try:
 
         inferenceImageResult = ensureDockerImage(
-            imageName=(inferenceComponent["imageName"]),
-            dockerfile=(inferenceComponent["dockerfile"]),
-            buildContext=(inferenceComponent["buildContext"]),
+            imageName=inferenceComponent["imageName"],
+            dockerfile=inferenceComponent["dockerfile"],
+            buildContext=inferenceComponent["buildContext"],
             forceBuild=forceBuild,
         )
 
@@ -263,9 +280,10 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": ("inference-image-build-failed"),
-            "inferenceComponent": (inferenceComponent),
+            "status": "inference-image-build-failed",
+            "inferenceComponent": inferenceComponent,
             "implementationResearchResult": (implementationResearchResult),
+            "generatedFiles": generatedFiles,
             "error": str(error),
         }
 
@@ -300,10 +318,10 @@ def runComponentBuildingWorkflow(
     try:
 
         evaluationImageResult = ensureDockerImage(
-            imageName=(evaluationComponent["imageName"]),
-            dockerfile=(evaluationComponent["dockerfile"]),
-            buildContext=(evaluationComponent["buildContext"]),
-            forceBuild=False,  # to set it back to flag
+            imageName=evaluationComponent["imageName"],
+            dockerfile=evaluationComponent["dockerfile"],
+            buildContext=evaluationComponent["buildContext"],
+            forceBuild=False,
         )
 
     except Exception as error:
@@ -317,11 +335,12 @@ def runComponentBuildingWorkflow(
         return {
             "modelName": modelName,
             "source": source,
-            "status": ("evaluation-image-build-failed"),
-            "inferenceComponent": (inferenceComponent),
-            "inferenceImageResult": (inferenceImageResult),
-            "evaluationComponent": (evaluationComponent),
+            "status": "evaluation-image-build-failed",
+            "inferenceComponent": inferenceComponent,
+            "inferenceImageResult": inferenceImageResult,
+            "evaluationComponent": evaluationComponent,
             "implementationResearchResult": (implementationResearchResult),
+            "generatedFiles": generatedFiles,
             "error": str(error),
         }
 
@@ -345,10 +364,11 @@ def runComponentBuildingWorkflow(
         "modelName": modelName,
         "source": source,
         "status": "completed",
-        "inferenceComponent": (inferenceComponent),
-        "inferenceImageResult": (inferenceImageResult),
-        "evaluationComponent": (evaluationComponent),
-        "evaluationImageResult": (evaluationImageResult),
+        "inferenceComponent": inferenceComponent,
+        "inferenceImageResult": inferenceImageResult,
+        "evaluationComponent": evaluationComponent,
+        "evaluationImageResult": evaluationImageResult,
+        "generatedFiles": list(dict.fromkeys(generatedFiles)),
     }
 
     if implementationResearchResult is not None:

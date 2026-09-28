@@ -26,7 +26,7 @@ def validateComponent(
     entryPoint = component.get("entryPoint")
 
     if not componentName:
-        raise RuntimeError(f"{componentType} component " "name is missing.")
+        raise RuntimeError(f"{componentType} component name is missing.")
 
     if not imageName:
         raise RuntimeError(
@@ -72,7 +72,7 @@ def buildEvaluationPipeline(
     evaluationStageName = "stt_evaluation"
 
     return {
-        "project_name": (f"nestscanner_" f"{normalizeName(modelName)}"),
+        "project_name": (f"nestscanner_{normalizeName(modelName)}"),
         "datasets": {
             "dataset_ids": [
                 datasetId,
@@ -83,20 +83,20 @@ def buildEvaluationPipeline(
         "stages": {
             inferenceStageName: {
                 "queue": QUEUE_NAME,
-                "image_name": (inferenceComponent["imageName"]),
+                "image_name": inferenceComponent["imageName"],
                 "task_type": "inference",
-                "entry_point": (inferenceComponent["entryPoint"]),
+                "entry_point": inferenceComponent["entryPoint"],
                 "cache_executed_step": False,
                 "parameter_override": {
-                    "Args/dataset_id": ("${datasets}"),
-                    "Args/model_id": (modelId),
+                    "Args/dataset_id": "${datasets}",
+                    "Args/model_id": modelId,
                 },
             },
             evaluationStageName: {
                 "queue": QUEUE_NAME,
-                "image_name": (evaluationComponent["imageName"]),
+                "image_name": evaluationComponent["imageName"],
                 "task_type": "testing",
-                "entry_point": (evaluationComponent["entryPoint"]),
+                "entry_point": evaluationComponent["entryPoint"],
                 "cache_executed_step": False,
                 "parents": [
                     inferenceStageName,
@@ -105,7 +105,7 @@ def buildEvaluationPipeline(
                     "Args/hyp_dataset_id": (
                         f"${{{inferenceStageName}.id}}:" "dataset_id"
                     ),
-                    "Args/ref_dataset_id": ("${datasets}"),
+                    "Args/ref_dataset_id": "${datasets}",
                 },
             },
         },
@@ -117,6 +117,10 @@ def writeEvaluationPipeline(
     pipeline: dict,
 ) -> dict:
 
+    # ----------------------------------------
+    # 1. Prepare pipeline directory
+    # ----------------------------------------
+
     NESTSCANNER_PIPELINE_CONF_DIR.mkdir(
         parents=True,
         exist_ok=True,
@@ -126,6 +130,10 @@ def writeEvaluationPipeline(
 
     pipelinePath = NESTSCANNER_PIPELINE_CONF_DIR / pipelineName
 
+    # ----------------------------------------
+    # 2. Write pipeline YAML
+    # ----------------------------------------
+
     pipelinePath.write_text(
         yaml.safe_dump(
             pipeline,
@@ -134,7 +142,20 @@ def writeEvaluationPipeline(
         encoding="utf-8",
     )
 
+    # ----------------------------------------
+    # 3. Record generated file for GitHub PR
+    # ----------------------------------------
+
+    generatedFiles = [f"pipeline/src/conf/nestscanner/{pipelineName}"]
+
+    print("[Pipeline Builder] " f"Recorded {pipelineName} for GitHub PR.")
+
+    # ----------------------------------------
+    # 4. Return pipeline information
+    # ----------------------------------------
+
     return {
         "pipelineName": pipelineName,
         "pipelinePath": str(pipelinePath),
+        "generatedFiles": generatedFiles,
     }

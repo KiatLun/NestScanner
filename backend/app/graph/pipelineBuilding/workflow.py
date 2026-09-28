@@ -21,10 +21,12 @@ def runPipelineBuildingWorkflow(
     # ----------------------------------------
 
     if componentResult.get("status") != "completed":
+
         return {
             "modelName": modelName,
-            "status": ("component-building-incomplete"),
-            "componentStatus": (componentResult.get("status")),
+            "status": "component-building-incomplete",
+            "componentStatus": componentResult.get("status"),
+            "generatedFiles": [],
         }
 
     inferenceComponent = componentResult.get("inferenceComponent")
@@ -35,14 +37,16 @@ def runPipelineBuildingWorkflow(
 
         return {
             "modelName": modelName,
-            "status": ("inference-component-missing"),
+            "status": "inference-component-missing",
+            "generatedFiles": [],
         }
 
     if not evaluationComponent:
 
         return {
             "modelName": modelName,
-            "status": ("evaluation-component-missing"),
+            "status": "evaluation-component-missing",
+            "generatedFiles": [],
         }
 
     # ----------------------------------------
@@ -55,8 +59,8 @@ def runPipelineBuildingWorkflow(
             modelName=modelName,
             modelId=modelId,
             datasetId=datasetId,
-            inferenceComponent=(inferenceComponent),
-            evaluationComponent=(evaluationComponent),
+            inferenceComponent=inferenceComponent,
+            evaluationComponent=evaluationComponent,
         )
 
     except Exception as error:
@@ -69,7 +73,8 @@ def runPipelineBuildingWorkflow(
 
         return {
             "modelName": modelName,
-            "status": ("pipeline-build-failed"),
+            "status": "pipeline-build-failed",
+            "generatedFiles": [],
             "error": str(error),
         }
 
@@ -92,8 +97,9 @@ def runPipelineBuildingWorkflow(
 
         return {
             "modelName": modelName,
-            "status": ("pipeline-write-failed"),
+            "status": "pipeline-write-failed",
             "pipeline": pipeline,
+            "generatedFiles": [],
             "error": str(error),
         }
 
@@ -104,7 +110,22 @@ def runPipelineBuildingWorkflow(
     )
 
     # ----------------------------------------
-    # 4. Completed
+    # 4. Record generated files for GitHub PR
+    # ----------------------------------------
+
+    generatedFiles = pipelineFileResult.get(
+        "generatedFiles",
+        [],
+    )
+
+    print(
+        "[Pipeline Building Workflow] "
+        f"Recorded {len(generatedFiles)} "
+        "generated files for GitHub PR."
+    )
+
+    # ----------------------------------------
+    # 5. Completed
     # ----------------------------------------
 
     result = {
@@ -113,8 +134,9 @@ def runPipelineBuildingWorkflow(
         "datasetId": datasetId,
         "status": "completed",
         "pipeline": pipeline,
-        "pipelineName": (pipelineFileResult["pipelineName"]),
-        "pipelinePath": (pipelineFileResult["pipelinePath"]),
+        "pipelineName": pipelineFileResult["pipelineName"],
+        "pipelinePath": pipelineFileResult["pipelinePath"],
+        "generatedFiles": generatedFiles,
     }
 
     print("[Pipeline Building Workflow] " f"Completed: {modelName}")
