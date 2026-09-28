@@ -42,9 +42,10 @@ modelsToTest = [
     # "whisper-medium",
     # "whisper-small",
     # "wav2vec2-base-960h",
-    # "speecht5-asr",
     # "speechbrain-crdnn-rnnlm-librispeech",
-    "hubert-large-ls960-ft",
+    "wav2vec2-large-960h-lv60-self",
+    # "wav2vec2-large-960h-lv60-self",
+    # "hubert-large-ls960-ft",
     # "speechbrain-commonvoice-en",
     # "voxtral-mini-4b-realtime-2602",
     # "silero-vad",
@@ -58,8 +59,8 @@ modelsToTest = [
 # ============================================================
 
 modelTestConfig = {
-    "speecht5-asr": {
-        "modelFamily": "speecht5",
+    "wav2vec2-large-960h-lv60-self": {
+        "modelFamily": "wav2vec2",
         "expectGenerated": True,
     },
     "wav2vec2-base-960h": {
