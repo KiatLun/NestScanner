@@ -1,6 +1,70 @@
 researchAgentOutput = {}
 
+"""
+Model-specific
 
+Expected behaviours:
+1. Should create a new model_list entry under
+   hugging_face_download in EchoForge.
+2. model_info.json in NestScanner should reflect
+   the new SpeechT5 model entry.
+3. Model should be downloaded and uploaded to ClearML.
+4. Should generate a new SpeechT5 inference component
+   if no compatible component exists.
+"""
+
+researchAgentOutput["speecht5-asr"] = {
+    "candidate": {
+        "name": "speecht5-asr",
+        "organisation": "Microsoft",
+        "sourceUrl": ("https://huggingface.co/" "microsoft/speecht5_asr"),
+        "candidateType": "model",
+    },
+    "isLocallyDeployable": True,
+    "researchEvidence": {
+        "deployabilityEvidence": [
+            {
+                "source": "huggingface",
+                "title": "microsoft/speecht5_asr",
+                "url": ("https://huggingface.co/" "microsoft/speecht5_asr"),
+                "description": (
+                    "Official Microsoft SpeechT5 model "
+                    "fine-tuned for automatic speech recognition "
+                    "on LibriSpeech. Public model weights, "
+                    "configuration files and local inference "
+                    "instructions are available."
+                ),
+            },
+            {
+                "source": "github",
+                "title": "Hugging Face Transformers",
+                "url": ("https://github.com/" "huggingface/transformers"),
+                "description": (
+                    "Provides SpeechT5Processor and "
+                    "SpeechT5ForSpeechToText for loading "
+                    "and running SpeechT5 ASR locally."
+                ),
+            },
+        ],
+        "technicalEvidence": [
+            {
+                "source": "huggingface",
+                "title": "SpeechT5 ASR model documentation",
+                "url": ("https://huggingface.co/" "microsoft/speecht5_asr"),
+                "description": (
+                    "SpeechT5 uses an encoder-decoder "
+                    "architecture. Load the processor using "
+                    "SpeechT5Processor.from_pretrained() "
+                    "and the model using "
+                    "SpeechT5ForSpeechToText.from_pretrained(). "
+                    "Generate token IDs with model.generate() "
+                    "and decode them using "
+                    "processor.batch_decode()."
+                ),
+            },
+        ],
+    },
+}
 """
 **Model-specific**
 

@@ -26,6 +26,34 @@ def runOnboardingWorkflow(
 ) -> dict:
 
     # ----------------------------------------
+    # 0. Refresh EchoForge model information
+    # ----------------------------------------
+
+    print()
+    print("=" * 60)
+    print("[Onboarding Workflow] Refreshing EchoForge model information.")
+    print("=" * 60)
+
+    try:
+
+        modelInfo = buildModelInfo()
+
+        writeModelInfo(modelInfo)
+
+        print("[Onboarding Workflow] " "model_info.json refreshed successfully.")
+
+    except Exception as error:
+
+        print("[Onboarding Workflow] " f"Model information refresh failed: {error}")
+
+        return {
+            "modelName": researchResult.get("candidate", {}).get("name"),
+            "status": "model-info-refresh-failed",
+            "sharedEntries": {},
+            "error": str(error),
+        }
+
+    # ----------------------------------------
     # 1. Resolve source + downloader
     # ----------------------------------------
 
