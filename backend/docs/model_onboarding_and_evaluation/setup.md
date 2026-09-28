@@ -38,13 +38,58 @@ Set up your `.env` file using `sample.env` as a reference.
 - Create a Hugging Face access token with full access.
 - Token setup: https://huggingface.co/settings/tokens
 
+
 ---
+# Important Note
+
+Currently, the Model Onboarding and Evaluation workflow has not yet been integrated with the Research Agent. Instead, mock Research Agent outputs are used to test the workflow.
+
+To test a new model, update the following files.
+
+## 1. Add a Research Agent Fixture
+
+File: `tests/fixtures/researchAgentOutput.py`
+
+Add the model's research information to `researchAgentOutput`, including its name, organisation, source URL, local deployability status and research evidence.
+
+## 2. Configure the Model
+
+File: `tests/graph/pipelineBuilding/test_combined_with_pr.py`
+
+Add the model to `modelTestConfig`:
+
+```python
+"your-model-name": {
+    "modelFamily": "your-model-family",
+    "expectGenerated": True,
+},
+```
+
+- `modelFamily`: The model's architecture or family.
+- `expectGenerated`: Set to `True` if a new inference component is expected to be generated, or `False` if an existing component is expected to be reused.
+
+## 3. Select Models to Test
+
+In the same file, update `modelsToTest`:
+
+```python
+modelsToTest = [
+    "your-model-name",
+]
+```
+
+This list determines which models the combined test will execute. You can include multiple models.
+
+Ensure that each model name matches the key defined in both `researchAgentOutput` and `modelTestConfig`.
+
+---
+
 
 # Combined Test Guide
 
 ## Summary
 
-This test runs the above flow with the **speechbrain-crdnn-rnnlm-librispeech** model.
+This test runs the full flow with the **speechbrain-crdnn-rnnlm-librispeech** model. (Comment out all other models in modelsToTest in test_combined_with_pr.py)
 
 - The generic HF downloader is expected to be used since no specific downloaders for it
 - Own inference component will be created since no existing one
