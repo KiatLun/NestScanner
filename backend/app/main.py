@@ -58,7 +58,7 @@ from app.tools.huggingFace import (
     searchHuggingFaceModels,
 )
 
-from app.services.echoforge.modelInfoReader import (
+from app.services.echoforge.model.modelInfoReader import (
     getAllSupportedModels,
 )
 
