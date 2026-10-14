@@ -22,10 +22,9 @@ from app.tools.github import (
     searchGitHubRepositories,
 )
 
-from app.tools.arvixSearch import (
+from backend.app.tools.arxivSearch import (
     searchArxivPapers,
 )
-
 
 
 def searchWeb(
@@ -105,9 +104,7 @@ def searchHuggingFace(
         results.extend(categoryResults)
 
     except Exception as error:
-        print(
-            "Hugging Face ASR category search failed."
-        )
+        print("Hugging Face ASR category search failed.")
 
         print(error)
 
@@ -118,9 +115,7 @@ def searchHuggingFace(
     for query in queries:
 
         if config.verbose:
-            print(
-                f"\nSearching Hugging Face: {query}"
-            )
+            print(f"\nSearching Hugging Face: {query}")
 
         try:
             queryResults = searchHuggingFaceModels(
@@ -135,22 +130,15 @@ def searchHuggingFace(
                     "before filtering."
                 )
 
-            queryResults = filterASRModels(
-                queryResults
-            )
+            queryResults = filterASRModels(queryResults)
 
             if config.verbose:
-                print(
-                    f"Found {len(queryResults)} "
-                    "ASR models after filtering."
-                )
+                print(f"Found {len(queryResults)} " "ASR models after filtering.")
 
             results.extend(queryResults)
 
         except Exception as error:
-            print(
-                f"Hugging Face search failed: {query}"
-            )
+            print(f"Hugging Face search failed: {query}")
 
             print(error)
 

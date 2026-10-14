@@ -2,21 +2,21 @@ from app.graph.onboarding.onboardingDownloadResolver import (
     resolveOnboardingDownload,
 )
 
-from app.services.echoforge.modelListManager import (
+from app.services.echoforge.model.modelListManager import (
     addModelListEntry,
     removeModelListEntry,
 )
 
-from app.services.echoforge.modelInfoBuilder import (
+from app.services.echoforge.model.modelInfoBuilder import (
     buildModelInfo,
     writeModelInfo,
 )
 
-from app.services.echoforge.modelDownloader import (
+from app.services.echoforge.model.modelDownloader import (
     downloadModel,
 )
 
-from app.services.echoforge.modelUploader import (
+from app.services.echoforge.model.modelUploader import (
     uploadModel,
 )
 
@@ -24,6 +24,34 @@ from app.services.echoforge.modelUploader import (
 def runOnboardingWorkflow(
     researchResult: dict,
 ) -> dict:
+
+    # ----------------------------------------
+    # 0. Refresh EchoForge model information
+    # ----------------------------------------
+
+    print()
+    print("=" * 60)
+    print("[Onboarding Workflow] Refreshing EchoForge model information.")
+    print("=" * 60)
+
+    try:
+
+        modelInfo = buildModelInfo()
+
+        writeModelInfo(modelInfo)
+
+        print("[Onboarding Workflow] " "model_info.json refreshed successfully.")
+
+    except Exception as error:
+
+        print("[Onboarding Workflow] " f"Model information refresh failed: {error}")
+
+        return {
+            "modelName": researchResult.get("candidate", {}).get("name"),
+            "status": "model-info-refresh-failed",
+            "sharedEntries": {},
+            "error": str(error),
+        }
 
     # ----------------------------------------
     # 1. Resolve source + downloader
@@ -40,6 +68,7 @@ def runOnboardingWorkflow(
         return {
             "modelName": modelName,
             "status": "download-resolution-failed",
+            "sharedEntries": {},
             "error": str(error),
         }
 
@@ -47,12 +76,12 @@ def runOnboardingWorkflow(
 
     print()
     print("=" * 60)
-    print(f"[Onboarding Workflow] Starting: " f"{modelName}")
+    print("[Onboarding Workflow] Starting: " f"{modelName}")
     print("=" * 60)
 
-    print(f"[Onboarding Workflow] Source type: " f"{downloadDecision['sourceType']}")
+    print("[Onboarding Workflow] Source type: " f"{downloadDecision['sourceType']}")
 
-    print(f"[Onboarding Workflow] Source: " f"{downloadDecision['source']}")
+    print("[Onboarding Workflow] Source: " f"{downloadDecision['source']}")
 
     # ----------------------------------------
     # 2. No usable downloader
@@ -65,17 +94,24 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "downloader-required",
+            "sharedEntries": {},
         }
 
     downloaderName = downloadDecision["downloader"]
 
-    print(f"[Onboarding Workflow] Downloader: " f"{downloaderName}")
+    print("[Onboarding Workflow] Downloader: " f"{downloaderName}")
 
     # ----------------------------------------
     # 3. Ensure model_list entry exists
     # ----------------------------------------
 
     modelListEntryAdded = False
+
+    # Records only the specific changes made by
+    # NestScanner to shared EchoForge files.
+    sharedEntries = {}
+
+    modelListPath = "deployment/model_download/" f"{downloaderName}/model_list"
 
     try:
 
@@ -107,17 +143,37 @@ def runOnboardingWorkflow(
                     f"{downloaderName}/model_list"
                 )
 
+                # The model-list manager must return
+                # the exact line it successfully wrote.
+                entryLine = modelListResult.get("entryLine")
+
+                if not entryLine:
+
+                    raise ValueError(
+                        "addModelListEntry added a model "
+                        "but did not return entryLine."
+                    )
+
+                sharedEntries[modelListPath] = [entryLine]
+
+                print(
+                    "[Onboarding Workflow] "
+                    "Recorded model_list change "
+                    "for GitHub PR."
+                )
+
             else:
 
                 print("[Onboarding Workflow] " "Model already exists in model_list.")
 
     except Exception as error:
 
-        print("[Onboarding Workflow] " f"Could not prepare model_list: " f"{error}")
+        print("[Onboarding Workflow] " "Could not prepare model_list: " f"{error}")
 
         return {
             **downloadDecision,
             "status": "download-resolution-failed",
+            "sharedEntries": sharedEntries,
             "error": str(error),
         }
 
@@ -132,7 +188,7 @@ def runOnboardingWorkflow(
 
         try:
 
-            print(f"[Onboarding Workflow] " f"Download attempt " f"{attempt + 1}/2")
+            print("[Onboarding Workflow] " f"Download attempt {attempt + 1}/2")
 
             downloadResult = downloadModel(
                 downloader={
@@ -157,7 +213,7 @@ def runOnboardingWorkflow(
             downloadError = error
 
             print(
-                f"[Onboarding Workflow] "
+                "[Onboarding Workflow] "
                 f"Download attempt "
                 f"{attempt + 1}/2 failed: "
                 f"{error}"
@@ -171,15 +227,13 @@ def runOnboardingWorkflow(
 
         print("[Onboarding Workflow] " "Downloader failed after retry.")
 
-        # Only remove the entry if
-        # NestScanner added it.
         if modelListEntryAdded:
 
             try:
 
                 removed = removeModelListEntry(
-                    downloaderName=(downloaderName),
-                    source=(downloadDecision["source"]),
+                    downloaderName=downloaderName,
+                    source=downloadDecision["source"],
                 )
 
                 if removed:
@@ -188,6 +242,13 @@ def runOnboardingWorkflow(
                         "[Onboarding Workflow] "
                         "Removed temporary "
                         "model_list entry."
+                    )
+
+                    # The entry was rolled back, so
+                    # it is no longer a PR change.
+                    sharedEntries.pop(
+                        modelListPath,
+                        None,
                     )
 
             except Exception as error:
@@ -201,6 +262,7 @@ def runOnboardingWorkflow(
         return {
             **downloadDecision,
             "status": "downloader-required",
+            "sharedEntries": sharedEntries,
             "error": str(downloadError),
         }
 
@@ -221,9 +283,7 @@ def runOnboardingWorkflow(
         except Exception as error:
 
             print(
-                "[Onboarding Workflow] "
-                f"Could not update "
-                f"model_info.json: {error}"
+                "[Onboarding Workflow] " "Could not update " f"model_info.json: {error}"
             )
 
     # ----------------------------------------
@@ -233,7 +293,7 @@ def runOnboardingWorkflow(
     try:
 
         uploadResult = uploadModel(
-            cacheName=(downloadResult["cacheName"]),
+            cacheName=downloadResult["cacheName"],
             modelName=modelName,
         )
 
@@ -247,8 +307,13 @@ def runOnboardingWorkflow(
             "modelListName": (downloadResult.get("modelListName")),
             "cacheName": (downloadResult.get("cacheName")),
             "cachePath": (downloadResult.get("cachePath")),
+            "sharedEntries": sharedEntries,
             "error": str(error),
         }
+
+    clearmlModelId = uploadResult["clearmlModelId"]
+
+    print("[Onboarding Workflow] " f"ClearML model ID: {clearmlModelId}")
 
     # ----------------------------------------
     # 8. Completed
@@ -260,8 +325,10 @@ def runOnboardingWorkflow(
         "modelListName": (downloadResult.get("modelListName")),
         "cacheName": (downloadResult["cacheName"]),
         "cachePath": (downloadResult["cachePath"]),
+        "clearmlModelId": clearmlModelId,
+        "sharedEntries": sharedEntries,
     }
 
-    print(f"[Onboarding Workflow] Completed: " f"{modelName}")
+    print("[Onboarding Workflow] " f"Completed: {modelName}")
 
     return result

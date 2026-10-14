@@ -12,7 +12,7 @@ def getModelListPath(
     downloaderDir = MODEL_DOWNLOAD_DIR / downloaderName
 
     if not downloaderDir.exists():
-        raise FileNotFoundError(f"Downloader directory not found: " f"{downloaderDir}")
+        raise FileNotFoundError(f"Downloader directory not found: {downloaderDir}")
 
     return downloaderDir / "model_list"
 
@@ -54,7 +54,7 @@ def getModelListEntries(
         entries.append(
             {
                 "source": source,
-                "modelListName": (modelListName),
+                "modelListName": modelListName,
             }
         )
 
@@ -107,6 +107,10 @@ def addModelListEntry(
     if not modelListName:
         modelListName = getModelListName(source)
 
+    # ----------------------------------------
+    # 1. Check whether entry already exists
+    # ----------------------------------------
+
     existingEntry = findModelListEntry(
         downloaderName=downloaderName,
         source=source,
@@ -118,8 +122,13 @@ def addModelListEntry(
             **existingEntry,
             "added": False,
             "createdModelList": False,
-            "modelListPath": (str(modelListPath)),
+            "modelListPath": str(modelListPath),
+            "entryLine": None,
         }
+
+    # ----------------------------------------
+    # 2. Prepare new entry
+    # ----------------------------------------
 
     createdModelList = not modelListPath.exists()
 
@@ -128,7 +137,12 @@ def addModelListEntry(
         exist_ok=True,
     )
 
-    newLine = f"{source} " f"{modelListName}"
+    # Keep this exact line for GitHub PR tracking.
+    entryLine = f"{source} {modelListName}"
+
+    # ----------------------------------------
+    # 3. Write model_list
+    # ----------------------------------------
 
     if modelListPath.exists():
 
@@ -138,23 +152,28 @@ def addModelListEntry(
             existingText += "\n"
 
         modelListPath.write_text(
-            existingText + newLine + "\n",
+            existingText + entryLine + "\n",
             encoding="utf-8",
         )
 
     else:
 
         modelListPath.write_text(
-            newLine + "\n",
+            entryLine + "\n",
             encoding="utf-8",
         )
+
+    # ----------------------------------------
+    # 4. Return entry and PR tracking data
+    # ----------------------------------------
 
     return {
         "source": source,
         "modelListName": modelListName,
         "added": True,
-        "createdModelList": (createdModelList),
-        "modelListPath": (str(modelListPath)),
+        "createdModelList": createdModelList,
+        "modelListPath": str(modelListPath),
+        "entryLine": entryLine,
     }
 
 

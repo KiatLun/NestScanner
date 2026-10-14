@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 
 backend/data/nestScanner.db
+/backend/app/agents/componentCreation/.cache

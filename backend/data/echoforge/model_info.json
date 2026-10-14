@@ -52,14 +52,9 @@
         "cacheName": "qwen3-asr-1.7b"
       },
       {
-        "source": "FunAudioLLM/Fun-ASR-Nano-2512",
-        "modelListName": "Fun-ASR-Nano-2512",
-        "cacheName": "Fun-ASR-Nano-2512"
-      },
-      {
-        "source": "FunAudioLLM/SenseVoiceSmall",
-        "modelListName": "SenseVoiceSmall",
-        "cacheName": "SenseVoiceSmall"
+        "source": "facebook/wav2vec2-large-960h-lv60-self",
+        "modelListName": "wav2vec2-large-960h-lv60-self",
+        "cacheName": "wav2vec2-large-960h-lv60-self"
       }
     ]
   },
@@ -155,11 +150,6 @@
         "source": "mistralai/Voxtral-Mini-3B-2507",
         "modelListName": "voxtral-3b",
         "cacheName": "voxtral"
-      },
-      {
-        "source": "mistralai/Voxtral-Mini-4B-Realtime-2602",
-        "modelListName": "Voxtral-Mini-4B-Realtime-2602",
-        "cacheName": "voxtral"
       }
     ]
   },
@@ -181,11 +171,6 @@
       {
         "source": "openai/whisper-large-v2",
         "modelListName": "whisper-large-v2",
-        "cacheName": "whisper"
-      },
-      {
-        "source": "openai/whisper-small",
-        "modelListName": "whisper-small",
         "cacheName": "whisper"
       }
     ]
