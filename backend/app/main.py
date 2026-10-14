@@ -55,7 +55,8 @@ from app.llm.client import (
 )
 
 from app.tools.huggingFace import (
-    searchHuggingFaceModels,
+    discoverASRModels,
+    deduplicateHFResults,
 )
 
 from app.services.echoforge.model.modelInfoReader import (
@@ -165,12 +166,18 @@ Also return:
 @app.get("/api/huggingface/asr-models")
 def getAsrModels():
 
-    models = searchHuggingFaceModels(
-        query="speech recognition",
-        limit=20,
+    models = discoverASRModels(
+        limitPerSource=100,
     )
 
-    return {"models": models}
+    models = deduplicateHFResults(
+        models
+    )
+
+    return {
+        "models": models,
+        "count": len(models),
+    }
 
 
 # =====================================================

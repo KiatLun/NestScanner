@@ -120,7 +120,7 @@ function ModelDetailsPage() {
 
 
           <ModelStatusCards
-            research={model.research}
+            model={model}
           />
 
 

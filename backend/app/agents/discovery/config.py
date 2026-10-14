@@ -8,17 +8,17 @@ class DiscoveryConfig:
     useLlmPlanner: bool = False
 
     # Enable / disable sources
-    enableWebSearch: bool = True
+    enableWebSearch: bool = False
     enableHuggingFaceSearch: bool = True
-    enableGithubSearch: bool = True
-    enableArxivSearch: bool = True
+    enableGithubSearch: bool = False
+    enableArxivSearch: bool = False
 
     # Results per query
-    webResultsPerQuery: int = 2
+    webResultsPerQuery: int = 0
     huggingFaceResultsPerQuery: int = 10
-    huggingFaceCategoryResults: int = 100
-    githubResultsPerQuery: int = 6
-    arxivResultsPerQuery: int = 2
+    huggingFaceResultsPerDiscoverySource: int = 100
+    githubResultsPerQuery: int = 0
+    arxivResultsPerQuery: int = 0
 
 
     # Candidate generation

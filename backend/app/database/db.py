@@ -70,8 +70,19 @@ def initializeDatabase():
             name TEXT NOT NULL,
             organisation TEXT,
             source_url TEXT,
-            repository_id TEXT NOT NULL,
-            UNIQUE(repository_id)
+            repository_id TEXT NOT NULL UNIQUE,
+
+            pipeline_tag TEXT,
+
+            downloads INTEGER,
+            likes INTEGER,
+            trending_score REAL,
+
+            created_at TEXT,
+            last_modified TEXT,
+            revision TEXT,
+
+            tags TEXT
         )
     """)
 
@@ -330,10 +341,54 @@ def saveDiscoveryCandidate(
 
     candidate = discoveryCandidate["candidate"]
 
-    name = candidate.get("name")
-    organisation = candidate.get("organisation")
-    repositoryId = candidate.get("repositoryId")
-    sourceUrl = candidate.get("sourceUrl")
+    name = candidate.get(
+        "name"
+    )
+
+    organisation = candidate.get(
+        "organisation"
+    )
+
+    repositoryId = candidate.get(
+        "repositoryId"
+    )
+
+    sourceUrl = candidate.get(
+        "sourceUrl"
+    )
+
+    pipelineTag = candidate.get(
+        "pipelineTag"
+    )
+
+    downloads = candidate.get(
+        "downloads"
+    )
+
+    likes = candidate.get(
+        "likes"
+    )
+
+    trendingScore = candidate.get(
+        "trendingScore"
+    )
+
+    createdAt = candidate.get(
+        "createdAt"
+    )
+
+    lastModified = candidate.get(
+        "lastModified"
+    )
+
+    revision = candidate.get(
+        "revision"
+    )
+
+    tags = candidate.get(
+        "tags",
+        []
+    )
 
     if not repositoryId:
         raise ValueError(
@@ -374,16 +429,35 @@ def saveDiscoveryCandidate(
             INSERT INTO models (
                 name,
                 organisation,
+                source_url,
                 repository_id,
-                source_url
+                pipeline_tag,
+                downloads,
+                likes,
+                trending_score,
+                created_at,
+                last_modified,
+                revision,
+                tags
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 name,
                 organisation,
-                repositoryId,
                 sourceUrl,
+                repositoryId,
+                pipelineTag,
+                downloads,
+                likes,
+                trendingScore,
+                createdAt,
+                lastModified,
+                revision,
+                json.dumps(
+                    tags,
+                    ensure_ascii=False,
+                ),
             ),
         )
 
@@ -393,6 +467,41 @@ def saveDiscoveryCandidate(
 
         modelId = row["id"]
 
+        cursor.execute(
+            """
+            UPDATE models
+            SET
+                name = ?,
+                organisation = ?,
+                source_url = ?,
+                pipeline_tag = ?,
+                downloads = ?,
+                likes = ?,
+                trending_score = ?,
+                created_at = ?,
+                last_modified = ?,
+                revision = ?,
+                tags = ?
+            WHERE id = ?
+            """,
+            (
+                name,
+                organisation,
+                sourceUrl,
+                pipelineTag,
+                downloads,
+                likes,
+                trendingScore,
+                createdAt,
+                lastModified,
+                revision,
+                json.dumps(
+                    tags,
+                    ensure_ascii=False,
+                ),
+                modelId,
+            ),
+        )
     # =================================================
     # LINK MODEL TO THIS SCAN
     # =================================================
@@ -550,6 +659,14 @@ def getScan(
             m.organisation,
             m.source_url,
             m.repository_id,
+            m.pipeline_tag,
+            m.downloads,
+            m.likes,
+            m.trending_score,
+            m.created_at,
+            m.last_modified,
+            m.revision,
+            m.tags,
             sm.discovery_evidence
 
         FROM scan_models sm
@@ -590,6 +707,18 @@ def getScan(
                     "organisation": row["organisation"],
                     "repositoryId": row["repository_id"],
                     "sourceUrl": row["source_url"],
+                    "pipelineTag": row["pipeline_tag"],
+                    "downloads": row["downloads"],
+                    "likes": row["likes"],
+                    "trendingScore": row["trending_score"],
+                    "createdAt": row["created_at"],
+                    "lastModified": row["last_modified"],
+                    "revision": row["revision"],
+                    "tags": (
+                        json.loads(row["tags"])
+                        if row["tags"]
+                        else []
+                    ),
                 },
                 "discoveryEvidence": discoveryEvidence,
             }
@@ -772,10 +901,18 @@ def getAllModels() -> list[dict]:
             name,
             organisation,
             source_url,
-            repository_id
+            repository_id,
+            pipeline_tag,
+            downloads,
+            likes,
+            trending_score,
+            created_at,
+            last_modified,
+            revision,
+            tags
         FROM models
         ORDER BY id DESC
-        """)
+    """)
 
     rows = cursor.fetchall()
 
@@ -788,8 +925,20 @@ def getAllModels() -> list[dict]:
             "organisation": row["organisation"],
             "sourceUrl": row["source_url"],
             "repositoryId": row["repository_id"],
+            "pipelineTag": row["pipeline_tag"],
+            "downloads": row["downloads"],
+            "likes": row["likes"],
+            "trendingScore": row["trending_score"],
+            "createdAt": row["created_at"],
+            "lastModified": row["last_modified"],
+            "revision": row["revision"],
+            "tags": (
+                json.loads(row["tags"])
+                if row["tags"]
+                else []
+            ),
         }
-         for row in rows
+        for row in rows
     ]
 
 
@@ -811,7 +960,15 @@ def getModel(
             name,
             organisation,
             source_url,
-            repository_id
+            repository_id,
+            pipeline_tag,
+            downloads,
+            likes,
+            trending_score,
+            created_at,
+            last_modified,
+            revision,
+            tags
         FROM models
         WHERE id = ?
         """,
@@ -831,6 +988,18 @@ def getModel(
         "organisation": row["organisation"],
         "sourceUrl": row["source_url"],
         "repositoryId": row["repository_id"],
+        "pipelineTag": row["pipeline_tag"],
+        "downloads": row["downloads"],
+        "likes": row["likes"],
+        "trendingScore": row["trending_score"],
+        "createdAt": row["created_at"],
+        "lastModified": row["last_modified"],
+        "revision": row["revision"],
+        "tags": (
+            json.loads(row["tags"])
+            if row["tags"]
+            else []
+        ),
     }
 
 def getModelDetails(
@@ -848,6 +1017,14 @@ def getModelDetails(
             m.organisation,
             m.source_url,
             m.repository_id,
+            m.pipeline_tag,
+            m.downloads,
+            m.likes,
+            m.trending_score,
+            m.created_at,
+            m.last_modified,
+            m.revision,
+            m.tags,
 
             rr.id AS research_result_id,
             rr.scan_id,
@@ -883,7 +1060,6 @@ def getModelDetails(
     
     technicalProfile = None
     researchEvidence = {}
-    print(row["technical_profile"])
     if row["technical_profile"]:
         technicalProfile = json.loads(
             row["technical_profile"]
@@ -899,6 +1075,19 @@ def getModelDetails(
         "organisation": row["organisation"],
         "sourceUrl": row["source_url"],
         "repositoryId": row["repository_id"],
+
+        "pipelineTag": row["pipeline_tag"],
+        "downloads": row["downloads"],
+        "likes": row["likes"],
+        "trendingScore": row["trending_score"],
+        "createdAt": row["created_at"],
+        "lastModified": row["last_modified"],
+        "revision": row["revision"],
+        "tags": (
+            json.loads(row["tags"])
+            if row["tags"]
+            else []
+        ),
 
         "research": (
             None
@@ -922,3 +1111,28 @@ def getModelDetails(
             }
         ),
     }
+
+def hasResearchResult(
+    modelId: int,
+) -> bool:
+
+    connection = getConnection()
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM research_results
+        WHERE model_id = ?
+        LIMIT 1
+        """,
+        (modelId,),
+    )
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    return row is not None
+    

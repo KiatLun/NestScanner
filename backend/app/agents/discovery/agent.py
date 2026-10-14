@@ -10,10 +10,6 @@ from app.agents.discovery.search import (
 )
 
 
-from app.agents.discovery.evidenceMatcher import (
-    groupModelEvidence,
-)
-
 from app.database.db import (
     saveDiscoveryCandidate,
     updateScanStage,
@@ -59,12 +55,80 @@ def discoveryAgent(
     # CREATE CANDIDATES
     # =================================================
 
-    candidates = groupModelEvidence(
-        discoveryEvidence,
-        discoveryConfig,
-    )
+    candidates = []
 
-    candidates = candidates[: discoveryConfig.maxCandidates]
+    for evidence in discoveryEvidence:
+
+        if evidence.get("source") != "huggingface":
+            continue
+
+        metadata = evidence.get(
+            "metadata",
+            {},
+        )
+        repositoryId = metadata.get(
+            "repositoryId"
+        )
+
+        if not repositoryId:
+            continue
+
+        candidate = {
+            "name": repositoryId.split("/")[-1],
+
+            "organisation": metadata.get(
+                "organisation"
+            ),
+
+            "repositoryId": repositoryId,
+
+            "sourceUrl": evidence.get(
+                "url"
+            ),
+
+            "pipelineTag": metadata.get(
+                "pipelineTag"
+            ),
+
+            "downloads": metadata.get(
+                "downloads"
+            ),
+
+            "likes": metadata.get(
+                "likes"
+            ),
+
+            "trendingScore": metadata.get(
+                "trendingScore"
+            ),
+
+            "createdAt": metadata.get(
+                "createdAt"
+            ),
+
+            "lastModified": metadata.get(
+                "lastModified"
+            ),
+
+            "revision": metadata.get(
+                "revision"
+            ),
+
+            "tags": metadata.get(
+                "tags",
+                []
+            ),
+        }
+
+        candidates.append(
+            {
+                "candidate": candidate,
+                "discoveryEvidence": [
+                    evidence
+                ],
+            }
+        )
+    
 
     # =================================================
     # SAVE CANDIDATES

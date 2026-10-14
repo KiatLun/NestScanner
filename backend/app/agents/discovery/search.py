@@ -14,7 +14,8 @@ from app.tools.webSearch import (
 from app.tools.huggingFace import (
     searchHuggingFaceModels,
     filterASRModels,
-    getASRModels,
+    discoverASRModels,
+    deduplicateHFResults,
 )
 
 from app.tools.github import (
@@ -64,14 +65,13 @@ def searchHuggingFace(
     config: DiscoveryConfig,
 ) -> list[dict]:
     """
-    Discover ASR models from Hugging Face.
+    Discover ASR models from Hugging Face using
+    multiple catalogue views:
 
-    Primary strategy:
-    - retrieve models directly from the
-      automatic-speech-recognition pipeline category
-
-    Secondary strategy:
-    - supplement with keyword-based searches
+    - newly created models
+    - recently modified models
+    - most downloaded models
+    - trending models
     """
 
     results = []
@@ -81,15 +81,25 @@ def searchHuggingFace(
     # =================================================
 
     if config.verbose:
-        print("\nSearching Hugging Face " "automatic-speech-recognition category...")
+        print(
+            "\nSearching Hugging Face "
+            "ASR discovery sources..."
+        )
 
     try:
-        categoryResults = getASRModels(
-            limit=config.huggingFaceCategoryResults,
+        categoryResults = discoverASRModels(
+            limitPerSource=config.huggingFaceResultsPerDiscoverySource,
         )
 
         if config.verbose:
-            print(f"Found {len(categoryResults)} " "ASR category models.")
+            print(
+                f"Found {len(categoryResults)} "
+                "ASR category models."
+            )
+            for model in categoryResults[:5]:
+                print(
+                    model["metadata"]["repositoryId"]
+                )
 
         results.extend(categoryResults)
 
@@ -132,6 +142,7 @@ def searchHuggingFace(
 
             print(error)
 
+    results = deduplicateHFResults(results)
     return results
 
 
@@ -219,6 +230,10 @@ def gatherDiscoveryEvidence(
 
     Hugging Face should be treated as the primary discovery
     source.
+
+    Only prioritize models with identifiable Hugging Face repository IDs.
+
+    Hugging Face repository IDs should be treated as the unique identity of a model.
 
     Focus on specific published models or checkpoints.
 

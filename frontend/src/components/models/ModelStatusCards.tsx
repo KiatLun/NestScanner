@@ -1,10 +1,10 @@
 import InfoCard from "@/components/models/InfoCard"
 
-import type { ModelResearch } from "@/types/model"
+import type { ModelDetails } from "@/types/model"
 
 
 interface ModelStatusCardsProps {
-  research: ModelResearch | null
+  model: ModelDetails
 }
 
 
@@ -20,8 +20,17 @@ function formatDate(date: string) {
 }
 
 
+function formatNumber(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "Unknown"
+  }
+
+  return value.toLocaleString()
+}
+
+
 export default function ModelStatusCards({
-  research,
+  model,
 }: ModelStatusCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -29,33 +38,43 @@ export default function ModelStatusCards({
       <InfoCard
         title="Release Date"
         value={
-          research?.releaseDate
-            ? formatDate(research.releaseDate)
+          model.createdAt
+            ? formatDate(model.createdAt)
             : "Unknown"
         }
       />
 
+      <InfoCard
+        title="Likes"
+        value={formatNumber(model.likes)}
+      />
 
       <InfoCard
-        title="Recency"
+        title="Downloads"
+        value={formatNumber(model.downloads)}
+      />
+
+      <InfoCard
+        title="Last Modified"
         value={
-          research?.isRecent === null ||
-          research?.isRecent === undefined
-            ? "Unknown"
-            : research.isRecent
-              ? "Recent"
-              : "Not Recent"
+          model.lastModified
+            ? formatDate(model.lastModified)
+            : "Unknown"
         }
       />
 
+      <InfoCard
+        title="Trend Score"
+        value={formatNumber(model.trendingScore)}
+      />
 
       <InfoCard
         title="Local Deployment"
         value={
-          research?.isLocallyDeployable === null ||
-          research?.isLocallyDeployable === undefined
+          model.research?.isLocallyDeployable === null ||
+          model.research?.isLocallyDeployable === undefined
             ? "Unknown"
-            : research.isLocallyDeployable
+            : model.research.isLocallyDeployable
               ? "Supported"
               : "Not Supported"
         }

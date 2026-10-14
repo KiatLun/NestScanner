@@ -65,13 +65,13 @@ A returned candidate MUST:
 
 1. Be an automatic speech recognition model.
 
-2. Represent one specific identifiable model or
-   checkpoint.
+2. Represent one specific identifiable model or checkpoint.
 
-3. Have supporting evidence in the supplied data.
+3. Have an exact Hugging Face repositoryId.
 
-4. Be suitable for deeper investigation by the Research
-   Agent.
+4. Have supporting evidence in the supplied data.
+
+5. Be suitable for deeper investigation by the Research Agent.
 
 Do NOT return:
 
@@ -90,43 +90,71 @@ Do NOT return:
 MODEL IDENTITY RULES
 ========================================================
 
-Each candidate represents ONE specific model.
+Each candidate represents ONE specific Hugging Face model
+repository.
 
-Different parameter-size variants are DIFFERENT models.
+The Hugging Face repositoryId is the unique identity of a
+model.
+
+Different Hugging Face repositories MUST be treated as
+different models.
 
 For example:
 
-Qwen3-ASR-0.6B
+Qwen/Qwen3-ASR-0.6B
 
 and:
 
-Qwen3-ASR-1.7B
+Qwen/Qwen3-ASR-1.7B
 
-MUST be returned as two separate candidates.
+are two separate models because they have different
+repository IDs.
 
-Do NOT combine them under:
+Return them as two separate candidates.
+
+Do NOT combine them into:
 
 Qwen3-ASR
 
-The same applies to variants such as:
+Do NOT create model families.
 
-Model-Base
-Model-Large
+The same applies to:
 
-when they are separately published checkpoints.
+- Base vs Large variants
+- Small vs Large variants
+- different parameter sizes
+- different checkpoints
+- language-specific variants
+- domain-specific variants
+- fine-tuned models
+- distilled models
+- quantized models
+- adapted models
 
-Fine-tuned models, distilled models, quantized models,
-language-specific models, domain-specific models, and
-adapted models should also remain separate when they have
-their own identifiable model repository or model name.
+if they have their own Hugging Face repositoryId.
 
-Only group evidence when it refers to the exact same
-model/checkpoint.
+Only group evidence when all evidence refers to the exact
+same Hugging Face repositoryId.
 
-Being produced by the same organisation is NOT enough.
+The organisation name is NOT a model identity.
 
-If uncertain whether two results represent the exact
-same model, keep them separate.
+For example:
+
+Organisation:
+Qwen
+
+Repository:
+Qwen/Qwen3-ASR-0.6B
+
+and:
+
+Repository:
+Qwen/Qwen3-ASR-1.7B
+
+must remain separate.
+
+If two evidence items cannot be confidently matched to the
+same repositoryId, keep them as separate candidates.
 
 ========================================================
 MODEL NAME
@@ -168,23 +196,26 @@ Do NOT remove or generalize:
 
 Do not invent a cleaner or more general model name.
 
+======================================================== 
+MODEL IDENTITY
 ========================================================
-MODEL ID
-========================================================
 
-If Hugging Face evidence exists, modelId MUST be the exact
-Hugging Face repository identifier.
+Every returned candidate MUST have an exact Hugging Face
+repository identifier.
 
-Example:
+The repositoryId is the unique identity of the model.
 
-Qwen/Qwen3-ASR-0.6B
+If evidence does not contain a Hugging Face repository ID,
+omit this candidate.
 
-Preserve it exactly.
+Do NOT create candidates from only:
+- articles
+- papers
+- GitHub repositories
+- organisation names
 
-Do not normalize, shorten, or rewrite it.
-
-If there is no Hugging Face repository available,
-modelId may be null.
+unless the exact Hugging Face repository can also be
+identified.
 
 ========================================================
 ORGANISATION
@@ -244,7 +275,7 @@ Use exactly this structure:
             "candidate": {{
                 "name": "official model name",
                 "organisation": "organisation or null",
-                "repositoryId": "Hugging Face repository ID or null",
+                "repositoryId": "Hugging Face repository ID",
                 "sourceUrl": "primary source URL or null"
             }},
             "discoveryEvidence": [
@@ -266,7 +297,9 @@ Do not include explanations outside the JSON.
 """)
 
     rawContent = response.content
-
+    print("RAW CONTENT TYPE:", type(rawContent))
+    print("RAW CONTENT LENGTH:", len(rawContent))
+    print("RAW CONTENT:", repr(rawContent))
     if config.verbose:
         print("\n=== RAW EVIDENCE MATCHER RESPONSE ===")
 

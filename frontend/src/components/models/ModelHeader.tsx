@@ -43,9 +43,6 @@ export default function ModelHeader({
                 {model.name}
                 </h1>
 
-                <Badge variant="outline">
-                {model.candidateType}
-                </Badge>
 
             </div>
 

@@ -9,7 +9,11 @@ from app.agents.research.config import (
     defaultResearchConfig,
 )
 
-from app.database.db import saveResearchResult, updateScanStage
+from app.database.db import (
+    saveResearchResult,
+    updateScanStage,
+    hasResearchResult,
+)
 
 
 def research_agent(
@@ -49,6 +53,18 @@ def research_agent(
     for researchInput in candidates:
 
         modelId = researchInput.get("modelId")
+
+        if modelId is None:
+            continue
+
+        if hasResearchResult(modelId):
+            print(
+                "Skipping already researched:",
+                researchInput["candidate"]["name"],
+            )
+            continue
+
+
         print(
             "Researching:",
             researchInput["candidate"]["name"],
@@ -56,12 +72,15 @@ def research_agent(
             modelId,
         )
 
+
         result = researchAgent(
             researchInput,
             researchConfig,
         )
 
-        if scanId is not None and modelId is not None:
+
+        if scanId is not None:
+
             researchResultId = saveResearchResult(
                 scanId,
                 modelId,
@@ -69,6 +88,7 @@ def research_agent(
             )
 
             result["researchResultId"] = researchResultId
+
 
         researchResults.append(result)
 
