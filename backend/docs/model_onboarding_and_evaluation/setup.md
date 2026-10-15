@@ -7,9 +7,8 @@
 
 Set up your `.env` file using `sample.env` as a reference.
 
-**Hugging Face access token**
-- Create a Hugging Face access token with full access.
-- Token setup: https://huggingface.co/settings/tokens
+**Hugging Face and Github access token**
+- Refer to NestScanner Setup below for more details.
 
 ### Step 2: Ensure ClearML and MinIO are running
 
@@ -30,9 +29,13 @@ Pull and use the changes from [EchoForge PR #217](https://github.com/aceaigit/ec
 Set up your `.env` file using `sample.env` as a reference.
 
 **GitHub personal access token**
-- Create a GitHub personal access token. A fine-grained token can be used.
-- Ensure the token has read-write access to the EchoForge repository for pull request creation.
-- Token setup: https://github.com/settings/personal-access-tokens
+- Create a GitHub personal access token.
+    1. GitHub Profile Icon -> Settings -> Developer settings (left side) -> Personal Access Tokens -> Fine-grained tokens -> Generate new token
+    2. For `Resource owner` select `aceaigit`
+    3. For `Repository access` select `Only select repositories` and select `aceaigit/echoforge`
+    4. For `Permissions` add `Pull requests` and set `Access: Read and write`
+    5. Generate token and update the `GITHUB_TOKEN` in .env
+
 
 **Hugging Face access token**
 - Create a Hugging Face access token with full access.
@@ -192,7 +195,7 @@ Under echoforge github, a draft pull request with the created files should appea
 
 ### 1. Remove all created components / scripts
 
-- The inference component folder (with the DockerFile, main.py, requirements.txt)
+- The **WHOLE** inference component folder (with the DockerFile, main.py, requirements.txt)
 - The pipeline yaml
 - The model folder in .cache
 
