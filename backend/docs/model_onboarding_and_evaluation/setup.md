@@ -33,7 +33,7 @@ Set up your `.env` file using `sample.env` as a reference.
     1. GitHub Profile Icon -> Settings -> Developer settings (left side) -> Personal Access Tokens -> Fine-grained tokens -> Generate new token
     2. For `Resource owner` select `aceaigit`
     3. For `Repository access` select `Only select repositories` and select `aceaigit/echoforge`
-    4. For `Permissions` add `Pull requests` and set `Access: Read and write`
+    4. For `Permissions` add `Contents` & `Pull requests`, and set both to `Access: Read and write`
     5. Generate token and update the `GITHUB_TOKEN` in .env
 
 
