@@ -7,6 +7,10 @@ from fastapi import (
     BackgroundTasks,
 )
 
+from app.tools.github import (
+    checkGitHubAuthentication,
+)
+
 from fastapi.middleware.cors import (
     CORSMiddleware,
 )
@@ -248,6 +252,35 @@ def startScan(
     request: StartScanRequest,
     backgroundTasks: BackgroundTasks,
 ):
+
+    # =================================================
+    # GITHUB PRE-FLIGHT CHECK
+    # =================================================
+
+    print(
+        "\n=== GITHUB AUTHENTICATION CHECK ==="
+    )
+
+    githubAuthenticated = (
+        checkGitHubAuthentication()
+    )
+
+    if githubAuthenticated:
+
+        print(
+            "GitHub technical research is enabled."
+        )
+
+    else:
+
+        print(
+            "WARNING: GitHub authentication failed."
+        )
+
+        print(
+            "GitHub technical research may be "
+            "unavailable for this scan."
+        )
 
     # =================================================
     # 1. RESOLVE DISCOVERY CONFIG

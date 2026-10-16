@@ -1,0 +1,97 @@
+from app.models.state import ScanState
+
+from app.agents.research.agent import (
+    researchAgent,
+)
+
+from app.agents.research.config import (
+    ResearchConfig,
+    defaultResearchConfig,
+)
+
+from app.database.db import (
+    saveResearchResult,
+    updateScanStage,
+    hasResearchResult,
+)
+
+
+def research_agent(
+    state: ScanState,
+) -> dict:
+
+    scanId = state.get("scanId")
+
+    if scanId is not None:
+        updateScanStage(
+            scanId,
+            "research",
+        )
+
+    candidates = state.get(
+        "candidates",
+        [],
+    )
+
+    # =================================================
+    # CONFIG
+    # =================================================
+
+    researchConfigData = state.get("researchConfig")
+
+    if researchConfigData:
+        researchConfig = ResearchConfig(**researchConfigData)
+    else:
+        researchConfig = defaultResearchConfig
+
+    # =================================================
+    # RESEARCH
+    # =================================================
+
+    researchResults = []
+
+    for researchInput in candidates:
+
+        modelId = researchInput.get("modelId")
+
+        if modelId is None:
+            continue
+
+        if hasResearchResult(modelId):
+            print(
+                "Skipping already researched:",
+                researchInput["candidate"]["name"],
+            )
+            continue
+
+
+        print(
+            "Researching:",
+            researchInput["candidate"]["name"],
+            "modelId:",
+            modelId,
+        )
+
+
+        result = researchAgent(
+            researchInput,
+            researchConfig,
+        )
+
+
+        if scanId is not None:
+
+            researchResultId = saveResearchResult(
+                scanId,
+                modelId,
+                result,
+            )
+
+            result["researchResultId"] = researchResultId
+
+
+        researchResults.append(result)
+
+    return {
+        "researchResults": researchResults,
+    }

@@ -1002,6 +1002,86 @@ def getModel(
         ),
     }
 
+def getModelByRepositoryId(
+    repositoryId: str,
+) -> dict | None:
+    """
+    Return a model by its Hugging Face repository ID,
+    together with the completion time of its latest
+    completed research scan.
+    """
+
+    connection = getConnection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            m.id,
+            m.name,
+            m.organisation,
+            m.source_url,
+            m.repository_id,
+            m.pipeline_tag,
+            m.downloads,
+            m.likes,
+            m.trending_score,
+            m.created_at,
+            m.last_modified,
+            m.revision,
+            m.tags,
+
+            (
+                SELECT s.completed_at
+                FROM research_results rr
+                JOIN scans s
+                    ON rr.scan_id = s.id
+                WHERE rr.model_id = m.id
+                    AND s.status = 'completed'
+                    AND s.completed_at IS NOT NULL
+                ORDER BY
+                    s.completed_at DESC,
+                    rr.id DESC
+                LIMIT 1
+            ) AS latest_research_completed_at
+
+        FROM models m
+
+        WHERE m.repository_id = ?
+        """,
+        (repositoryId,),
+    )
+
+    row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return None
+
+    return {
+        "modelId": row["id"],
+        "name": row["name"],
+        "organisation": row["organisation"],
+        "sourceUrl": row["source_url"],
+        "repositoryId": row["repository_id"],
+        "pipelineTag": row["pipeline_tag"],
+        "downloads": row["downloads"],
+        "likes": row["likes"],
+        "trendingScore": row["trending_score"],
+        "createdAt": row["created_at"],
+        "lastModified": row["last_modified"],
+        "revision": row["revision"],
+        "tags": (
+            json.loads(row["tags"])
+            if row["tags"]
+            else []
+        ),
+        "latestResearchCompletedAt": (
+            row["latest_research_completed_at"]
+        ),
+    }
+
 def getModelDetails(
     modelId: int,
 ) -> dict | None:

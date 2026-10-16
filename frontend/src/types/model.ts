@@ -86,13 +86,23 @@ export interface scanStatusResponse {
 
 export interface TechnicalProfile {
   architecture: string | null
-  parameterCount: string | number| null
+  parameterCount: string | number | null
   languages: string[]
-  reportedWer: string | null
-  fineTuningSupport: string | null
   license: string | null
-}
 
+  baseModel: string | null
+  baseModelRelation: string | null
+
+  reportedWer: string | null
+  benchmarkDetails: string | null
+
+  fineTuningSupport: string | null
+  trainingDatasets: string[]
+
+  inferenceFramework: string | null
+  inferenceRequirements: string | null
+  hardwareRequirements: string | null
+}
 
 export interface ResearchEvidenceItem {
   source: string

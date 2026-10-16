@@ -5,28 +5,39 @@ from dataclasses import dataclass
 class ResearchConfig:
 
     # =================================================
-    # RECENCY
-    # =================================================
-
-    recencyWindowDays: int = 180
-    maxRecencySearches: int = 3
-    recencyResultsPerSearch: int = 5
-
-    # =================================================
     # DEPLOYABILITY
     # =================================================
 
-    maxDeployabilitySearches: int = 3
-    deployabilityResultsPerSearch: int = 5
+    # Maximum number of additional searches that can be
+    # performed when determining local deployability.
+
+    maxDeployabilitySearches: int = 1
+
+    # Maximum number of results returned for each
+    # deployability search.
+
+    deployabilityResultsPerSearch: int = 3
+
 
     # =================================================
     # TECHNICAL PROFILE
     # =================================================
 
-    technicalResultsPerSearch: int = 5
-    technicalHuggingFaceResults: int = 10
-    technicalGithubResults: int = 5
-    technicalArxivResults: int = 5
+    # Maximum number of general web results returned
+    # for each targeted technical search.
+
+    technicalResultsPerSearch: int = 3
+
+    # Maximum number of GitHub results returned for
+    # each targeted technical search.
+
+    technicalGithubResults: int = 2
+
+    # Maximum number of arXiv results returned for
+    # each targeted technical search.
+
+    technicalArxivResults: int = 2
+
 
     # =================================================
     # LOGGING

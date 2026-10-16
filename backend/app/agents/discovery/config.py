@@ -15,14 +15,14 @@ class DiscoveryConfig:
 
     # Results per query
     webResultsPerQuery: int = 0
-    huggingFaceResultsPerQuery: int = 10
-    huggingFaceResultsPerDiscoverySource: int = 100
+    huggingFaceResultsPerQuery: int = 5
+    huggingFaceResultsPerDiscoverySource: int = 10
     githubResultsPerQuery: int = 0
     arxivResultsPerQuery: int = 0
 
 
     # Candidate generation
-    maxCandidates: int = 10
+    maxCandidates: int = 5
 
     # Logging
     verbose: bool = True

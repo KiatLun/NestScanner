@@ -3,10 +3,6 @@ from app.agents.research.config import (
     defaultResearchConfig,
 )
 
-from app.agents.research.checkRecency import (
-    checkRecency,
-)
-
 from app.agents.research.checkDeployability import (
     checkDeployability,
 )
@@ -20,29 +16,60 @@ def researchAgent(
     researchInput: dict,
     researchConfig: ResearchConfig = defaultResearchConfig,
 ) -> dict:
+    """
+    Research one model discovered by the Discovery Agent.
 
-    candidate = researchInput["candidate"]
+    The Research Agent is responsible for:
+
+    1. Evaluating whether the model can be deployed locally.
+    2. Building a technical profile for the exact model.
+    3. Gathering evidence supporting both findings.
+
+    Recency is NOT handled here.
+
+    Model freshness is handled by the Discovery pipeline
+    using Hugging Face metadata such as lastModified.
+    """
+
+    # =================================================
+    # 1. VALIDATE INPUT
+    # =================================================
+
+    if not isinstance(
+        researchInput,
+        dict,
+    ):
+        raise TypeError(
+            "researchInput must be a dictionary."
+        )
+
+    candidate = researchInput.get(
+        "candidate"
+    )
+
+    if not isinstance(
+        candidate,
+        dict,
+    ):
+        raise ValueError(
+            "researchInput must contain a "
+            "'candidate' dictionary."
+        )
 
     discoveryEvidence = researchInput.get(
         "discoveryEvidence",
         [],
     )
 
-    # =================================================
-    # 1. RECENCY
-    # =================================================
-
-    recencyResult = checkRecency(
-        candidate,
+    if not isinstance(
         discoveryEvidence,
-        researchConfig,
-    )
-
-    releaseDate = recencyResult.get("releaseDate")
+        list,
+    ):
+        discoveryEvidence = []
 
 
     # =================================================
-    # 2. DEPLOYABILITY
+    # 2. LOCAL DEPLOYABILITY
     # =================================================
 
     deployabilityResult = checkDeployability(
@@ -61,40 +88,107 @@ def researchAgent(
         [],
     )
 
+    if not isinstance(
+        deployabilityEvidence,
+        list,
+    ):
+        deployabilityEvidence = []
+
+
     # =================================================
     # 3. TECHNICAL PROFILE
     # =================================================
 
-    technicalProfile = None
-    technicalEvidence = []
+    # Technical research is performed regardless of
+    # local deployability.
+    #
+    # A model that cannot currently be deployed locally
+    # can still have useful information such as:
+    #
+    # - architecture
+    # - parameter count
+    # - languages
+    # - license
+    # - base model
+    # - model lineage
+    # - WER
+    # - benchmark information
+    # - training datasets
+    # - fine-tuning support
+    # - inference framework
+    #
+    # buildTechnicalProfile performs:
+    #
+    # HF metadata/model-card research
+    #       ↓
+    # information-gap analysis
+    #       ↓
+    # targeted external research
+    #       ↓
+    # final LLM extraction
 
-    if isLocallyDeployable:
+    profileResult = buildTechnicalProfile(
+        candidate,
+        discoveryEvidence,
+        deployabilityEvidence,
+        candidate.get("createdAt"),
+        researchConfig,
+    )
 
-        profileResult = buildTechnicalProfile(
-            candidate,
-            discoveryEvidence,
-            deployabilityEvidence,
-            releaseDate,
-            researchConfig,
-        )
+    technicalProfile = profileResult.get(
+        "technicalProfile"
+    )
 
-        technicalProfile = profileResult.get("technicalProfile")
+    technicalEvidence = profileResult.get(
+        "evidence",
+        [],
+    )
 
-        technicalEvidence = profileResult.get(
-            "evidence",
-            [],
-        )
+    if not isinstance(
+        technicalEvidence,
+        list,
+    ):
+        technicalEvidence = []
+
 
     # =================================================
-    # 4. RETURN RESULT
+    # 4. RELEASE DATE
+    # =================================================
+
+    # Discovery already provides createdAt from
+    # Hugging Face.
+    #
+    # Until a separate authoritative release-date
+    # mechanism is introduced, use createdAt.
+
+    releaseDate = profileResult.get(
+        "releaseDate",
+        candidate.get("createdAt"),
+    )
+
+
+    # =================================================
+    # 5. RETURN RESEARCH RESULT
     # =================================================
 
     return {
         "releaseDate": releaseDate,
-        "isLocallyDeployable": (isLocallyDeployable),
-        "technicalProfile": (technicalProfile),
+
+        "isLocallyDeployable": (
+            isLocallyDeployable
+        ),
+
+        "technicalProfile": (
+            technicalProfile
+        ),
+
         "researchEvidence": {
-            "deployabilityEvidence": (deployabilityEvidence),
-            "technicalEvidence": (technicalEvidence),
+            "deployabilityEvidence": (
+                deployabilityEvidence
+            ),
+
+            "technicalEvidence": (
+                technicalEvidence
+            ),
         },
     }
